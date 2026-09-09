@@ -19,7 +19,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--accent-text-readable);
@@ -36,7 +36,7 @@
 
 .project-detail-add-btn {
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--accent-text-readable);
@@ -57,7 +57,7 @@
 /* ── Project Name ── */
 .project-detail-name {
   font-family: var(--font-heading);
-  font-size: 26px;
+  font-size: 1.733rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text-primary);
@@ -84,7 +84,7 @@
 
 .project-detail-empty-heading {
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 0.867rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -92,14 +92,14 @@
 }
 
 .project-detail-empty-sub {
-  font-size: 13px;
+  font-size: 0.867rem;
   color: var(--text-dim);
   margin: 0 0 10px;
 }
 
 .project-detail-add-btn-empty {
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--accent-text-readable);
@@ -131,7 +131,7 @@
 
 .project-detail-section-heading {
   font-family: var(--font-heading);
-  font-size: 11px;
+  font-size: 0.733rem;
   font-weight: 700;
   letter-spacing: 0.13em;
   color: var(--text-dim);

@@ -12,7 +12,7 @@
 
 .placeholder-title {
   font-family: var(--font-heading);
-  font-size: 32px;
+  font-size: 2.133rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--text-primary);
@@ -20,7 +20,7 @@
 }
 
 .placeholder-subtitle {
-  font-size: 14px;
+  font-size: 0.933rem;
   color: var(--text-secondary);
 }
 
@@ -50,7 +50,7 @@
 }
 
 .placeholder-text {
-  font-size: 14px;
+  font-size: 0.933rem;
   color: var(--text-secondary);
   line-height: 1.5;
   max-width: 320px;
@@ -58,7 +58,7 @@
 
 .placeholder-tag {
   font-family: var(--font-heading);
-  font-size: 11px;
+  font-size: 0.733rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   padding: 4px 10px;
@@ -71,7 +71,7 @@
 
 .placeholder-back-btn {
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 0.867rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -107,20 +107,20 @@
 }
 
 .settings-item-label {
-  font-size: 14px;
+  font-size: 0.933rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .settings-item-desc {
-  font-size: 12px;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin-top: 2px;
 }
 
 .settings-item-value {
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 0.867rem;
   font-weight: 700;
   color: var(--cyan-primary);
   letter-spacing: 0.04em;

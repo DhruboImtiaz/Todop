@@ -126,21 +126,16 @@
 :root,
 [data-font-size="medium"] {
   --font-size-base: 15px;
-  --font-size-sm: 13px;
-  --font-size-xs: 11px;
-  --font-size-lg: 17px;
+  font-size: 15px;
 }
 
 [data-font-size="small"] {
-  --font-size-base: 13.5px;
-  --font-size-sm: 12px;
-  --font-size-xs: 10px;
-  --font-size-lg: 15.5px;
+  --font-size-base: 12.5px;
+  font-size: 12.5px;
 }
 
 [data-font-size="large"] {
-  --font-size-base: 16.5px;
-  --font-size-sm: 14.5px;
-  --font-size-xs: 12px;
-  --font-size-lg: 18.5px;
+  --font-size-base: 17.5px;
+  font-size: 17.5px;
 }
+

@@ -14,7 +14,7 @@
 
 .settings-heading {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 1.467rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--text-primary);
@@ -22,7 +22,7 @@
 }
 
 .settings-subtitle {
-  font-size: 13px;
+  font-size: 0.867rem;
   color: var(--text-dim);
   margin: 0;
 }
@@ -64,14 +64,14 @@
 
 .feedback-title {
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .feedback-desc {
-  font-size: 13px;
+  font-size: 0.867rem;
   line-height: 1.4;
   opacity: 0.92;
 }
@@ -100,7 +100,7 @@
 
 .settings-section-title {
   font-family: var(--font-heading);
-  font-size: 11px;
+  font-size: 0.733rem;
   font-weight: 700;
   letter-spacing: 0.13em;
   color: var(--text-dim);
@@ -128,7 +128,7 @@
 
 .settings-item-name {
   font-family: var(--font-heading);
-  font-size: 14px;
+  font-size: 0.933rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: var(--text-primary);
@@ -136,7 +136,7 @@
 }
 
 .settings-item-desc {
-  font-size: 12px;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
@@ -152,7 +152,7 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   display: flex;
@@ -209,7 +209,7 @@
   justify-content: center;
   gap: 8px;
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-secondary);
@@ -251,7 +251,7 @@
   justify-content: space-between;
   padding: 6px 0;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 13px;
+  font-size: 0.867rem;
 }
 
 .settings-meta-row:last-child {
@@ -326,7 +326,7 @@
 
 .restore-modal-title {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: 0.05em;
   color: var(--text-primary);
@@ -334,7 +334,7 @@
 }
 
 .restore-modal-desc {
-  font-size: 14px;
+  font-size: 0.933rem;
   color: var(--text-secondary);
   line-height: 1.45;
   margin: 0;
@@ -345,7 +345,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: 0.867rem;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -364,7 +364,7 @@
   padding: 10px 16px;
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 0.867rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   display: flex;

@@ -23,7 +23,7 @@
 
 .top-bar-brand {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 1.467rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--text-primary);
