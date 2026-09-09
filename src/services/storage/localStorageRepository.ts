@@ -57,8 +57,24 @@ export class LocalStorageRepository implements StorageRepository {
         modified = true;
       }
 
-      // Keep projects sorted by order
+      // Keep projects sorted by order, and normalize order indices deterministically
       parsed.projects.sort((a, b) => a.order - b.order);
+      for (let i = 0; i < parsed.projects.length; i++) {
+        if (parsed.projects[i].order !== i) {
+          parsed.projects[i].order = i;
+          modified = true;
+        }
+      }
+
+      // Defensive normalization: only set a log's projectId to null when that referenced project genuinely does not exist.
+      // Valid project relationships are strictly preserved.
+      const validProjectIds = new Set(parsed.projects.map((p) => p.id));
+      for (const log of parsed.logs) {
+        if (log.projectId !== null && !validProjectIds.has(log.projectId)) {
+          log.projectId = null;
+          modified = true;
+        }
+      }
 
       // Normalize settings
       if (!parsed.settings || typeof parsed.settings !== 'object') {

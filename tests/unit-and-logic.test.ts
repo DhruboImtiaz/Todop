@@ -936,10 +936,125 @@ async function testRepository() {
   assert.equal(existingFontSettings.theme, 'light');
   console.log('✓ 24. Existing font-size preference remains preserved');
 
+  // --- Phase 3: Final Polish & Defensive Normalization Tests ---
+  console.log('\n--- Phase 3: Defensive Normalization & QA Tests ---');
+
+  // 1. Orphaned project reference in log is defensively normalized to null without discarding the log
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [
+      {
+        id: 'log-orphaned-1',
+        title: 'Orphaned Log',
+        deadline: '2030-01-01T12:00:00.000Z',
+        completed: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        projectId: 'non-existent-project-id',
+      },
+    ],
+    projects: [
+      {
+        id: 'real-project-1',
+        name: 'Real Project',
+        order: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    settings: {
+      theme: 'light',
+      fontSize: 'medium',
+    },
+  });
+  const defNormRepo1 = new LocalStorageRepository();
+  const defLogs1 = await defNormRepo1.getActiveLogs();
+  assert.equal(defLogs1.length, 1);
+  assert.equal(defLogs1[0].id, 'log-orphaned-1');
+  assert.equal(defLogs1[0].projectId, null);
+  console.log('✓ 1. Orphaned project reference in log is defensively normalized to null');
+
+  // 2. Valid project reference in log is strictly preserved
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [
+      {
+        id: 'log-valid-1',
+        title: 'Valid Log',
+        deadline: '2030-01-01T12:00:00.000Z',
+        completed: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        projectId: 'real-project-1',
+      },
+    ],
+    projects: [
+      {
+        id: 'real-project-1',
+        name: 'Real Project',
+        order: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    settings: {
+      theme: 'light',
+      fontSize: 'medium',
+    },
+  });
+  const defNormRepo2 = new LocalStorageRepository();
+  const defLogs2 = await defNormRepo2.getActiveLogs();
+  assert.equal(defLogs2.length, 1);
+  assert.equal(defLogs2[0].projectId, 'real-project-1');
+  console.log('✓ 2. Valid project reference in log is strictly preserved');
+
+  // 3. Corrupted project ordering is deterministically normalized to 0, 1, 2... preserving relative order
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [
+      {
+        id: 'proj-b',
+        name: 'Project B',
+        order: 50,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'proj-a',
+        name: 'Project A',
+        order: 10,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'proj-c',
+        name: 'Project C',
+        order: 100,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    settings: {
+      theme: 'light',
+      fontSize: 'medium',
+    },
+  });
+  const defNormRepo3 = new LocalStorageRepository();
+  const defProjects3 = await defNormRepo3.getProjects();
+  assert.equal(defProjects3.length, 3);
+  assert.equal(defProjects3[0].id, 'proj-a');
+  assert.equal(defProjects3[0].order, 0);
+  assert.equal(defProjects3[1].id, 'proj-b');
+  assert.equal(defProjects3[1].order, 1);
+  assert.equal(defProjects3[2].id, 'proj-c');
+  assert.equal(defProjects3[2].order, 2);
+  console.log('✓ 3. Corrupted project ordering is deterministically normalized to 0, 1, 2... preserving relative order');
+
   // Restore original mock localStorage
   globalThis.localStorage = originalLocalStorage;
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D) PASSED ---');
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3) PASSED ---');
 }
 
 testRepository().catch((err) => {

@@ -16,6 +16,18 @@ export const DeleteProjectDialog: React.FC<DeleteProjectDialogProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  React.useEffect(() => {
+    if (!project) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [project, onCancel]);
+
   if (!project) return null;
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {

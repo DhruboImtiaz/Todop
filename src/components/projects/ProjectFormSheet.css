@@ -147,17 +147,18 @@
 }
 
 .project-btn-primary {
-  background-color: var(--cyan-primary);
-  border: 1px solid var(--cyan-primary);
-  color: #090A0C;
+  background-color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-text);
+  font-weight: 800;
 }
 
 .project-btn-primary:hover {
-  background-color: var(--cyan-hover);
-  border-color: var(--cyan-hover);
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .project-btn-primary:active {
-  background-color: var(--cyan-active);
-  border-color: var(--cyan-active);
+  background-color: var(--accent-active);
+  border-color: var(--accent-active);
 }

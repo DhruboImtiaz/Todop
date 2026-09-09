@@ -1,4 +1,4 @@
-const CACHE_NAME = 'todop-cache-v1';
+const CACHE_NAME = 'todop-cache-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -33,13 +33,27 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
+  // Only handle http / https schemes (ignore blob:, data:, chrome-extension:, etc.)
+  if (!url.protocol.startsWith('http')) return;
+
   // Ignore cross-origin requests
   if (url.origin !== self.location.origin) return;
+
+  // Never cache user-generated backup JSON files
+  if (url.pathname.includes('backup') && url.pathname.endsWith('.json')) return;
 
   // For navigation requests (e.g. visiting /projects or /settings directly)
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html'))
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
@@ -49,7 +63,11 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            (networkResponse.type === 'basic' || networkResponse.type === 'cors')
+          ) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
           }

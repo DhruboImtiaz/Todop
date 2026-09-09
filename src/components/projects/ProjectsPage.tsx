@@ -93,12 +93,22 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
     onNavigateToProject(projectId);
   };
 
-  // Close any open menu when clicking elsewhere
+  // Close any open menu when clicking elsewhere or pressing Escape
   React.useEffect(() => {
     if (!openMenuId) return;
     const closeMenu = () => setOpenMenuId(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setOpenMenuId(null);
+      }
+    };
     document.addEventListener('mousedown', closeMenu);
-    return () => document.removeEventListener('mousedown', closeMenu);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', closeMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [openMenuId]);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Download, Moon, Sun, Type, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useStorage } from '../../hooks/useStorage';
 import type { AppDataSchema, AppFontSize, AppTheme } from '../../types';
@@ -105,6 +105,19 @@ export const SettingsPage: React.FC = () => {
     setPendingRestoreData(null);
     setPendingSummary(null);
   };
+
+  // Close restore confirmation modal on Escape key
+  useEffect(() => {
+    if (!isConfirmModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        handleCancelRestore();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isConfirmModalOpen]);
 
   // Confirm restore: atomic replacement
   const handleConfirmRestore = async () => {
