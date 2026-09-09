@@ -1,0 +1,26 @@
+.floating-add-btn {
+  position: fixed;
+  right: calc(max(var(--page-padding-x), (100vw - var(--max-content-width)) / 2 + var(--page-padding-x)));
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-full);
+  background-color: var(--cyan-primary);
+  color: #0A0A0C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 35;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.floating-add-btn:hover {
+  background-color: var(--cyan-hover);
+  transform: translateY(-2px);
+}
+
+.floating-add-btn:active {
+  transform: translateY(0) scale(0.95);
+  background-color: var(--cyan-active);
+}

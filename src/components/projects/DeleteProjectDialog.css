@@ -1,0 +1,131 @@
+.delete-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-overlay);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.delete-dialog-box {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  animation: scaleIn 0.18s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.delete-dialog-icon-row {
+  margin-bottom: 4px;
+}
+
+.delete-dialog-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 119, 97, 0.12);
+  border: 1px solid rgba(255, 119, 97, 0.3);
+  color: var(--overdue-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-dialog-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.delete-dialog-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-dialog-project-name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.delete-dialog-note {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0;
+  padding: 8px 12px;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  line-height: 1.5;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.delete-dialog-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.delete-dialog-btn {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.delete-dialog-cancel {
+  background-color: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.delete-dialog-cancel:hover {
+  border-color: var(--border-focused);
+  color: var(--text-primary);
+}
+
+.delete-dialog-confirm {
+  background-color: rgba(255, 119, 97, 0.15);
+  border: 1px solid rgba(255, 119, 97, 0.4);
+  color: var(--overdue-text);
+}
+
+.delete-dialog-confirm:hover {
+  background-color: rgba(255, 119, 97, 0.25);
+  border-color: var(--overdue-text);
+}

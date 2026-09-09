@@ -1,0 +1,236 @@
+.projects-page {
+  padding: 16px var(--page-padding-x) 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ── */
+.projects-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.projects-page-heading {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.projects-add-btn {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--cyan-primary);
+  background: transparent;
+  border: 1px solid var(--cyan-border-tint);
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.projects-add-btn:hover {
+  background-color: var(--cyan-tint);
+  border-color: var(--cyan-primary);
+}
+
+/* ── Empty State ── */
+.projects-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 64px 20px;
+}
+
+.projects-empty-icon {
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.projects-empty-heading {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.projects-empty-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+
+/* ── Project List ── */
+.projects-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.project-row {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: visible;
+  transition: border-color 0.15s ease;
+}
+
+.project-row:hover {
+  border-color: var(--border-strong);
+}
+
+.project-row.is-dragging {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.project-row.drag-over {
+  border-color: var(--cyan-primary);
+  background-color: var(--cyan-tint);
+}
+
+.project-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 14px 14px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.project-row-inner:focus-visible {
+  outline: 2px solid var(--cyan-primary);
+  outline-offset: -2px;
+  border-radius: var(--radius-md);
+}
+
+/* Drag Handle */
+.project-row-grip {
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+/* Project Info */
+.project-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.project-row-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-row-count {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* Overflow Menu Container */
+.project-row-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.project-row-overflow-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.project-row-overflow-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--border-subtle);
+}
+
+/* Overflow Dropdown */
+.project-overflow-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  min-width: 152px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-overflow-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.project-overflow-item:hover:not(:disabled) {
+  background-color: var(--border-subtle);
+}
+
+.project-overflow-item:disabled,
+.project-overflow-item[aria-disabled='true'] {
+  color: var(--text-dim);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.project-overflow-delete {
+  color: var(--overdue-text);
+}
+
+.project-overflow-delete:hover {
+  background-color: rgba(255, 115, 92, 0.12) !important;
+}
+
+.project-overflow-divider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: 3px 0;
+}
