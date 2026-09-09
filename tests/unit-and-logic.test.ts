@@ -344,7 +344,185 @@ async function testRepository() {
   await repoAfterRefresh3.deleteProject(projAlpha.id);
   await repoAfterRefresh3.deleteProject(projGamma.id);
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A) PASSED ---');
+  // ==========================================
+  // Phase 2B: Search System Tests
+  // ==========================================
+  console.log('\n--- Running Phase 2B Search Tests ---');
+
+  const { searchLogs } = await import('../src/utils/search');
+
+  // Set up fresh test projects & logs in repo
+  const searchProj = await repoAfterRefresh3.createProject('Search Test Project');
+
+  const logActiveNear = await repoAfterRefresh3.createLog({
+    title: 'Finish math assignment',
+    deadline: createDateOffset(12), // 12 hours from now
+    projectId: searchProj.id,
+  });
+
+  const logActiveFar = await repoAfterRefresh3.createLog({
+    title: 'Database assignment part 2',
+    deadline: createDateOffset(48), // 48 hours from now
+  });
+
+  const logActiveOther = await repoAfterRefresh3.createLog({
+    title: 'Grocery shopping',
+    deadline: createDateOffset(24),
+  });
+
+  const logCompletedOld = await repoAfterRefresh3.createLog({
+    title: 'Submit history assignment',
+    deadline: createDateOffset(-24),
+  });
+  // Mark as completed
+  await repoAfterRefresh3.toggleLogCompletion(logCompletedOld.id);
+
+  // Small delay to ensure strictly distinct updatedAt timestamp
+  await new Promise((r) => setTimeout(r, 15));
+
+  const logCompletedNew = await repoAfterRefresh3.createLog({
+    title: 'Biology assignment review',
+    deadline: createDateOffset(-12),
+  });
+  // Mark as completed later
+  await repoAfterRefresh3.toggleLogCompletion(logCompletedNew.id);
+
+  let currentAllLogs = await repoAfterRefresh3.getLogs();
+
+  // Test 1: Empty search query returns zero matches
+  const resEmpty1 = searchLogs(currentAllLogs, '');
+  const resEmpty2 = searchLogs(currentAllLogs, '   ');
+  assert.equal(resEmpty1.totalMatches, 0);
+  assert.equal(resEmpty1.active.length, 0);
+  assert.equal(resEmpty1.completed.length, 0);
+  assert.equal(resEmpty2.totalMatches, 0);
+  console.log('✓ 1. Empty search query returns zero matches');
+
+  // Test 2: Exact title match works
+  const resExact = searchLogs(currentAllLogs, 'Finish math assignment');
+  assert.equal(resExact.totalMatches, 1);
+  assert.equal(resExact.active[0].id, logActiveNear.id);
+  console.log('✓ 2. Exact title match works');
+
+  // Test 3: Partial title match works
+  const resPartial = searchLogs(currentAllLogs, 'assignment');
+  assert.equal(resPartial.totalMatches, 4); // 2 active + 2 completed
+  console.log('✓ 3. Partial title match works (found 4 logs containing "assignment")');
+
+  // Test 4: Search is case-insensitive
+  const resCase = searchLogs(currentAllLogs, 'ASSIGNMENT');
+  assert.equal(resCase.totalMatches, 4);
+  const resMixed = searchLogs(currentAllLogs, 'mAtH');
+  assert.equal(resMixed.totalMatches, 1);
+  assert.equal(resMixed.active[0].id, logActiveNear.id);
+  console.log('✓ 4. Search is case-insensitive');
+
+  // Test 5: Leading/trailing whitespace is ignored
+  const resWhitespace = searchLogs(currentAllLogs, '   assignment   ');
+  assert.equal(resWhitespace.totalMatches, 4);
+  console.log('✓ 5. Leading/trailing whitespace is ignored');
+
+  // Test 6: No-match query returns empty results
+  const resNoMatch = searchLogs(currentAllLogs, 'nonexistentquery123');
+  assert.equal(resNoMatch.totalMatches, 0);
+  assert.equal(resNoMatch.active.length, 0);
+  assert.equal(resNoMatch.completed.length, 0);
+  console.log('✓ 6. No-match query returns empty results');
+
+  // Test 7: Active logs are included in search
+  assert.ok(resPartial.active.some((l) => l.id === logActiveNear.id));
+  assert.ok(resPartial.active.some((l) => l.id === logActiveFar.id));
+  console.log('✓ 7. Active logs are included in search results');
+
+  // Test 8: Completed logs are included in search
+  assert.ok(resPartial.completed.some((l) => l.id === logCompletedOld.id));
+  assert.ok(resPartial.completed.some((l) => l.id === logCompletedNew.id));
+  console.log('✓ 8. Completed logs are included in search results');
+
+  // Test 9: Active results are sorted by nearest deadline ascending
+  assert.equal(resPartial.active[0].id, logActiveNear.id); // 12h before 48h
+  assert.equal(resPartial.active[1].id, logActiveFar.id);
+  console.log('✓ 9. Active results sorted by nearest deadline ascending');
+
+  // Test 10: Completed results are sorted by newest updatedAt descending
+  assert.equal(resPartial.completed[0].id, logCompletedNew.id); // completed after logCompletedOld
+  assert.equal(resPartial.completed[1].id, logCompletedOld.id);
+  console.log('✓ 10. Completed results sorted by newest updatedAt descending');
+
+  // Test 11: Editing a search result modifies the original log record in storage
+  const updatedFar = await repoAfterRefresh3.updateLog({
+    id: logActiveFar.id,
+    title: 'Database assignment part 2 - Revised',
+    description: 'Added revision notes',
+  });
+  assert.equal(updatedFar.id, logActiveFar.id);
+  assert.equal(updatedFar.title, 'Database assignment part 2 - Revised');
+  console.log('✓ 11. Editing a search result modifies the original log record');
+
+  // Test 12: Reactivating a completed log moves it into active results
+  await repoAfterRefresh3.toggleLogCompletion(logCompletedNew.id);
+  currentAllLogs = await repoAfterRefresh3.getLogs();
+  const resAfterReactivate = searchLogs(currentAllLogs, 'assignment');
+  assert.equal(resAfterReactivate.active.length, 3);
+  assert.equal(resAfterReactivate.completed.length, 1);
+  assert.ok(resAfterReactivate.active.some((l) => l.id === logCompletedNew.id));
+  console.log('✓ 12. Reactivating a completed log moves it into active search results');
+
+  // Test 13: Search results update after editing a title
+  const resUpdatedTitle = searchLogs(currentAllLogs, 'Revised');
+  assert.equal(resUpdatedTitle.totalMatches, 1);
+  assert.equal(resUpdatedTitle.active[0].id, logActiveFar.id);
+  console.log('✓ 13. Search results update after editing a title');
+
+  // Test 14: Deleted logs disappear from search
+  await repoAfterRefresh3.deleteLog(logCompletedOld.id);
+  currentAllLogs = await repoAfterRefresh3.getLogs();
+  const resAfterDelete = searchLogs(currentAllLogs, 'assignment');
+  assert.ok(!resAfterDelete.completed.some((l) => l.id === logCompletedOld.id));
+  assert.equal(resAfterDelete.completed.length, 0);
+  console.log('✓ 14. Deleted logs disappear immediately from search');
+
+  // Test 15: Editing/rescheduling preserves the same log ID
+  const newDeadlineForNear = createDateOffset(5);
+  const rescheduledLog = await repoAfterRefresh3.updateLog({
+    id: logActiveNear.id,
+    deadline: newDeadlineForNear,
+  });
+  assert.equal(rescheduledLog.id, logActiveNear.id);
+  console.log('✓ 15. Editing/rescheduling preserves the original log ID');
+
+  // Test 16: Project relationship remains intact when a log is edited via Search
+  assert.equal(rescheduledLog.projectId, searchProj.id);
+  console.log('✓ 16. Project relationship remains intact when edited via Search');
+
+  // Test 17: A title changed so it no longer matches disappears from results
+  await repoAfterRefresh3.updateLog({
+    id: logActiveFar.id,
+    title: 'Database exam prep', // no longer contains "assignment"
+  });
+  currentAllLogs = await repoAfterRefresh3.getLogs();
+  const resAfterTitleDrop = searchLogs(currentAllLogs, 'assignment');
+  assert.ok(!resAfterTitleDrop.active.some((l) => l.id === logActiveFar.id));
+  console.log('✓ 17. Title changed so it no longer matches disappears from search results');
+
+  // Test 18: A title changed so it starts matching appears in results
+  await repoAfterRefresh3.updateLog({
+    id: logActiveOther.id,
+    title: 'Grocery shopping assignment', // now contains "assignment"
+  });
+  currentAllLogs = await repoAfterRefresh3.getLogs();
+  const resAfterTitleGain = searchLogs(currentAllLogs, 'assignment');
+  assert.ok(resAfterTitleGain.active.some((l) => l.id === logActiveOther.id));
+  console.log('✓ 18. Title changed so it starts matching appears in search results');
+
+  // Clean up search test data
+  await repoAfterRefresh3.deleteLog(logActiveNear.id);
+  await repoAfterRefresh3.deleteLog(logActiveFar.id);
+  await repoAfterRefresh3.deleteLog(logActiveOther.id);
+  await repoAfterRefresh3.deleteLog(logCompletedNew.id);
+  await repoAfterRefresh3.deleteProject(searchProj.id);
+
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B) PASSED ---');
 }
 
 testRepository().catch((err) => {

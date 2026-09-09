@@ -10,7 +10,7 @@ import { LogFormSheet } from './components/logs/LogFormSheet';
 import { FloatingAddButton } from './components/common/FloatingAddButton';
 import { ProjectsPage } from './components/projects/ProjectsPage';
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
-import { SearchPlaceholder } from './components/placeholders/SearchPlaceholder';
+import { SearchPage } from './components/search/SearchPage';
 import { SettingsView } from './components/placeholders/SettingsView';
 
 import { getRouteFromPath, getPathFromRoute } from './utils/routing';
@@ -149,9 +149,7 @@ const TodopMain: React.FC = () => {
           )}
 
           {currentTab === 'search' && (
-            <SearchPlaceholder
-              onBackToUpcoming={() => handleNavigate('upcoming')}
-            />
+            <SearchPage />
           )}
 
           {currentTab === 'settings' && (
