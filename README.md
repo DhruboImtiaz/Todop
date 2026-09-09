@@ -1,5 +1,7 @@
 # TODOP — Personal Task Planner
 
+**🌐 Live App: [todop7.netlify.app](https://todop7.netlify.app/)**
+
 A sleek, mobile-first, local-first progressive web application (PWA) designed for focused task tracking with live countdowns, project organization, instant archive search, and complete offline capability.
 
 ---
@@ -139,15 +141,14 @@ Visit `http://localhost:4173` in your browser.
 
 ## Deployment
 
-TODOP is configured for static hosting platforms like [Netlify](https://www.netlify.com/).
+TODOP is live at **[todop7.netlify.app](https://todop7.netlify.app/)**, deployed via [Netlify](https://www.netlify.com/) with automatic continuous deployment from the `main` branch.
 
-### Netlify Deployment
+### Netlify Configuration
 
-1. Connect your repository to Netlify.
-2. Build settings:
-   - **Build command**: `npm run build`
-   - **Publish directory**: `dist`
-3. Single Page Application (SPA) routing is handled automatically via `netlify.toml` and `public/_redirects` to ensure deep links (e.g., `/projects`, `/search`, `/settings`) resolve correctly on page refresh.
+- **Build command**: `npm run build`
+- **Publish directory**: `dist`
+- SPA routing is handled automatically via `netlify.toml` and `public/_redirects`, ensuring deep links (e.g., `/projects`, `/search`, `/settings`) resolve correctly on page refresh.
+- The production build is fully static — no server-side runtime required.
 
 ---
 
