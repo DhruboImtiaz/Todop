@@ -39,8 +39,9 @@
 }
 
 .bottom-nav-item.active {
-  color: var(--cyan-primary);
+  color: var(--accent-nav-active);
 }
+
 
 .bottom-nav-label {
   font-family: var(--font-heading);

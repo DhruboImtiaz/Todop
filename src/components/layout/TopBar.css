@@ -40,7 +40,7 @@
   width: 7px;
   height: 7px;
   border-radius: var(--radius-full);
-  background-color: var(--cyan-primary);
+  background-color: var(--accent-primary);
   display: inline-block;
 }
 
@@ -56,10 +56,11 @@
 }
 
 .top-bar-settings-btn:hover {
-  color: var(--cyan-primary);
+  color: var(--accent-text-readable);
   background-color: var(--bg-card);
 }
 
 .top-bar-settings-btn.active {
-  color: var(--cyan-primary);
+  color: var(--accent-nav-active);
 }
+

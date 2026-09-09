@@ -22,7 +22,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--cyan-primary);
+  color: var(--accent-text-readable);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -31,7 +31,7 @@
 }
 
 .project-detail-back-btn:hover {
-  color: var(--cyan-hover);
+  color: var(--accent-hover);
 }
 
 .project-detail-add-btn {
@@ -39,9 +39,9 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--cyan-primary);
+  color: var(--accent-text-readable);
   background: transparent;
-  border: 1px solid var(--cyan-border-tint);
+  border: 1px solid var(--accent-border-tint);
   border-radius: var(--radius-sm);
   padding: 7px 12px;
   cursor: pointer;
@@ -50,8 +50,8 @@
 }
 
 .project-detail-add-btn:hover {
-  background-color: var(--cyan-tint);
-  border-color: var(--cyan-primary);
+  background-color: var(--accent-tint);
+  border-color: var(--accent-primary);
 }
 
 /* ── Project Name ── */
@@ -102,9 +102,9 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--cyan-primary);
+  color: var(--accent-text-readable);
   background: transparent;
-  border: 1px solid var(--cyan-border-tint);
+  border: 1px solid var(--accent-border-tint);
   border-radius: var(--radius-sm);
   padding: 9px 18px;
   cursor: pointer;
@@ -112,8 +112,8 @@
 }
 
 .project-detail-add-btn-empty:hover {
-  background-color: var(--cyan-tint);
-  border-color: var(--cyan-primary);
+  background-color: var(--accent-tint);
+  border-color: var(--accent-primary);
 }
 
 /* ── Log Sections ── */

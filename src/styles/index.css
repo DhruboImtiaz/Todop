@@ -1,12 +1,11 @@
 @import './variables.css';
 
-/* Offline Font Loads */
-@import '@fontsource/barlow-semi-condensed/600.css';
-@import '@fontsource/barlow-semi-condensed/700.css';
-@import '@fontsource/barlow-semi-condensed/800.css';
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
+/* Offline Font Loads - Plus Jakarta Sans */
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -30,11 +29,11 @@ html, body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Base Headings - Condensed Bold */
+/* Base Headings - Clean Geometric Sans */
 h1, h2, h3, h4, .font-heading {
   font-family: var(--font-heading);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -51,7 +50,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--cyan-primary);
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 
@@ -91,8 +90,9 @@ input, select, textarea {
 }
 
 /* Utilities */
+.text-accent,
 .text-cyan {
-  color: var(--cyan-primary);
+  color: var(--accent-primary);
 }
 
 .text-muted {

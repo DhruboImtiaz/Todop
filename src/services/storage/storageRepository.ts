@@ -1,4 +1,4 @@
-import type { Log, Project, Settings } from '../../types';
+import type { AppDataSchema, Log, Project, Settings } from '../../types';
 
 export interface NewLogInput {
   title: string;
@@ -42,6 +42,11 @@ export interface StorageRepository {
   getSettings(): Promise<Settings>;
   updateSettings(patch: Partial<Settings>): Promise<Settings>;
 
+  // Backup & Restore
+  exportData(): Promise<AppDataSchema>;
+  importData(data: AppDataSchema): Promise<boolean>;
+
   // Event Subscription
   subscribe(listener: StorageListener): () => void;
 }
+

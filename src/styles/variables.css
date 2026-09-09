@@ -1,36 +1,45 @@
-:root,
-[data-theme="dark"] {
-  /* Colors - Dark Theme (Default) */
-  --bg-base: #090A0C;
-  --bg-card: #111318;
-  --bg-card-hover: #161920;
-  --bg-input: #14171E;
-  --bg-elevated: #181B22;
-  --bg-overlay: rgba(0, 0, 0, 0.72);
+:root {
+  /* Colors - Light Theme (Default) */
+  --bg-base: #F4F5F7;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #EAECEF;
+  --bg-input: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-overlay: rgba(18, 20, 24, 0.45);
 
-  --text-primary: #F2F4F7;
-  --text-secondary: #8A8F98;
-  --text-dim: #545965;
+  --text-primary: #121417;
+  --text-secondary: #565D6B;
+  --text-dim: #7C8494;
 
-  --border-subtle: #1F232D;
-  --border-focused: #00D9E8;
-  --border-strong: #2F3545;
+  --border-subtle: #DCE0E8;
+  --border-focused: #AEACFF;
+  --border-strong: #C4CAD4;
 
-  /* Primary Accent - Cyan Only */
-  --cyan-primary: #00D9E8;
-  --cyan-hover: #1AE2F0;
-  --cyan-active: #00BDCB;
-  --cyan-tint: rgba(0, 217, 232, 0.10);
-  --cyan-border-tint: rgba(0, 217, 232, 0.28);
+  /* Primary Accent - Lavender #AEACFF */
+  --accent-primary: #AEACFF;
+  --accent-hover: #BFBDFF;
+  --accent-active: #9B98F5;
+  --accent-text: #0D0E15; /* Accessible dark text on lavender surfaces */
+  --accent-text-readable: #5450E4; /* High-contrast accessible accent for text/icons on light surfaces */
+  --accent-nav-active: #5450E4; /* High-contrast active navigation text/icon on light theme */
+  --accent-tint: rgba(174, 172, 255, 0.16);
+  --accent-border-tint: rgba(174, 172, 255, 0.38);
 
-  /* Overdue State */
-  --overdue-text: #FF7761;
-  --overdue-badge-bg: #211516;
-  --overdue-border: #4D2121;
+  /* Legacy aliases for non-destructive backwards-compatibility */
+  --cyan-primary: var(--accent-primary);
+  --cyan-hover: var(--accent-hover);
+  --cyan-active: var(--accent-active);
+  --cyan-tint: var(--accent-tint);
+  --cyan-border-tint: var(--accent-border-tint);
 
-  /* Typography */
-  --font-heading: 'Barlow Semi Condensed', -apple-system-short, Impact, 'Arial Narrow', sans-serif-condensed, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Overdue State - Light Theme High Contrast */
+  --overdue-text: #D63024;
+  --overdue-badge-bg: #FEECEB;
+  --overdue-border: #F8C3BE;
+
+  /* Typography - Plus Jakarta Sans */
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   /* Sizing & Layout */
   --header-height: 56px;
@@ -49,7 +58,40 @@
   --safe-right: env(safe-area-inset-right, 0px);
 }
 
-/* Colors - Light Theme Override */
+/* Colors - Dark Theme Override */
+[data-theme="dark"] {
+  --bg-base: #090A0C;
+  --bg-card: #111318;
+  --bg-card-hover: #161920;
+  --bg-input: #14171E;
+  --bg-elevated: #181B22;
+  --bg-overlay: rgba(0, 0, 0, 0.72);
+
+  --text-primary: #F2F4F7;
+  --text-secondary: #8A8F98;
+  --text-dim: #545965;
+
+  --border-subtle: #1F232D;
+  --border-focused: #AEACFF;
+  --border-strong: #2F3545;
+
+  /* Primary Accent - Lavender #AEACFF on Dark */
+  --accent-primary: #AEACFF;
+  --accent-hover: #BFBDFF;
+  --accent-active: #9B98F5;
+  --accent-text: #0D0E15;
+  --accent-text-readable: #AEACFF;
+  --accent-nav-active: #AEACFF;
+  --accent-tint: rgba(174, 172, 255, 0.14);
+  --accent-border-tint: rgba(174, 172, 255, 0.32);
+
+  /* Overdue State - Dark Theme */
+  --overdue-text: #FF7761;
+  --overdue-badge-bg: #211516;
+  --overdue-border: #4D2121;
+}
+
+/* Explicit Light Theme attribute (matches root default) */
 [data-theme="light"] {
   --bg-base: #F4F5F7;
   --bg-card: #FFFFFF;
@@ -63,17 +105,18 @@
   --text-dim: #7C8494;
 
   --border-subtle: #DCE0E8;
-  --border-focused: #00BCC9;
+  --border-focused: #AEACFF;
   --border-strong: #C4CAD4;
 
-  /* Primary Accent - Cyan preserved */
-  --cyan-primary: #00D9E8;
-  --cyan-hover: #1AE2F0;
-  --cyan-active: #00BDCB;
-  --cyan-tint: rgba(0, 217, 232, 0.14);
-  --cyan-border-tint: rgba(0, 160, 172, 0.45);
+  --accent-primary: #AEACFF;
+  --accent-hover: #BFBDFF;
+  --accent-active: #9B98F5;
+  --accent-text: #0D0E15;
+  --accent-text-readable: #5450E4;
+  --accent-nav-active: #5450E4;
+  --accent-tint: rgba(174, 172, 255, 0.16);
+  --accent-border-tint: rgba(174, 172, 255, 0.38);
 
-  /* Overdue State - Light Theme High Contrast */
   --overdue-text: #D63024;
   --overdue-badge-bg: #FEECEB;
   --overdue-border: #F8C3BE;

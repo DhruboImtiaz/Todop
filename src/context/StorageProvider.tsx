@@ -105,13 +105,30 @@ export const StorageProvider: React.FC<{
     [repository]
   );
 
-  // Synchronize data-theme and data-font-size to root element immediately when settings change
+  const exportData = useCallback(async () => {
+    return repository.exportData();
+  }, [repository]);
+
+  const importData = useCallback(
+    async (data: AppDataSchema) => {
+      return repository.importData(data);
+    },
+    [repository]
+  );
+
+  // Synchronize data-theme, data-font-size, and meta theme-color immediately when settings change
   React.useEffect(() => {
     if (typeof document !== 'undefined') {
-      const currentTheme = settings?.theme || 'dark';
+      const currentTheme = settings?.theme || 'light';
       const currentFontSize = settings?.fontSize || 'medium';
       document.documentElement.setAttribute('data-theme', currentTheme);
       document.documentElement.setAttribute('data-font-size', currentFontSize);
+
+      // Dynamic PWA theme color without page reload
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        metaTheme.setAttribute('content', currentTheme === 'dark' ? '#090A0C' : '#F4F5F7');
+      }
     }
   }, [settings?.theme, settings?.fontSize]);
 
@@ -133,6 +150,8 @@ export const StorageProvider: React.FC<{
       reorderProjects,
       moveProject,
       updateSettings,
+      exportData,
+      importData,
     }),
     [
       repository,
@@ -150,8 +169,11 @@ export const StorageProvider: React.FC<{
       reorderProjects,
       moveProject,
       updateSettings,
+      exportData,
+      importData,
     ]
   );
 
   return <StorageContext.Provider value={value}>{children}</StorageContext.Provider>;
 };
+

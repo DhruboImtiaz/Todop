@@ -5,7 +5,7 @@ const STORAGE_KEY = 'todop_app_data_v1';
 const CURRENT_SCHEMA_VERSION = 1;
 
 const DEFAULT_SETTINGS: Settings = {
-  theme: 'dark',
+  theme: 'light',
   fontSize: 'medium',
 };
 
@@ -66,7 +66,7 @@ export class LocalStorageRepository implements StorageRepository {
         modified = true;
       } else {
         if (parsed.settings.theme !== 'dark' && parsed.settings.theme !== 'light') {
-          parsed.settings.theme = 'dark';
+          parsed.settings.theme = 'light';
           modified = true;
         }
         if (
@@ -102,14 +102,18 @@ export class LocalStorageRepository implements StorageRepository {
   }
 
   private persistRawData(data: AppDataSchema): void {
+    const previousCached = this.cachedData;
     try {
       // Sort projects by order
       data.projects.sort((a, b) => a.order - b.order);
+      const json = JSON.stringify(data);
+      localStorage.setItem(STORAGE_KEY, json);
       this.cachedData = data;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       this.notifyListeners();
     } catch (e) {
+      this.cachedData = previousCached;
       console.error('Failed to write TODOP storage data to localStorage', e);
+      throw e;
     }
   }
 
@@ -374,7 +378,32 @@ export class LocalStorageRepository implements StorageRepository {
     this.persistRawData(data);
     return { ...data.settings };
   }
+
+  // --- Backup & Restore API ---
+
+
+  public async exportData(): Promise<AppDataSchema> {
+    const data = this.loadRawData();
+    return JSON.parse(JSON.stringify(data));
+  }
+
+  public async importData(data: AppDataSchema): Promise<boolean> {
+    const clone: AppDataSchema = JSON.parse(JSON.stringify(data));
+    if (!clone.version) {
+      clone.version = CURRENT_SCHEMA_VERSION;
+    }
+    // Normalize projects order
+    if (Array.isArray(clone.projects)) {
+      clone.projects.sort((a, b) => a.order - b.order);
+      clone.projects.forEach((p, index) => {
+        p.order = index;
+      });
+    }
+    this.persistRawData(clone);
+    return true;
+  }
 }
 
 // Singleton instance for repository
 export const defaultStorageRepository = new LocalStorageRepository();
+

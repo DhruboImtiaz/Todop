@@ -5,8 +5,8 @@
   width: 54px;
   height: 54px;
   border-radius: var(--radius-full);
-  background-color: var(--cyan-primary);
-  color: #0A0A0C;
+  background-color: var(--accent-primary);
+  color: var(--accent-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,11 +16,12 @@
 }
 
 .floating-add-btn:hover {
-  background-color: var(--cyan-hover);
+  background-color: var(--accent-hover);
   transform: translateY(-2px);
 }
 
 .floating-add-btn:active {
   transform: translateY(0) scale(0.95);
-  background-color: var(--cyan-active);
+  background-color: var(--accent-active);
 }
+

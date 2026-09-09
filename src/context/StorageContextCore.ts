@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { Log, Project, Settings } from '../types';
+import type { AppDataSchema, Log, Project, Settings } from '../types';
 import type { NewLogInput, StorageRepository, UpdateLogInput } from '../services/storage/storageRepository';
 
 export interface StorageContextValue {
@@ -19,6 +19,9 @@ export interface StorageContextValue {
   reorderProjects: (projectIds: string[]) => Promise<Project[]>;
   moveProject: (id: string, direction: 'up' | 'down') => Promise<Project[]>;
   updateSettings: (patch: Partial<Settings>) => Promise<Settings>;
+  exportData: () => Promise<AppDataSchema>;
+  importData: (data: AppDataSchema) => Promise<boolean>;
 }
 
 export const StorageContext = createContext<StorageContextValue | null>(null);
+

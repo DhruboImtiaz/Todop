@@ -65,14 +65,14 @@
 }
 
 .search-input-field:focus {
-  border-color: var(--cyan-primary);
+  border-color: var(--accent-primary);
   background-color: var(--bg-input);
-  outline: 2px solid var(--cyan-primary);
+  outline: 2px solid var(--accent-primary);
   outline-offset: -1px;
 }
 
 .search-input-container:focus-within .search-input-icon {
-  color: var(--cyan-primary);
+  color: var(--accent-primary);
 }
 
 .search-clear-btn {

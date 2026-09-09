@@ -8,9 +8,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0A0A0C" />
+    <meta name="theme-color" content="#F4F5F7" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="TODOP" />
     <script>
       (function() {
@@ -19,17 +19,21 @@
           if (raw) {
             var data = JSON.parse(raw);
             if (data && data.settings) {
-              var theme = data.settings.theme === 'light' ? 'light' : 'dark';
+              var theme = data.settings.theme === 'dark' ? 'dark' : 'light';
               var fontSize = (data.settings.fontSize === 'small' || data.settings.fontSize === 'large')
                 ? data.settings.fontSize
                 : 'medium';
               document.documentElement.setAttribute('data-theme', theme);
               document.documentElement.setAttribute('data-font-size', fontSize);
+              var metaTheme = document.querySelector('meta[name="theme-color"]');
+              if (metaTheme) {
+                metaTheme.setAttribute('content', theme === 'dark' ? '#090A0C' : '#F4F5F7');
+              }
               return;
             }
           }
         } catch (e) {}
-        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme', 'light');
         document.documentElement.setAttribute('data-font-size', 'medium');
       })();
     </script>

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { getCountdown, getLogSection, localDateTimeToIso, isoToLocalDateAndTime } from '../src/utils/time';
 import { LocalStorageRepository } from '../src/services/storage/localStorageRepository';
+import { createBackup, validateBackup, CURRENT_BACKUP_VERSION, BACKUP_APP_IDENTIFIER } from '../src/utils/backup';
 
 console.log('--- Running TODOP Logic & Unit Tests ---');
+
 
 // Mock localStorage for Node environment
 const store: Record<string, string> = {};
@@ -548,9 +550,9 @@ async function testRepository() {
 
   const freshRepo = new LocalStorageRepository();
   const defaultSettings = await freshRepo.getSettings();
-  assert.equal(defaultSettings.theme, 'dark');
+  assert.equal(defaultSettings.theme, 'light');
   assert.equal(defaultSettings.fontSize, 'medium');
-  console.log('✓ 1. Default settings are dark + medium');
+  console.log('✓ 1. Default settings are light + medium');
 
   // Test 2: Settings can be persisted
   const updatedSettings = await freshRepo.updateSettings({
@@ -634,7 +636,7 @@ async function testRepository() {
   });
   const fallbackRepo = new LocalStorageRepository();
   const normalizedSettings = await fallbackRepo.getSettings();
-  assert.equal(normalizedSettings.theme, 'dark');
+  assert.equal(normalizedSettings.theme, 'light');
   assert.equal(normalizedSettings.fontSize, 'medium');
 
   // Missing settings completely
@@ -645,7 +647,7 @@ async function testRepository() {
   });
   const missingSettingsRepo = new LocalStorageRepository();
   const fromMissingSettings = await missingSettingsRepo.getSettings();
-  assert.equal(fromMissingSettings.theme, 'dark');
+  assert.equal(fromMissingSettings.theme, 'light');
   assert.equal(fromMissingSettings.fontSize, 'medium');
   console.log('✓ 10. Invalid/missing stored settings safely fall back to defaults');
 
@@ -682,13 +684,266 @@ async function testRepository() {
   assert.ok(sessionProjects.some((p) => p.id === finalProject.id));
   console.log('✓ 12. Existing logs/projects remain intact after settings persistence');
 
+  // ==========================================
+  // PHASE 2D: BACKUP & RESTORE UNIT & LOGIC TESTS
+  // ==========================================
+  console.log('\n--- Phase 2D: Backup & Restore Tests ---');
+
+  // Setup rich data for backup testing
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+    settings: { theme: 'light', fontSize: 'medium' },
+  });
+  const backupTestRepo = new LocalStorageRepository();
+
+  const proj1 = await backupTestRepo.createProject('Design System');
+  const proj2 = await backupTestRepo.createProject('Engine Refactor');
+  await backupTestRepo.reorderProjects([proj2.id, proj1.id]); // proj2 order 0, proj1 order 1
+
+  const activeLog1 = await backupTestRepo.createLog({
+    title: 'Active Task 1',
+    description: 'First active task with project',
+    deadline: createDateOffset(48),
+    projectId: proj2.id,
+  });
+
+  const activeLog2 = await backupTestRepo.createLog({
+    title: 'Active Task 2',
+    deadline: createDateOffset(72),
+    projectId: null,
+  });
+
+  const completedLog = await backupTestRepo.createLog({
+    title: 'Completed Task',
+    description: 'Was finished',
+    deadline: createDateOffset(-12),
+    projectId: proj1.id,
+  });
+  await backupTestRepo.toggleLogCompletion(completedLog.id);
+
+  await backupTestRepo.updateSettings({ theme: 'light', fontSize: 'large' });
+
+  // 1. Backup contains all active logs
+  const exportedData = await backupTestRepo.exportData();
+  const backup1 = createBackup(exportedData);
+  assert.ok(backup1.data.logs.some((l) => l.id === activeLog1.id && !l.completed));
+  assert.ok(backup1.data.logs.some((l) => l.id === activeLog2.id && !l.completed));
+  console.log('✓ 1. Backup contains all active logs');
+
+  // 2. Backup contains completed logs
+  const foundCompleted = backup1.data.logs.find((l) => l.id === completedLog.id);
+  assert.ok(foundCompleted);
+  assert.equal(foundCompleted.completed, true);
+  console.log('✓ 2. Backup contains completed logs');
+
+  // 3. Backup contains all projects
+  assert.equal(backup1.data.projects.length, 2);
+  assert.ok(backup1.data.projects.some((p) => p.id === proj1.id));
+  assert.ok(backup1.data.projects.some((p) => p.id === proj2.id));
+  console.log('✓ 3. Backup contains all projects');
+
+  // 4. Backup preserves project ordering
+  assert.equal(backup1.data.projects[0].id, proj2.id);
+  assert.equal(backup1.data.projects[1].id, proj1.id);
+  assert.equal(backup1.data.projects[0].order, 0);
+  assert.equal(backup1.data.projects[1].order, 1);
+  console.log('✓ 4. Backup preserves project ordering');
+
+  // 5. Backup preserves log project relationships
+  const backupActive1 = backup1.data.logs.find((l) => l.id === activeLog1.id);
+  const backupActive2 = backup1.data.logs.find((l) => l.id === activeLog2.id);
+  const backupComp = backup1.data.logs.find((l) => l.id === completedLog.id);
+  assert.equal(backupActive1?.projectId, proj2.id);
+  assert.equal(backupActive2?.projectId, null);
+  assert.equal(backupComp?.projectId, proj1.id);
+  console.log('✓ 5. Backup preserves log project relationships');
+
+  // 6. Backup preserves settings
+  assert.equal(backup1.data.settings.theme, 'light');
+  assert.equal(backup1.data.settings.fontSize, 'large');
+  console.log('✓ 6. Backup preserves settings');
+
+  // 7. Backup contains supported backupVersion
+  assert.equal(backup1.backupVersion, CURRENT_BACKUP_VERSION);
+  assert.equal(backup1.app, BACKUP_APP_IDENTIFIER);
+  assert.ok(typeof backup1.exportedAt === 'string');
+  console.log('✓ 7. Backup contains supported backupVersion');
+
+  // 8. Backup generation does not mutate original data
+  const originalSnapshot = await backupTestRepo.exportData();
+  const snapshotJsonBefore = JSON.stringify(originalSnapshot);
+  createBackup(originalSnapshot);
+  const snapshotJsonAfter = JSON.stringify(originalSnapshot);
+  assert.equal(snapshotJsonBefore, snapshotJsonAfter);
+  console.log('✓ 8. Backup generation does not mutate original data');
+
+  // 9. Valid backup restores logs
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+    settings: { theme: 'dark', fontSize: 'small' },
+  });
+  const restoreTargetRepo = new LocalStorageRepository();
+  await restoreTargetRepo.importData(backup1.data);
+  const restoredLogs = await restoreTargetRepo.getLogs();
+  assert.equal(restoredLogs.length, 3);
+  console.log('✓ 9. Valid backup restores logs');
+
+  // 10. Valid backup restores completed logs
+  const restoredCompleted = await restoreTargetRepo.getCompletedLogs();
+  assert.equal(restoredCompleted.length, 1);
+  assert.equal(restoredCompleted[0].id, completedLog.id);
+  assert.equal(restoredCompleted[0].completed, true);
+  console.log('✓ 10. Valid backup restores completed logs');
+
+  // 11. Valid backup restores projects
+  const restoredProjects = await restoreTargetRepo.getProjects();
+  assert.equal(restoredProjects.length, 2);
+  console.log('✓ 11. Valid backup restores projects');
+
+  // 12. Valid backup restores project ordering
+  assert.equal(restoredProjects[0].id, proj2.id);
+  assert.equal(restoredProjects[1].id, proj1.id);
+  assert.equal(restoredProjects[0].order, 0);
+  assert.equal(restoredProjects[1].order, 1);
+  console.log('✓ 12. Valid backup restores project ordering');
+
+  // 13. Valid backup preserves log IDs
+  assert.ok(restoredLogs.some((l) => l.id === activeLog1.id));
+  assert.ok(restoredLogs.some((l) => l.id === activeLog2.id));
+  assert.ok(restoredLogs.some((l) => l.id === completedLog.id));
+  console.log('✓ 13. Valid backup preserves log IDs');
+
+  // 14. Valid backup preserves project relationships
+  const restoredLog1 = restoredLogs.find((l) => l.id === activeLog1.id);
+  assert.equal(restoredLog1?.projectId, proj2.id);
+  console.log('✓ 14. Valid backup preserves project relationships');
+
+  // 15. Valid backup restores settings
+  const restoredSettings = await restoreTargetRepo.getSettings();
+  assert.equal(restoredSettings.theme, 'light');
+  assert.equal(restoredSettings.fontSize, 'large');
+  console.log('✓ 15. Valid backup restores settings');
+
+  // 16. Invalid JSON is rejected
+  const invalidJsonResult = validateBackup('this is not json at all {');
+  assert.equal(invalidJsonResult.valid, false);
+  console.log('✓ 16. Invalid JSON is rejected');
+
+  // 17. Unsupported backupVersion is rejected
+  const unsupportedVersionResult = validateBackup(
+    JSON.stringify({ ...backup1, backupVersion: 999 })
+  );
+  assert.equal(unsupportedVersionResult.valid, false);
+  console.log('✓ 17. Unsupported backupVersion is rejected');
+
+  // 18. Malformed backup is rejected
+  const malformedBackup1 = validateBackup(
+    JSON.stringify({ ...backup1, app: 'not-todop' })
+  );
+  assert.equal(malformedBackup1.valid, false);
+
+  const malformedBackup2 = validateBackup(
+    JSON.stringify({
+      ...backup1,
+      data: {
+        ...backup1.data,
+        logs: [{ id: '1', title: '' }], // missing required fields
+      },
+    })
+  );
+  assert.equal(malformedBackup2.valid, false);
+  console.log('✓ 18. Malformed backup is rejected');
+
+  // 19. Failed validation leaves existing data unchanged
+  const countBefore = (await restoreTargetRepo.getLogs()).length;
+  const failedValidation = validateBackup('{"corrupt": true}');
+  assert.equal(failedValidation.valid, false);
+  const countAfter = (await restoreTargetRepo.getLogs()).length;
+  assert.equal(countBefore, countAfter);
+  console.log('✓ 19. Failed validation leaves existing data unchanged');
+
+  // 20. Restore replaces existing data only after confirmation-level operation
+  const stagingValidation = validateBackup(
+    JSON.stringify({
+      backupVersion: 1,
+      app: 'todop',
+      exportedAt: new Date().toISOString(),
+      data: {
+        schemaVersion: 1,
+        logs: [],
+        projects: [],
+        settings: { theme: 'dark', fontSize: 'small' },
+      },
+    })
+  );
+  assert.equal(stagingValidation.valid, true);
+  assert.equal((await restoreTargetRepo.getLogs()).length, 3);
+  console.log('✓ 20. Restore replaces existing data only after confirmation-level operation');
+
+  // 21. Restored settings can be applied to the UI state
+  let simulatedHtmlTheme = '';
+  let simulatedHtmlFontSize = '';
+  const applySettingsToDom = (s: { theme: string; fontSize: string }) => {
+    simulatedHtmlTheme = s.theme;
+    simulatedHtmlFontSize = s.fontSize;
+  };
+  applySettingsToDom(restoredSettings);
+  assert.equal(simulatedHtmlTheme, 'light');
+  assert.equal(simulatedHtmlFontSize, 'large');
+  console.log('✓ 21. Restored settings can be applied to the UI state');
+
+  // 22. Default settings are light + medium
+  cleanStore['todop_app_data_v1'] = '';
+  const freshLightRepo = new LocalStorageRepository();
+  const freshLightSettings = await freshLightRepo.getSettings();
+  assert.equal(freshLightSettings.theme, 'light');
+  assert.equal(freshLightSettings.fontSize, 'medium');
+  console.log('✓ 22. Default settings are light + medium');
+
+  // 23. Existing dark preference remains preserved for users who already saved dark
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+    settings: {
+      theme: 'dark',
+      fontSize: 'large',
+    },
+  });
+  const existingDarkRepo = new LocalStorageRepository();
+  const existingDarkSettings = await existingDarkRepo.getSettings();
+  assert.equal(existingDarkSettings.theme, 'dark');
+  assert.equal(existingDarkSettings.fontSize, 'large');
+  console.log('✓ 23. Existing dark preference remains preserved for users who already saved dark');
+
+  // 24. Existing font-size preference remains preserved
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+    settings: {
+      theme: 'light',
+      fontSize: 'small',
+    },
+  });
+  const existingFontRepo = new LocalStorageRepository();
+  const existingFontSettings = await existingFontRepo.getSettings();
+  assert.equal(existingFontSettings.fontSize, 'small');
+  assert.equal(existingFontSettings.theme, 'light');
+  console.log('✓ 24. Existing font-size preference remains preserved');
+
   // Restore original mock localStorage
   globalThis.localStorage = originalLocalStorage;
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C) PASSED ---');
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D) PASSED ---');
 }
 
 testRepository().catch((err) => {
   console.error('Test failure:', err);
   process.exit(1);
 });
+

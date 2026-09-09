@@ -27,9 +27,9 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--cyan-primary);
+  color: var(--accent-text-readable);
   background: transparent;
-  border: 1px solid var(--cyan-border-tint);
+  border: 1px solid var(--accent-border-tint);
   border-radius: var(--radius-sm);
   padding: 7px 12px;
   cursor: pointer;
@@ -38,8 +38,8 @@
 }
 
 .projects-add-btn:hover {
-  background-color: var(--cyan-tint);
-  border-color: var(--cyan-primary);
+  background-color: var(--accent-tint);
+  border-color: var(--accent-primary);
 }
 
 /* ── Empty State ── */
@@ -101,8 +101,8 @@
 }
 
 .project-row.drag-over {
-  border-color: var(--cyan-primary);
-  background-color: var(--cyan-tint);
+  border-color: var(--accent-primary);
+  background-color: var(--accent-tint);
 }
 
 .project-row-inner {
@@ -116,7 +116,7 @@
 }
 
 .project-row-inner:focus-visible {
-  outline: 2px solid var(--cyan-primary);
+  outline: 2px solid var(--accent-primary);
   outline-offset: -2px;
   border-radius: var(--radius-md);
 }
