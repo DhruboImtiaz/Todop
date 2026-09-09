@@ -99,15 +99,7 @@
   border-color: var(--border-strong);
 }
 
-.project-row.is-dragging {
-  opacity: 0.45;
-  border-style: dashed;
-}
 
-.project-row.drag-over {
-  border-color: var(--accent-primary);
-  background-color: var(--accent-tint);
-}
 
 .project-row-inner {
   display: flex;
@@ -125,14 +117,7 @@
   border-radius: var(--radius-md);
 }
 
-/* Drag Handle */
-.project-row-grip {
-  color: var(--text-dim);
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  cursor: grab;
-}
+
 
 /* Project Info */
 .project-row-info {

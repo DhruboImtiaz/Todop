@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { GripVertical, MoreVertical, ChevronUp, ChevronDown, Pencil, Trash2, FolderOpen } from 'lucide-react';
+import { MoreVertical, ChevronUp, ChevronDown, Pencil, Trash2, FolderOpen } from 'lucide-react';
 import type { Project } from '../../types';
 import { useStorage } from '../../hooks/useStorage';
 import { ProjectFormSheet } from './ProjectFormSheet';
@@ -18,16 +18,12 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
     updateProject,
     deleteProject,
     moveProject,
-    reorderProjects,
   } = useStorage();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
-  const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
-  const isDraggingRef = React.useRef(false);
   // Ref attached to the currently-open overflow dropdown. Used by the
   // document mousedown handler so that clicks inside the menu do NOT
   // close it before the subsequent click event fires on the menu item.
@@ -92,7 +88,6 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
   };
 
   const handleRowClick = (projectId: string) => {
-    if (isDraggingRef.current) return;
     setOpenMenuId(null);
     onNavigateToProject(projectId);
   };
@@ -101,8 +96,8 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
   // IMPORTANT: we listen for `mousedown` (not `click`) so the menu closes
   // as soon as the pointer goes down outside it. However, mousedown fires
   // *before* click in the browser event order, so if the user mousedowns
-  // on a menu item (e.g. Delete) the old unconditional closeMenu would
-  // unmount the dropdown before the click could reach the button.
+  // on a menu item (e.g. Delete) an unconditional closeMenu would unmount
+  // the dropdown before the click could reach the button.
   // The containment check fixes this: if the mousedown target is inside
   // the currently-open dropdown, we let the event pass through so the
   // subsequent click fires normally on the menu item.
@@ -166,63 +161,12 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
             const isFirst = index === 0;
             const isLast = index === sortedProjects.length - 1;
             const menuIsOpen = openMenuId === project.id;
-            const isBeingDragged = draggedProjectId === project.id;
-            const isDropTarget = dragOverProjectId === project.id;
 
             return (
               <li
                 key={project.id}
-                className={`project-row ${isBeingDragged ? 'is-dragging' : ''} ${isDropTarget ? 'drag-over' : ''}`}
+                className="project-row"
                 role="listitem"
-                draggable={!openMenuId}
-                onDragStart={(e) => {
-                  isDraggingRef.current = true;
-                  setDraggedProjectId(project.id);
-                  e.dataTransfer.effectAllowed = 'move';
-                  e.dataTransfer.setData('text/plain', project.id);
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                  if (draggedProjectId && draggedProjectId !== project.id && dragOverProjectId !== project.id) {
-                    setDragOverProjectId(project.id);
-                  }
-                }}
-                onDragLeave={() => {
-                  if (dragOverProjectId === project.id) {
-                    setDragOverProjectId(null);
-                  }
-                }}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  const sourceId = draggedProjectId || e.dataTransfer.getData('text/plain');
-                  const targetId = project.id;
-                  setDraggedProjectId(null);
-                  setDragOverProjectId(null);
-                  setTimeout(() => {
-                    isDraggingRef.current = false;
-                  }, 60);
-
-                  if (!sourceId || sourceId === targetId) return;
-
-                  const currentIds = sortedProjects.map((p) => p.id);
-                  const sourceIdx = currentIds.indexOf(sourceId);
-                  const targetIdx = currentIds.indexOf(targetId);
-                  if (sourceIdx === -1 || targetIdx === -1) return;
-
-                  const nextIds = [...currentIds];
-                  const [moved] = nextIds.splice(sourceIdx, 1);
-                  nextIds.splice(targetIdx, 0, moved);
-
-                  await reorderProjects(nextIds);
-                }}
-                onDragEnd={() => {
-                  setDraggedProjectId(null);
-                  setDragOverProjectId(null);
-                  setTimeout(() => {
-                    isDraggingRef.current = false;
-                  }, 60);
-                }}
               >
                 <div
                   className="project-row-inner"
@@ -237,10 +181,6 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
                     }
                   }}
                 >
-                  <span className="project-row-grip" aria-hidden="true">
-                    <GripVertical size={16} strokeWidth={1.5} />
-                  </span>
-
                   <div className="project-row-info">
                     <span className="project-row-name">{project.name}</span>
                     <span className="project-row-count">
