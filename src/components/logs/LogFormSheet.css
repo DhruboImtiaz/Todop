@@ -1,0 +1,261 @@
+.form-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: var(--bg-overlay);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.form-sheet-dialog {
+  width: 100%;
+  max-width: var(--max-content-width);
+  background-color: var(--bg-elevated);
+  border-top: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: 20px var(--page-padding-x) calc(var(--safe-bottom) + 24px);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.form-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-sheet-title {
+  font-family: var(--font-heading);
+  font-size: 1.333rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.form-sheet-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.form-sheet-close-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--border-subtle);
+}
+
+.form-sheet-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.form-label-optional {
+  font-size: 0.733rem;
+  font-weight: 400;
+  text-transform: none;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
+
+.form-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  width: fit-content;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.status-dot.active {
+  background-color: var(--accent-primary);
+}
+
+.status-dot.completed {
+  background-color: var(--text-secondary);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Actions Section */
+.form-sheet-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.edit-actions-stack {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-secondary-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form-btn {
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: 0.933rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.form-btn-secondary {
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.form-btn-secondary:hover {
+  background-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.form-btn-primary {
+  width: 100%;
+  background-color: var(--accent-primary);
+  color: var(--accent-text);
+  font-weight: 800;
+}
+
+.form-btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+
+.form-btn-danger {
+  background-color: rgba(255, 115, 92, 0.08);
+  color: var(--overdue-text);
+  border: 1px solid var(--overdue-border);
+}
+
+.form-btn-danger:hover {
+  background-color: rgba(255, 115, 92, 0.16);
+}
+
+.form-btn:active {
+  transform: scale(0.98);
+}
+
+/* Delete Confirmation Panel */
+.delete-confirm-box {
+  background-color: var(--overdue-badge-bg);
+  border: 1px solid var(--overdue-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.delete-confirm-text {
+  font-size: 0.867rem;
+  color: var(--overdue-text);
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.delete-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form-btn-danger-confirm {
+  background-color: var(--overdue-text);
+  color: #0A0A0C;
+  font-weight: 800;
+}
+
+.form-btn-danger-confirm:hover {
+  opacity: 0.9;
+}

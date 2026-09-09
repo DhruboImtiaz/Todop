@@ -1,0 +1,226 @@
+.log-card {
+  position: relative;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+}
+
+.log-card:hover {
+  border-color: var(--border-strong);
+  background-color: var(--bg-card-hover);
+}
+
+.log-card:active {
+  transform: scale(0.99);
+  background-color: var(--bg-card-hover);
+}
+
+.log-card:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.log-card.overdue {
+  border-color: var(--overdue-border);
+  background-color: var(--overdue-badge-bg);
+}
+
+.log-card.overdue:hover {
+  border-color: var(--overdue-text);
+}
+
+.log-card.completed {
+  border-color: var(--border-subtle);
+  opacity: 0.82;
+}
+
+.log-card.completed:hover {
+  opacity: 1;
+  border-color: var(--border-strong);
+}
+
+.log-card.completed .log-card-title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.log-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.log-card-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.35;
+  word-break: break-word;
+  flex: 1;
+}
+
+.log-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Circular Completion Control */
+.log-card-complete-btn {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--text-dim);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.log-card-complete-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.log-card-complete-btn:hover {
+  border-color: var(--accent-primary);
+  background-color: var(--accent-tint);
+  color: var(--accent-primary);
+}
+
+.log-card-complete-btn.completed {
+  border-color: var(--accent-primary);
+  background-color: var(--accent-primary);
+  color: var(--accent-text);
+}
+
+.log-card-complete-btn:active {
+  transform: scale(0.92);
+}
+
+/* Overflow Menu Button */
+.log-card-overflow-btn {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.log-card-overflow-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.log-card-overflow-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--border-subtle);
+}
+
+/* Countdown Display */
+.log-card-countdown {
+  font-family: var(--font-heading);
+  font-size: 1.067rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent-text-readable);
+  line-height: 1.2;
+}
+
+.log-card.overdue .log-card-countdown {
+  color: var(--overdue-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.overdue-tag {
+  font-size: 0.733rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(255, 115, 92, 0.15);
+  border: 1px solid rgba(255, 115, 92, 0.3);
+  color: var(--overdue-text);
+}
+
+.completed-tag {
+  font-size: 0.733rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(138, 143, 152, 0.15);
+  border: 1px solid rgba(138, 143, 152, 0.3);
+  color: var(--text-secondary);
+}
+
+/* Overflow Dropdown */
+.log-overflow-dropdown {
+  position: absolute;
+  top: 42px;
+  right: 12px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+  min-width: 130px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-overflow-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.867rem;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.log-overflow-item:hover {
+  background-color: var(--border-subtle);
+}
+
+.log-overflow-item.delete-item {
+  color: var(--overdue-text);
+}
+
+.log-overflow-item.delete-item:hover {
+  background-color: rgba(255, 115, 92, 0.12);
+}
