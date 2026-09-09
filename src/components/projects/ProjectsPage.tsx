@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { GripVertical, MoreVertical, ChevronUp, ChevronDown, Pencil, Trash2, FolderOpen } from 'lucide-react';
 import type { Project } from '../../types';
 import { useStorage } from '../../hooks/useStorage';
@@ -28,6 +28,10 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
   const isDraggingRef = React.useRef(false);
+  // Ref attached to the currently-open overflow dropdown. Used by the
+  // document mousedown handler so that clicks inside the menu do NOT
+  // close it before the subsequent click event fires on the menu item.
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const sortedProjects = [...projects].sort((a, b) => a.order - b.order);
 
@@ -93,10 +97,21 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
     onNavigateToProject(projectId);
   };
 
-  // Close any open menu when clicking elsewhere or pressing Escape
+  // Close any open menu when clicking elsewhere or pressing Escape.
+  // IMPORTANT: we listen for `mousedown` (not `click`) so the menu closes
+  // as soon as the pointer goes down outside it. However, mousedown fires
+  // *before* click in the browser event order, so if the user mousedowns
+  // on a menu item (e.g. Delete) the old unconditional closeMenu would
+  // unmount the dropdown before the click could reach the button.
+  // The containment check fixes this: if the mousedown target is inside
+  // the currently-open dropdown, we let the event pass through so the
+  // subsequent click fires normally on the menu item.
   React.useEffect(() => {
     if (!openMenuId) return;
-    const closeMenu = () => setOpenMenuId(null);
+    const closeMenu = (e: MouseEvent) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      setOpenMenuId(null);
+    };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
@@ -252,6 +267,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
 
                     {menuIsOpen && (
                       <div
+                        ref={menuRef}
                         className="project-overflow-dropdown"
                         role="menu"
                         onClick={(e) => e.stopPropagation()}
