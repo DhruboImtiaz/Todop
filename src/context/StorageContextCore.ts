@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { AppDataSchema, Log, Project, Settings } from '../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask } from '../types';
 import type { NewLogInput, StorageRepository, UpdateLogInput } from '../services/storage/storageRepository';
 
 export interface StorageContextValue {
@@ -13,6 +13,10 @@ export interface StorageContextValue {
   updateLog: (input: UpdateLogInput) => Promise<Log>;
   toggleLogCompletion: (id: string) => Promise<Log | null>;
   deleteLog: (id: string) => Promise<boolean>;
+  addSubtask: (logId: string, title: string) => Promise<Subtask>;
+  updateSubtaskTitle: (logId: string, subtaskId: string, title: string) => Promise<Subtask>;
+  toggleSubtaskCompletion: (logId: string, subtaskId: string) => Promise<Subtask | null>;
+  deleteSubtask: (logId: string, subtaskId: string) => Promise<boolean>;
   createProject: (name: string) => Promise<Project>;
   updateProject: (id: string, name: string) => Promise<Project>;
   deleteProject: (id: string) => Promise<boolean>;

@@ -45,6 +45,7 @@ export const SearchPage: React.FC = () => {
     description?: string;
     deadline: string;
     projectId?: string;
+    draftSubtasks?: string[];
   }) => {
     if (editingLog) {
       await updateLog({

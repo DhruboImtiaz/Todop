@@ -16,7 +16,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
   project,
   onBack,
 }) => {
-  const { activeLogs, completedLogs, createLog, updateLog, toggleLogCompletion, deleteLog } =
+  const { activeLogs, completedLogs, createLog, updateLog, toggleLogCompletion, deleteLog, addSubtask } =
     useStorage();
 
   const currentTimestamp = useRealtimeTicker(5000);
@@ -48,6 +48,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
     description?: string;
     deadline: string;
     projectId?: string;
+    draftSubtasks?: string[];
   }) => {
     if (editingLog) {
       await updateLog({
@@ -58,12 +59,17 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
         projectId: data.projectId ?? null,
       });
     } else {
-      await createLog({
+      const created = await createLog({
         title: data.title,
         description: data.description,
         deadline: data.deadline,
         projectId: project.id, // default to this project
       });
+      if (data.draftSubtasks && data.draftSubtasks.length > 0) {
+        for (const stTitle of data.draftSubtasks) {
+          await addSubtask(created.id, stTitle);
+        }
+      }
     }
     handleCloseSheet();
   };

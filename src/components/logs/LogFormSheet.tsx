@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, Trash2 } from 'lucide-react';
+import { X, Check, Trash2, Plus } from 'lucide-react';
 import type { Log } from '../../types';
 import {
   getDefaultNewLogDateTime,
@@ -20,6 +20,7 @@ interface LogFormSheetProps {
     description?: string;
     deadline: string;
     projectId?: string;
+    draftSubtasks?: string[];
   }) => void;
   onComplete?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -34,7 +35,23 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
   onComplete,
   onDelete,
 }) => {
-  const { projects } = useStorage();
+  const {
+    projects,
+    activeLogs,
+    completedLogs,
+    addSubtask,
+    updateSubtaskTitle,
+    toggleSubtaskCompletion,
+    deleteSubtask,
+  } = useStorage();
+
+  const isEditing = Boolean(initialLog);
+  const currentReactiveLog = initialLog
+    ? activeLogs.find((l) => l.id === initialLog.id) ||
+      completedLogs.find((l) => l.id === initialLog.id) ||
+      initialLog
+    : null;
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
@@ -43,7 +60,18 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Subtasks state
+  const [draftSubtasks, setDraftSubtasks] = useState<string[]>([]);
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [subtaskInput, setSubtaskInput] = useState('');
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [editingDraftIndex, setEditingDraftIndex] = useState<number | null>(null);
+  const [editingDraftTitle, setEditingDraftTitle] = useState('');
+
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const subtaskInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -60,9 +88,15 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
         const { date: d, time: t } = getDefaultNewLogDateTime();
         setDate(d);
         setTime(t);
-        // Pre-select defaultProjectId if provided
         setProjectId(defaultProjectId || '');
       }
+      setDraftSubtasks([]);
+      setIsAddingSubtask(false);
+      setSubtaskInput('');
+      setEditingSubtaskId(null);
+      setEditingTitle('');
+      setEditingDraftIndex(null);
+      setEditingDraftTitle('');
       setError('');
       setShowDeleteConfirm(false);
 
@@ -72,7 +106,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initialLog]);
+  }, [isOpen, initialLog, defaultProjectId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -92,6 +126,66 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
 
   if (!isOpen) return null;
 
+  // Subtask handlers for existing logs
+  const handleAddSubtask = async () => {
+    const clean = subtaskInput.trim();
+    if (!clean) return;
+    if (initialLog) {
+      await addSubtask(initialLog.id, clean);
+    } else {
+      setDraftSubtasks((prev) => [...prev, clean]);
+    }
+    setSubtaskInput('');
+    setTimeout(() => subtaskInputRef.current?.focus(), 30);
+  };
+
+  const handleToggleSubtask = async (subtaskId: string) => {
+    if (initialLog) {
+      await toggleSubtaskCompletion(initialLog.id, subtaskId);
+    }
+  };
+
+  const handleStartEditSubtask = (id: string, currentText: string) => {
+    setEditingSubtaskId(id);
+    setEditingTitle(currentText);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveSubtaskTitle = async (subtaskId: string) => {
+    const clean = editingTitle.trim();
+    if (clean && initialLog) {
+      await updateSubtaskTitle(initialLog.id, subtaskId, clean);
+    }
+    setEditingSubtaskId(null);
+    setEditingTitle('');
+  };
+
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    if (initialLog) {
+      await deleteSubtask(initialLog.id, subtaskId);
+    }
+  };
+
+  // Subtask handlers for new logs (draft items)
+  const handleStartEditDraft = (index: number, currentText: string) => {
+    setEditingDraftIndex(index);
+    setEditingDraftTitle(currentText);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveDraftTitle = (index: number) => {
+    const clean = editingDraftTitle.trim();
+    if (clean) {
+      setDraftSubtasks((prev) => prev.map((t, i) => (i === index ? clean : t)));
+    }
+    setEditingDraftIndex(null);
+    setEditingDraftTitle('');
+  };
+
+  const handleDeleteDraft = (index: number) => {
+    setDraftSubtasks((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanTitle = title.trim();
@@ -107,12 +201,24 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
 
     const isoDeadline = localDateTimeToIso(date, time || '23:59');
 
-    onSubmit({
-      title: cleanTitle,
-      description: description.trim() || undefined,
-      deadline: isoDeadline,
-      projectId: projectId || undefined,
-    });
+    if (initialLog) {
+      // For existing logs, subtasks are already saved directly in repository
+      onSubmit({
+        title: cleanTitle,
+        description: description.trim() || undefined,
+        deadline: isoDeadline,
+        projectId: projectId || undefined,
+      });
+    } else {
+      // For new logs, pass draftSubtasks so they are created after the parent Log is created
+      onSubmit({
+        title: cleanTitle,
+        description: description.trim() || undefined,
+        deadline: isoDeadline,
+        projectId: projectId || undefined,
+        draftSubtasks: draftSubtasks.length > 0 ? draftSubtasks : undefined,
+      });
+    }
   };
 
   const handleCompleteClick = () => {
@@ -132,8 +238,6 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
       onClose();
     }
   };
-
-  const isEditing = Boolean(initialLog);
 
   return (
     <div
@@ -206,6 +310,215 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
               placeholder="Add key notes, links, or context..."
               rows={2}
             />
+          </div>
+
+          {/* Subtasks Section */}
+          <div className="form-field subtasks-form-section">
+            <div className="subtasks-section-header">
+              <span className="form-label">
+                SUBTASKS
+                {isEditing && currentReactiveLog && currentReactiveLog.subtasks.length > 0 && (
+                  <span className="subtasks-count-pill">
+                    {currentReactiveLog.subtasks.filter((s) => s.completed).length} / {currentReactiveLog.subtasks.length}
+                  </span>
+                )}
+                {!isEditing && draftSubtasks.length > 0 && (
+                  <span className="subtasks-count-pill">
+                    {draftSubtasks.length}
+                  </span>
+                )}
+              </span>
+            </div>
+
+            {/* Existing Log Subtasks List */}
+            {isEditing && currentReactiveLog && currentReactiveLog.subtasks.length > 0 && (
+              <div className="subtasks-list" role="list">
+                {currentReactiveLog.subtasks.map((st) => {
+                  const isEditingThis = editingSubtaskId === st.id;
+                  return (
+                    <div key={st.id} className="subtask-row" role="listitem">
+                      <button
+                        type="button"
+                        className={`subtask-checkbox ${st.completed ? 'completed' : ''}`}
+                        onClick={() => handleToggleSubtask(st.id)}
+                        role="checkbox"
+                        aria-checked={st.completed}
+                        aria-label={st.completed ? `Mark "${st.title}" as incomplete` : `Mark "${st.title}" as completed`}
+                      >
+                        <Check size={12} strokeWidth={2.8} />
+                      </button>
+
+                      {isEditingThis ? (
+                        <input
+                          ref={editInputRef}
+                          type="text"
+                          className="subtask-inline-edit-input"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveSubtaskTitle(st.id);
+                            } else if (e.key === 'Escape') {
+                              e.stopPropagation();
+                              setEditingSubtaskId(null);
+                            }
+                          }}
+                          onBlur={() => handleSaveSubtaskTitle(st.id)}
+                          aria-label="Edit subtask title"
+                        />
+                      ) : (
+                        <span
+                          className={`subtask-text ${st.completed ? 'completed' : ''}`}
+                          onClick={() => handleStartEditSubtask(st.id, st.title)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`Subtask: ${st.title}. Tap or press Enter to edit.`}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleStartEditSubtask(st.id, st.title);
+                            }
+                          }}
+                        >
+                          {st.title}
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className="subtask-delete-btn"
+                        onClick={() => handleDeleteSubtask(st.id)}
+                        aria-label={`Delete subtask "${st.title}"`}
+                        title="Delete subtask"
+                      >
+                        <Trash2 size={15} strokeWidth={1.8} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* New Log Draft Subtasks List */}
+            {!isEditing && draftSubtasks.length > 0 && (
+              <div className="subtasks-list" role="list">
+                {draftSubtasks.map((draftTitle, idx) => {
+                  const isEditingThis = editingDraftIndex === idx;
+                  return (
+                    <div key={idx} className="subtask-row" role="listitem">
+                      <span className="subtask-checkbox draft" aria-hidden="true" />
+
+                      {isEditingThis ? (
+                        <input
+                          ref={editInputRef}
+                          type="text"
+                          className="subtask-inline-edit-input"
+                          value={editingDraftTitle}
+                          onChange={(e) => setEditingDraftTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveDraftTitle(idx);
+                            } else if (e.key === 'Escape') {
+                              e.stopPropagation();
+                              setEditingDraftIndex(null);
+                            }
+                          }}
+                          onBlur={() => handleSaveDraftTitle(idx)}
+                          aria-label="Edit subtask title"
+                        />
+                      ) : (
+                        <span
+                          className="subtask-text"
+                          onClick={() => handleStartEditDraft(idx, draftTitle)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`Draft subtask: ${draftTitle}. Tap or press Enter to edit.`}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleStartEditDraft(idx, draftTitle);
+                            }
+                          }}
+                        >
+                          {draftTitle}
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className="subtask-delete-btn"
+                        onClick={() => handleDeleteDraft(idx)}
+                        aria-label={`Delete subtask "${draftTitle}"`}
+                        title="Delete subtask"
+                      >
+                        <Trash2 size={15} strokeWidth={1.8} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add Subtask Input or Trigger Button */}
+            {!isAddingSubtask ? (
+              <button
+                type="button"
+                className="subtask-add-trigger"
+                onClick={() => {
+                  setIsAddingSubtask(true);
+                  setSubtaskInput('');
+                  setTimeout(() => subtaskInputRef.current?.focus(), 50);
+                }}
+              >
+                <Plus size={16} strokeWidth={2.4} />
+                <span>ADD SUBTASK</span>
+              </button>
+            ) : (
+              <div className="subtask-add-box">
+                <input
+                  ref={subtaskInputRef}
+                  type="text"
+                  className="subtask-add-input"
+                  value={subtaskInput}
+                  onChange={(e) => setSubtaskInput(e.target.value)}
+                  placeholder="Enter subtask item..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddSubtask();
+                    } else if (e.key === 'Escape') {
+                      e.stopPropagation();
+                      setIsAddingSubtask(false);
+                      setSubtaskInput('');
+                    }
+                  }}
+                  autoComplete="off"
+                  aria-label="New subtask title"
+                />
+                <div className="subtask-add-btn-group">
+                  <button
+                    type="button"
+                    className="subtask-inline-btn primary"
+                    onClick={handleAddSubtask}
+                    disabled={!subtaskInput.trim()}
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    className="subtask-inline-btn secondary"
+                    onClick={() => {
+                      setIsAddingSubtask(false);
+                      setSubtaskInput('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-grid-row">

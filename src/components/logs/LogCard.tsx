@@ -99,7 +99,7 @@ export const LogCard: React.FC<LogCardProps> = ({
       onKeyDown={handleCardKeyDown}
       tabIndex={0}
       role="button"
-      aria-label={`Log: ${log.title}, status: ${log.completed ? 'Completed' : countdown.label}. Tap to view or edit details.`}
+      aria-label={`Log: ${log.title}, status: ${log.completed ? 'Completed' : countdown.label}${log.subtasks && log.subtasks.length > 0 ? `, ${log.subtasks.filter((s) => s.completed).length} of ${log.subtasks.length} subtasks completed` : ''}. Tap to view or edit details.`}
     >
       <div className="log-card-header">
         <h3 className="log-card-title">{log.title}</h3>
@@ -128,6 +128,14 @@ export const LogCard: React.FC<LogCardProps> = ({
           </button>
         </div>
       </div>
+
+      {log.subtasks && log.subtasks.length > 0 && (
+        <div className="log-card-subtasks" aria-hidden="true">
+          <span className="subtasks-progress-text">
+            {log.subtasks.filter((s) => s.completed).length} / {log.subtasks.length} subtasks
+          </span>
+        </div>
+      )}
 
       <div className="log-card-countdown" aria-live="polite">
         {log.completed ? (

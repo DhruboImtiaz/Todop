@@ -1,4 +1,4 @@
-import type { AppDataSchema, Log, Project, Settings } from '../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask } from '../types';
 
 export const CURRENT_BACKUP_VERSION = 1;
 export const BACKUP_APP_IDENTIFIER = 'todop';
@@ -31,7 +31,10 @@ export function createBackup(data: AppDataSchema, exportedAt?: string): TodopBac
     exportedAt: exportedAt || new Date().toISOString(),
     data: {
       schemaVersion: data.version ?? 1,
-      logs: JSON.parse(JSON.stringify(data.logs || [])),
+      logs: (data.logs || []).map((l) => ({
+        ...l,
+        subtasks: (l.subtasks || []).map((s) => ({ ...s })),
+      })),
       projects: JSON.parse(JSON.stringify(data.projects || [])),
       settings: JSON.parse(JSON.stringify(data.settings || { theme: 'light', fontSize: 'medium' })),
     },
@@ -144,6 +147,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
     };
   }
 
+  const validatedLogs: Log[] = [];
   for (let i = 0; i < dataPayload.logs.length; i++) {
     const log = dataPayload.logs[i];
     if (!log || typeof log !== 'object' || Array.isArray(log)) {
@@ -189,6 +193,76 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
         error: `MALFORMED LOG RECORD: Log "${String(l.title)}" has invalid timestamps.`,
       };
     }
+
+    // Validate subtasks (backward-compatible: older backups without subtasks are valid and normalize to [])
+    const validatedSubtasks: Subtask[] = [];
+    if ('subtasks' in l && l.subtasks !== undefined) {
+      if (!Array.isArray(l.subtasks)) {
+        return {
+          valid: false,
+          error: `MALFORMED LOG RECORD: Log "${String(l.title)}" subtasks must be an array.`,
+        };
+      }
+      for (let j = 0; j < l.subtasks.length; j++) {
+        const subtask = l.subtasks[j];
+        if (!subtask || typeof subtask !== 'object' || Array.isArray(subtask)) {
+          return {
+            valid: false,
+            error: `MALFORMED SUBTASK RECORD: Subtask at index ${j} of Log "${String(l.title)}" is not a valid object.`,
+          };
+        }
+        const st = subtask as Record<string, unknown>;
+        if (typeof st.id !== 'string' || !st.id.trim()) {
+          return {
+            valid: false,
+            error: `MALFORMED SUBTASK RECORD: Subtask at index ${j} of Log "${String(l.title)}" is missing a valid ID.`,
+          };
+        }
+        if (typeof st.title !== 'string' || !st.title.trim()) {
+          return {
+            valid: false,
+            error: `MALFORMED SUBTASK RECORD: Subtask "${String(st.id)}" in Log "${String(l.title)}" is missing a valid title.`,
+          };
+        }
+        if (typeof st.completed !== 'boolean') {
+          return {
+            valid: false,
+            error: `MALFORMED SUBTASK RECORD: Subtask "${String(st.title)}" in Log "${String(l.title)}" has an invalid completion state.`,
+          };
+        }
+        if (typeof st.createdAt !== 'string' || isNaN(Date.parse(st.createdAt))) {
+          return {
+            valid: false,
+            error: `MALFORMED SUBTASK RECORD: Subtask "${String(st.title)}" in Log "${String(l.title)}" has an invalid createdAt timestamp.`,
+          };
+        }
+        if (typeof st.updatedAt !== 'string' || isNaN(Date.parse(st.updatedAt))) {
+          return {
+            valid: false,
+            error: `MALFORMED SUBTASK RECORD: Subtask "${String(st.title)}" in Log "${String(l.title)}" has an invalid updatedAt timestamp.`,
+          };
+        }
+        validatedSubtasks.push({
+          id: st.id,
+          title: st.title.trim(),
+          completed: st.completed,
+          createdAt: st.createdAt,
+          updatedAt: st.updatedAt,
+        });
+      }
+    }
+
+    validatedLogs.push({
+      id: l.id as string,
+      title: (l.title as string).trim(),
+      description: typeof l.description === 'string' ? l.description.trim() || undefined : undefined,
+      deadline: l.deadline as string,
+      projectId: (l.projectId as string | null) ?? null,
+      completed: l.completed as boolean,
+      subtasks: validatedSubtasks,
+      createdAt: l.createdAt as string,
+      updatedAt: l.updatedAt as string,
+    });
   }
 
   // Validate projects array
@@ -259,7 +333,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
   // Construct valid AppDataSchema
   const validSchema: AppDataSchema = {
     version: schemaVer as number,
-    logs: dataPayload.logs as Log[],
+    logs: validatedLogs,
     projects: (dataPayload.projects as Project[]).sort((a, b) => a.order - b.order),
     settings: {
       theme: s.theme as 'light' | 'dark',

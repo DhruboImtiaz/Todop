@@ -63,6 +63,34 @@ export const StorageProvider: React.FC<{
     [repository]
   );
 
+  const addSubtask = useCallback(
+    async (logId: string, title: string) => {
+      return repository.addSubtask(logId, title);
+    },
+    [repository]
+  );
+
+  const updateSubtaskTitle = useCallback(
+    async (logId: string, subtaskId: string, title: string) => {
+      return repository.updateSubtaskTitle(logId, subtaskId, title);
+    },
+    [repository]
+  );
+
+  const toggleSubtaskCompletion = useCallback(
+    async (logId: string, subtaskId: string) => {
+      return repository.toggleSubtaskCompletion(logId, subtaskId);
+    },
+    [repository]
+  );
+
+  const deleteSubtask = useCallback(
+    async (logId: string, subtaskId: string) => {
+      return repository.deleteSubtask(logId, subtaskId);
+    },
+    [repository]
+  );
+
   const createProject = useCallback(
     async (name: string) => {
       return repository.createProject(name);
@@ -144,6 +172,10 @@ export const StorageProvider: React.FC<{
       updateLog,
       toggleLogCompletion,
       deleteLog,
+      addSubtask,
+      updateSubtaskTitle,
+      toggleSubtaskCompletion,
+      deleteSubtask,
       createProject,
       updateProject,
       deleteProject,
@@ -163,6 +195,10 @@ export const StorageProvider: React.FC<{
       updateLog,
       toggleLogCompletion,
       deleteLog,
+      addSubtask,
+      updateSubtaskTitle,
+      toggleSubtaskCompletion,
+      deleteSubtask,
       createProject,
       updateProject,
       deleteProject,

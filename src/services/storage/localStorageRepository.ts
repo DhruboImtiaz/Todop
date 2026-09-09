@@ -1,4 +1,4 @@
-import type { AppDataSchema, Log, Project, Settings } from '../../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types';
 import type { NewLogInput, StorageListener, StorageRepository, UpdateLogInput } from './storageRepository';
 
 const STORAGE_KEY = 'todop_app_data_v1';
@@ -38,13 +38,48 @@ export class LocalStorageRepository implements StorageRepository {
         return this.initializeStorage();
       }
 
-      // Ensure backward-compatibility: normalize undefined projectId to null
+      // Ensure backward-compatibility: normalize undefined projectId to null, and missing subtasks to []
       let modified = false;
       if (Array.isArray(parsed.logs)) {
         for (const log of parsed.logs) {
           if (log.projectId === undefined) {
             log.projectId = null;
             modified = true;
+          }
+          if (!Array.isArray(log.subtasks)) {
+            log.subtasks = [];
+            modified = true;
+          } else {
+            // Defensively normalize subtasks: eliminate malformed entries and trim strings
+            const validSubtasks: Subtask[] = [];
+            let subtasksModified = false;
+            for (const st of log.subtasks) {
+              if (
+                st &&
+                typeof st === 'object' &&
+                typeof st.id === 'string' &&
+                st.id.trim() &&
+                typeof st.title === 'string' &&
+                st.title.trim() &&
+                typeof st.completed === 'boolean' &&
+                typeof st.createdAt === 'string' &&
+                typeof st.updatedAt === 'string'
+              ) {
+                validSubtasks.push({
+                  id: st.id,
+                  title: st.title.trim(),
+                  completed: st.completed,
+                  createdAt: st.createdAt,
+                  updatedAt: st.updatedAt,
+                });
+              } else {
+                subtasksModified = true;
+              }
+            }
+            if (subtasksModified || validSubtasks.length !== log.subtasks.length) {
+              log.subtasks = validSubtasks;
+              modified = true;
+            }
           }
         }
       } else {
@@ -182,6 +217,7 @@ export class LocalStorageRepository implements StorageRepository {
       deadline: input.deadline,
       projectId: input.projectId !== undefined ? input.projectId : null,
       completed: false,
+      subtasks: input.subtasks ? [...input.subtasks] : [],
       createdAt: now,
       updatedAt: now,
     };
@@ -199,14 +235,38 @@ export class LocalStorageRepository implements StorageRepository {
     }
 
     const current = data.logs[index];
+    const now = new Date().toISOString();
+
+    const willBeCompleted = input.completed !== undefined ? input.completed : current.completed;
+    const isBecomingCompleted = !current.completed && willBeCompleted;
+
+    let nextSubtasks: Subtask[] = input.subtasks !== undefined
+      ? [...input.subtasks]
+      : [...(current.subtasks || [])];
+
+    // Parent completion rule:
+    // Completing parent marks ALL subtasks completed, preserving already-completed subtasks.
+    // Uncompleting parent does NOT uncomplete subtasks.
+    if (isBecomingCompleted) {
+      nextSubtasks = nextSubtasks.map((s) => {
+        if (s.completed) return s;
+        return {
+          ...s,
+          completed: true,
+          updatedAt: now,
+        };
+      });
+    }
+
     const updated: Log = {
       ...current,
       title: input.title !== undefined ? input.title.trim() : current.title,
       description: input.description !== undefined ? input.description.trim() || undefined : current.description,
       deadline: input.deadline !== undefined ? input.deadline : current.deadline,
       projectId: input.projectId !== undefined ? input.projectId : current.projectId ?? null,
-      completed: input.completed !== undefined ? input.completed : current.completed,
-      updatedAt: new Date().toISOString(),
+      completed: willBeCompleted,
+      subtasks: nextSubtasks,
+      updatedAt: now,
     };
 
     data.logs[index] = updated;
@@ -220,10 +280,30 @@ export class LocalStorageRepository implements StorageRepository {
     if (index === -1) return null;
 
     const current = data.logs[index];
+    const newCompleted = !current.completed;
+    const now = new Date().toISOString();
+
+    let nextSubtasks: Subtask[] = [...(current.subtasks || [])];
+
+    // Parent completion rules:
+    // Completing the parent Log marks ALL of its subtasks as completed, preserving already-completed.
+    // Uncompleting the parent Log MUST NOT uncomplete its subtasks.
+    if (newCompleted) {
+      nextSubtasks = nextSubtasks.map((s) => {
+        if (s.completed) return s;
+        return {
+          ...s,
+          completed: true,
+          updatedAt: now,
+        };
+      });
+    }
+
     const updated: Log = {
       ...current,
-      completed: !current.completed,
-      updatedAt: new Date().toISOString(),
+      completed: newCompleted,
+      subtasks: nextSubtasks,
+      updatedAt: now,
     };
 
     data.logs[index] = updated;
@@ -240,6 +320,139 @@ export class LocalStorageRepository implements StorageRepository {
       return true;
     }
     return false;
+  }
+
+  // --- Subtasks API ---
+
+  public async addSubtask(logId: string, title: string): Promise<Subtask> {
+    const cleanTitle = title.trim();
+    if (!cleanTitle) {
+      throw new Error('Subtask title cannot be empty');
+    }
+
+    const data = this.loadRawData();
+    const index = data.logs.findIndex((log) => log.id === logId);
+    if (index === -1) {
+      throw new Error(`Log with id "${logId}" not found`);
+    }
+
+    const current = data.logs[index];
+    const now = new Date().toISOString();
+
+    const newSubtask: Subtask = {
+      id: generateId(),
+      title: cleanTitle,
+      completed: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const updatedSubtasks = [...(current.subtasks || []), newSubtask];
+    const updated: Log = {
+      ...current,
+      subtasks: updatedSubtasks,
+      updatedAt: now,
+    };
+
+    data.logs[index] = updated;
+    this.persistRawData(data);
+    return newSubtask;
+  }
+
+  public async updateSubtaskTitle(logId: string, subtaskId: string, title: string): Promise<Subtask> {
+    const cleanTitle = title.trim();
+    if (!cleanTitle) {
+      throw new Error('Subtask title cannot be empty');
+    }
+
+    const data = this.loadRawData();
+    const logIndex = data.logs.findIndex((log) => log.id === logId);
+    if (logIndex === -1) {
+      throw new Error(`Log with id "${logId}" not found`);
+    }
+
+    const parent = data.logs[logIndex];
+    const subtasks = parent.subtasks || [];
+    const subtaskIndex = subtasks.findIndex((s) => s.id === subtaskId);
+    if (subtaskIndex === -1) {
+      throw new Error(`Subtask with id "${subtaskId}" not found`);
+    }
+
+    const now = new Date().toISOString();
+    const currentSubtask = subtasks[subtaskIndex];
+    const updatedSubtask: Subtask = {
+      ...currentSubtask,
+      title: cleanTitle,
+      updatedAt: now,
+    };
+
+    const nextSubtasks = [...subtasks];
+    nextSubtasks[subtaskIndex] = updatedSubtask;
+
+    data.logs[logIndex] = {
+      ...parent,
+      subtasks: nextSubtasks,
+      updatedAt: now,
+    };
+
+    this.persistRawData(data);
+    return updatedSubtask;
+  }
+
+  public async toggleSubtaskCompletion(logId: string, subtaskId: string): Promise<Subtask | null> {
+    const data = this.loadRawData();
+    const logIndex = data.logs.findIndex((log) => log.id === logId);
+    if (logIndex === -1) return null;
+
+    const parent = data.logs[logIndex];
+    const subtasks = parent.subtasks || [];
+    const subtaskIndex = subtasks.findIndex((s) => s.id === subtaskId);
+    if (subtaskIndex === -1) return null;
+
+    const now = new Date().toISOString();
+    const currentSubtask = subtasks[subtaskIndex];
+    const updatedSubtask: Subtask = {
+      ...currentSubtask,
+      completed: !currentSubtask.completed,
+      updatedAt: now,
+    };
+
+    const nextSubtasks = [...subtasks];
+    nextSubtasks[subtaskIndex] = updatedSubtask;
+
+    // Notice: parent completed state is NOT changed even if all subtasks are complete.
+    // Parent's updatedAt IS updated.
+    data.logs[logIndex] = {
+      ...parent,
+      subtasks: nextSubtasks,
+      updatedAt: now,
+    };
+
+    this.persistRawData(data);
+    return updatedSubtask;
+  }
+
+  public async deleteSubtask(logId: string, subtaskId: string): Promise<boolean> {
+    const data = this.loadRawData();
+    const logIndex = data.logs.findIndex((log) => log.id === logId);
+    if (logIndex === -1) return false;
+
+    const parent = data.logs[logIndex];
+    const subtasks = parent.subtasks || [];
+    const subtaskIndex = subtasks.findIndex((s) => s.id === subtaskId);
+    if (subtaskIndex === -1) return false;
+
+    const now = new Date().toISOString();
+    const nextSubtasks = subtasks.filter((s) => s.id !== subtaskId);
+
+    data.logs[logIndex] = {
+      ...parent,
+      subtasks: nextSubtasks,
+      updatedAt: now,
+    };
+
+    this.persistRawData(data);
+    return true;
   }
 
   // --- Projects API ---
@@ -414,6 +627,17 @@ export class LocalStorageRepository implements StorageRepository {
       clone.projects.forEach((p, index) => {
         p.order = index;
       });
+    }
+    // Normalize logs subtasks and projectId
+    if (Array.isArray(clone.logs)) {
+      for (const log of clone.logs) {
+        if (!Array.isArray(log.subtasks)) {
+          log.subtasks = [];
+        }
+        if (log.projectId === undefined) {
+          log.projectId = null;
+        }
+      }
     }
     this.persistRawData(clone);
     return true;

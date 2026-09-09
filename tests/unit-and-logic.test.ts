@@ -1051,10 +1051,468 @@ async function testRepository() {
   assert.equal(defProjects3[2].order, 2);
   console.log('✓ 3. Corrupted project ordering is deterministically normalized to 0, 1, 2... preserving relative order');
 
+  // ==========================================
+  // PHASE 4 STAGE 1: SUBTASK DATA MODEL & STORAGE LOGIC TESTS
+  // ==========================================
+  console.log('\n--- Phase 4 Stage 1: Subtask Data Model & Storage Tests ---');
+
+  // Test 1: Existing Log without subtasks normalizes to []
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [
+      {
+        id: 'legacy-log-1',
+        title: 'Legacy Log Without Subtasks',
+        deadline: '2030-01-01T12:00:00.000Z',
+        completed: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        projectId: null,
+      },
+    ],
+    projects: [],
+    settings: { theme: 'light', fontSize: 'medium' },
+  });
+  const subtaskRepo1 = new LocalStorageRepository();
+  const legacyLog = await subtaskRepo1.getLogById('legacy-log-1');
+  assert.ok(legacyLog);
+  assert.ok(Array.isArray(legacyLog.subtasks));
+  assert.equal(legacyLog.subtasks.length, 0);
+  console.log('✓ 1. Existing Log without subtasks normalizes to []');
+
+  // Test 2: New Log can contain zero subtasks
+  const freshSubtaskRepo = new LocalStorageRepository();
+  const newLogNoSubtasks = await freshSubtaskRepo.createLog({
+    title: 'New Log With Zero Subtasks',
+    deadline: '2030-01-02T12:00:00.000Z',
+  });
+  assert.ok(Array.isArray(newLogNoSubtasks.subtasks));
+  assert.equal(newLogNoSubtasks.subtasks.length, 0);
+  console.log('✓ 2. New Log can contain zero subtasks');
+
+  // Test 3: Add a subtask
+  const parentCreatedAt = newLogNoSubtasks.createdAt;
+  const parentUpdatedAtBeforeAdd = newLogNoSubtasks.updatedAt;
+  await new Promise((r) => setTimeout(r, 5));
+  const subtask1 = await freshSubtaskRepo.addSubtask(newLogNoSubtasks.id, 'Subtask 1');
+  assert.ok(subtask1.id);
+  assert.equal(subtask1.title, 'Subtask 1');
+  assert.equal(subtask1.completed, false);
+  assert.ok(subtask1.createdAt);
+  assert.ok(subtask1.updatedAt);
+  const logAfterSubtask1 = await freshSubtaskRepo.getLogById(newLogNoSubtasks.id);
+  assert.equal(logAfterSubtask1?.subtasks.length, 1);
+  assert.equal(logAfterSubtask1?.subtasks[0].id, subtask1.id);
+  assert.equal(logAfterSubtask1?.createdAt, parentCreatedAt);
+  assert.notEqual(logAfterSubtask1?.updatedAt, parentUpdatedAtBeforeAdd);
+  console.log('✓ 3. Add a subtask');
+
+  // Test 4: Add multiple subtasks
+  const subtask2 = await freshSubtaskRepo.addSubtask(newLogNoSubtasks.id, 'Subtask 2');
+  const subtask3 = await freshSubtaskRepo.addSubtask(newLogNoSubtasks.id, 'Subtask 3');
+  const logAfterSubtask3 = await freshSubtaskRepo.getLogById(newLogNoSubtasks.id);
+  assert.equal(logAfterSubtask3?.subtasks.length, 3);
+  assert.equal(logAfterSubtask3?.subtasks[1].title, 'Subtask 2');
+  assert.equal(logAfterSubtask3?.subtasks[2].title, 'Subtask 3');
+  assert.notEqual(subtask1.id, subtask2.id);
+  assert.notEqual(subtask2.id, subtask3.id);
+  console.log('✓ 4. Add multiple subtasks');
+
+  // Test 5: Toggle a subtask completed/uncompleted
+  const subtask1CreatedAt = subtask1.createdAt;
+  await new Promise((r) => setTimeout(r, 5));
+  const toggledSubtask = await freshSubtaskRepo.toggleSubtaskCompletion(newLogNoSubtasks.id, subtask1.id);
+  assert.ok(toggledSubtask);
+  assert.equal(toggledSubtask.completed, true);
+  assert.equal(toggledSubtask.createdAt, subtask1CreatedAt); // createdAt not modified
+  const logAfterToggle = await freshSubtaskRepo.getLogById(newLogNoSubtasks.id);
+  assert.equal(logAfterToggle?.subtasks.find((s) => s.id === subtask1.id)?.completed, true);
+  // Toggle back to uncompleted
+  const toggledBack = await freshSubtaskRepo.toggleSubtaskCompletion(newLogNoSubtasks.id, subtask1.id);
+  assert.ok(toggledBack);
+  assert.equal(toggledBack.completed, false);
+  console.log('✓ 5. Toggle a subtask completed/uncompleted');
+
+  // Test 6: Edit a subtask title
+  await new Promise((r) => setTimeout(r, 5));
+  const editedSubtask = await freshSubtaskRepo.updateSubtaskTitle(newLogNoSubtasks.id, subtask2.id, 'Updated Subtask 2 Title');
+  assert.equal(editedSubtask.title, 'Updated Subtask 2 Title');
+  assert.equal(editedSubtask.createdAt, subtask2.createdAt); // subtask createdAt not modified
+  const logAfterEdit = await freshSubtaskRepo.getLogById(newLogNoSubtasks.id);
+  assert.equal(logAfterEdit?.subtasks.find((s) => s.id === subtask2.id)?.title, 'Updated Subtask 2 Title');
+  console.log('✓ 6. Edit a subtask title');
+
+  // Test 7: Delete a subtask
+  const deleteResult = await freshSubtaskRepo.deleteSubtask(newLogNoSubtasks.id, subtask3.id);
+  assert.equal(deleteResult, true);
+  const logAfterDelete = await freshSubtaskRepo.getLogById(newLogNoSubtasks.id);
+  assert.equal(logAfterDelete?.subtasks.length, 2);
+  assert.ok(!logAfterDelete?.subtasks.some((s) => s.id === subtask3.id));
+  console.log('✓ 7. Delete a subtask');
+
+  // Test 8: Whitespace-only subtask titles are rejected
+  await assert.rejects(
+    async () => {
+      await freshSubtaskRepo.addSubtask(newLogNoSubtasks.id, '   ');
+    },
+    /cannot be empty/
+  );
+  await assert.rejects(
+    async () => {
+      await freshSubtaskRepo.updateSubtaskTitle(newLogNoSubtasks.id, subtask1.id, '   \t  ');
+    },
+    /cannot be empty/
+  );
+  console.log('✓ 8. Whitespace-only subtask titles are rejected');
+
+  // Test 9: Completing an individual subtask does NOT complete the parent Log
+  const parentLog9 = await freshSubtaskRepo.createLog({
+    title: 'Parent Log 9',
+    deadline: '2030-01-05T12:00:00.000Z',
+  });
+  const st9A = await freshSubtaskRepo.addSubtask(parentLog9.id, 'Subtask 9A');
+  await freshSubtaskRepo.addSubtask(parentLog9.id, 'Subtask 9B');
+  await freshSubtaskRepo.toggleSubtaskCompletion(parentLog9.id, st9A.id);
+  const log9AfterStToggle = await freshSubtaskRepo.getLogById(parentLog9.id);
+  assert.equal(log9AfterStToggle?.completed, false);
+  console.log('✓ 9. Completing an individual subtask does NOT complete the parent Log');
+
+  // Test 10: Completing the parent Log marks ALL subtasks completed
+  await freshSubtaskRepo.toggleLogCompletion(parentLog9.id);
+  const log9Completed = await freshSubtaskRepo.getLogById(parentLog9.id);
+  assert.equal(log9Completed?.completed, true);
+  assert.equal(log9Completed?.subtasks.length, 2);
+  assert.ok(log9Completed?.subtasks.every((s) => s.completed === true));
+  console.log('✓ 10. Completing the parent Log marks ALL subtasks completed');
+
+  // Test 11: Completing the parent Log preserves already-completed subtasks
+  const parentLog11 = await freshSubtaskRepo.createLog({
+    title: 'Parent Log 11',
+    deadline: '2030-01-06T12:00:00.000Z',
+  });
+  const st11A = await freshSubtaskRepo.addSubtask(parentLog11.id, 'Subtask 11A');
+  await freshSubtaskRepo.addSubtask(parentLog11.id, 'Subtask 11B');
+  await freshSubtaskRepo.toggleSubtaskCompletion(parentLog11.id, st11A.id); // 11A is completed
+  const st11AUpdatedAt = (await freshSubtaskRepo.getLogById(parentLog11.id))?.subtasks[0].updatedAt;
+  await freshSubtaskRepo.toggleLogCompletion(parentLog11.id);
+  const log11Completed = await freshSubtaskRepo.getLogById(parentLog11.id);
+  assert.equal(log11Completed?.completed, true);
+  assert.equal(log11Completed?.subtasks[0].completed, true);
+  assert.equal(log11Completed?.subtasks[1].completed, true);
+  assert.equal(log11Completed?.subtasks[0].updatedAt, st11AUpdatedAt);
+  console.log('✓ 11. Completing the parent Log preserves already-completed subtasks');
+
+  // Test 12: Uncompleting the parent Log preserves the completed states of its subtasks
+  await freshSubtaskRepo.toggleLogCompletion(parentLog11.id);
+  const log11Uncompleted = await freshSubtaskRepo.getLogById(parentLog11.id);
+  assert.equal(log11Uncompleted?.completed, false);
+  assert.equal(log11Uncompleted?.subtasks[0].completed, true);
+  assert.equal(log11Uncompleted?.subtasks[1].completed, true);
+  console.log('✓ 12. Uncompleting the parent Log preserves the completed states of its subtasks');
+
+  // Test 13: Completing all subtasks manually does NOT automatically complete the parent Log
+  const parentLog13 = await freshSubtaskRepo.createLog({
+    title: 'Parent Log 13',
+    deadline: '2030-01-07T12:00:00.000Z',
+  });
+  const st13A = await freshSubtaskRepo.addSubtask(parentLog13.id, 'Subtask 13A');
+  const st13B = await freshSubtaskRepo.addSubtask(parentLog13.id, 'Subtask 13B');
+  await freshSubtaskRepo.toggleSubtaskCompletion(parentLog13.id, st13A.id);
+  await freshSubtaskRepo.toggleSubtaskCompletion(parentLog13.id, st13B.id);
+  const log13AllSubtasksDone = await freshSubtaskRepo.getLogById(parentLog13.id);
+  assert.ok(log13AllSubtasksDone?.subtasks.every((s) => s.completed === true));
+  assert.equal(log13AllSubtasksDone?.completed, false);
+  console.log('✓ 13. Completing all subtasks manually does NOT automatically complete the parent Log');
+
+  // Test 14: A Log with zero subtasks still follows existing completion behavior
+  const parentLog14 = await freshSubtaskRepo.createLog({
+    title: 'Parent Log 14',
+    deadline: '2030-01-08T12:00:00.000Z',
+  });
+  assert.equal(parentLog14.completed, false);
+  const log14Completed = await freshSubtaskRepo.toggleLogCompletion(parentLog14.id);
+  assert.equal(log14Completed?.completed, true);
+  const log14Uncompleted = await freshSubtaskRepo.toggleLogCompletion(parentLog14.id);
+  assert.equal(log14Uncompleted?.completed, false);
+  console.log('✓ 14. A Log with zero subtasks still follows existing completion behavior');
+
+  // Test 15: Subtasks survive normal Log editing
+  const parentLog15 = await freshSubtaskRepo.createLog({
+    title: 'Parent Log 15',
+    description: 'Initial description',
+    deadline: '2030-01-09T12:00:00.000Z',
+  });
+  await freshSubtaskRepo.addSubtask(parentLog15.id, 'Subtask 15');
+  const editedLog15 = await freshSubtaskRepo.updateLog({
+    id: parentLog15.id,
+    title: 'Updated Title 15',
+    description: 'Updated description',
+  });
+  assert.equal(editedLog15.title, 'Updated Title 15');
+  assert.equal(editedLog15.subtasks.length, 1);
+  assert.equal(editedLog15.subtasks[0].title, 'Subtask 15');
+  console.log('✓ 15. Subtasks survive normal Log editing');
+
+  // Test 16: Subtasks survive Log rescheduling
+  const rescheduledLog15 = await freshSubtaskRepo.updateLog({
+    id: parentLog15.id,
+    deadline: '2035-12-31T23:59:59.000Z',
+  });
+  assert.equal(rescheduledLog15.deadline, '2035-12-31T23:59:59.000Z');
+  assert.equal(rescheduledLog15.subtasks.length, 1);
+  assert.equal(rescheduledLog15.subtasks[0].title, 'Subtask 15');
+  console.log('✓ 16. Subtasks survive Log rescheduling');
+
+  // Test 17: Subtasks survive project reassignment
+  const project17A = await freshSubtaskRepo.createProject('Project 17A');
+  const project17B = await freshSubtaskRepo.createProject('Project 17B');
+  await freshSubtaskRepo.updateLog({
+    id: parentLog15.id,
+    projectId: project17A.id,
+  });
+  const reassigned1 = await freshSubtaskRepo.getLogById(parentLog15.id);
+  assert.equal(reassigned1?.projectId, project17A.id);
+  assert.equal(reassigned1?.subtasks.length, 1);
+
+  await freshSubtaskRepo.updateLog({
+    id: parentLog15.id,
+    projectId: project17B.id,
+  });
+  const reassigned2 = await freshSubtaskRepo.getLogById(parentLog15.id);
+  assert.equal(reassigned2?.projectId, project17B.id);
+  assert.equal(reassigned2?.subtasks.length, 1);
+
+  await freshSubtaskRepo.updateLog({
+    id: parentLog15.id,
+    projectId: null,
+  });
+  const unassigned = await freshSubtaskRepo.getLogById(parentLog15.id);
+  assert.equal(unassigned?.projectId, null);
+  assert.equal(unassigned?.subtasks.length, 1);
+  console.log('✓ 17. Subtasks survive project reassignment');
+
+  // Test 18: Deleting a Project preserves its Logs and their subtasks
+  const project18 = await freshSubtaskRepo.createProject('Project 18');
+  const parentLog18 = await freshSubtaskRepo.createLog({
+    title: 'Parent Log 18',
+    deadline: '2030-01-10T12:00:00.000Z',
+    projectId: project18.id,
+  });
+  await freshSubtaskRepo.addSubtask(parentLog18.id, 'Subtask 18A');
+  await freshSubtaskRepo.addSubtask(parentLog18.id, 'Subtask 18B');
+  await freshSubtaskRepo.deleteProject(project18.id);
+
+  const log18AfterProjDelete = await freshSubtaskRepo.getLogById(parentLog18.id);
+  assert.ok(log18AfterProjDelete);
+  assert.equal(log18AfterProjDelete.projectId, null);
+  assert.equal(log18AfterProjDelete.subtasks.length, 2);
+  assert.equal(log18AfterProjDelete.subtasks[0].title, 'Subtask 18A');
+  assert.equal(log18AfterProjDelete.subtasks[1].title, 'Subtask 18B');
+  console.log('✓ 18. Deleting a Project preserves its Logs and their subtasks');
+
+  // Test 19: Backup export includes subtasks
+  const exported = await freshSubtaskRepo.exportData();
+  const backupWithSubtasks = createBackup(exported);
+  const logInBackup = backupWithSubtasks.data.logs.find((l) => l.id === parentLog18.id);
+  assert.ok(logInBackup);
+  assert.ok(Array.isArray(logInBackup.subtasks));
+  assert.equal(logInBackup.subtasks.length, 2);
+  assert.equal(logInBackup.subtasks[0].title, 'Subtask 18A');
+  assert.equal(logInBackup.subtasks[1].title, 'Subtask 18B');
+  console.log('✓ 19. Backup export includes subtasks');
+
+  // Test 20: Backup restore preserves subtasks
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+    settings: { theme: 'light', fontSize: 'medium' },
+  });
+  const restoreRepo = new LocalStorageRepository();
+  const validationResult = validateBackup(JSON.stringify(backupWithSubtasks));
+  assert.equal(validationResult.valid, true);
+  if (validationResult.valid) {
+    await restoreRepo.importData(validationResult.data);
+  }
+  const restoredLog = await restoreRepo.getLogById(parentLog18.id);
+  assert.ok(restoredLog);
+  assert.equal(restoredLog.subtasks.length, 2);
+  assert.equal(restoredLog.subtasks[0].title, 'Subtask 18A');
+  assert.equal(restoredLog.subtasks[1].title, 'Subtask 18B');
+  console.log('✓ 20. Backup restore preserves subtasks');
+
+  // Test 21: Older backups without subtasks restore successfully with []
+  const oldBackupWithoutSubtasks = {
+    backupVersion: 1,
+    app: 'todop',
+    exportedAt: '2026-01-01T00:00:00.000Z',
+    data: {
+      schemaVersion: 1,
+      logs: [
+        {
+          id: 'old-log-no-subtasks',
+          title: 'Old Log From Previous Version',
+          deadline: '2030-01-01T12:00:00.000Z',
+          completed: false,
+          projectId: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      projects: [],
+      settings: { theme: 'light', fontSize: 'medium' },
+    },
+  };
+  const oldBackupValidation = validateBackup(JSON.stringify(oldBackupWithoutSubtasks));
+  assert.equal(oldBackupValidation.valid, true);
+  if (oldBackupValidation.valid) {
+    assert.ok(Array.isArray(oldBackupValidation.data.logs[0].subtasks));
+    assert.equal(oldBackupValidation.data.logs[0].subtasks.length, 0);
+    await restoreRepo.importData(oldBackupValidation.data);
+  }
+  const restoredOldLog = await restoreRepo.getLogById('old-log-no-subtasks');
+  assert.ok(restoredOldLog);
+  assert.ok(Array.isArray(restoredOldLog.subtasks));
+  assert.equal(restoredOldLog.subtasks.length, 0);
+  console.log('✓ 21. Older backups without subtasks restore successfully with []');
+
+  // Extra Test: Malformed subtask in backup fails validation safely
+  const malformedSubtaskBackup = validateBackup(
+    JSON.stringify({
+      backupVersion: 1,
+      app: 'todop',
+      exportedAt: new Date().toISOString(),
+      data: {
+        schemaVersion: 1,
+        logs: [
+          {
+            id: 'log-malformed-st',
+            title: 'Log with malformed subtask',
+            deadline: '2030-01-01T12:00:00.000Z',
+            completed: false,
+            projectId: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+            subtasks: [{ id: 'st1', title: '' }], // missing title and other fields
+          },
+        ],
+        projects: [],
+        settings: { theme: 'light', fontSize: 'medium' },
+      },
+    })
+  );
+  assert.equal(malformedSubtaskBackup.valid, false);
+  console.log('✓ Defensive: Malformed subtask in backup fails validation safely');
+
+  // ==========================================
+  // PHASE 4 STAGE 2: SUBTASK UI + LOG INTEGRATION TESTS
+  // ==========================================
+  console.log('\n--- Phase 4 Stage 2: Subtask UI & Log Integration Tests ---');
+
+  // Test 1: Completed parent Log + new subtask behavior
+  // A completed log receives a new subtask: new subtask is completed: false, parent log remains completed: true
+  const stage2Repo = new LocalStorageRepository();
+  const completedParent = await stage2Repo.createLog({
+    title: 'Completed Log for Stage 2',
+    deadline: '2030-01-15T12:00:00.000Z',
+  });
+  await stage2Repo.toggleLogCompletion(completedParent.id);
+  const verifyCompleted = await stage2Repo.getLogById(completedParent.id);
+  assert.equal(verifyCompleted?.completed, true);
+
+  const newSubtaskOnCompleted = await stage2Repo.addSubtask(completedParent.id, 'New Follow-up Task');
+  assert.equal(newSubtaskOnCompleted.completed, false); // New subtask starts as incomplete
+
+  const parentAfterNewSubtask = await stage2Repo.getLogById(completedParent.id);
+  assert.equal(parentAfterNewSubtask?.completed, true); // Parent Log remains completed
+  assert.equal(parentAfterNewSubtask?.subtasks.length, 1);
+  assert.equal(parentAfterNewSubtask?.subtasks[0].completed, false);
+  console.log('✓ 1. Completed parent Log + new subtask: subtask is incomplete (completed: false), parent remains completed');
+
+  // Test 2: Sequential draft subtask creation flow on new Log
+  // Simulates LogFormSheet draft subtasks being created sequentially after parent log is created
+  const newLogWithDrafts = await stage2Repo.createLog({
+    title: 'New Log with Drafted Subtasks',
+    deadline: '2030-01-16T12:00:00.000Z',
+  });
+  const draftTitles = ['Draft Subtask A', 'Draft Subtask B', 'Draft Subtask C'];
+  for (const dt of draftTitles) {
+    await stage2Repo.addSubtask(newLogWithDrafts.id, dt);
+  }
+  const logWithAllDrafts = await stage2Repo.getLogById(newLogWithDrafts.id);
+  assert.equal(logWithAllDrafts?.subtasks.length, 3);
+  assert.equal(logWithAllDrafts?.subtasks[0].title, 'Draft Subtask A');
+  assert.equal(logWithAllDrafts?.subtasks[1].title, 'Draft Subtask B');
+  assert.equal(logWithAllDrafts?.subtasks[2].title, 'Draft Subtask C');
+  assert.ok(logWithAllDrafts?.subtasks.every((s) => !s.completed));
+  console.log('✓ 2. New Log with drafted subtasks creates all subtasks with repository-managed IDs and timestamps');
+
+  // Test 3: Subtask progress formatting logic
+  const getSubtaskProgress = (subtasks?: { completed: boolean }[] | null): string | null => {
+    if (!subtasks || subtasks.length === 0) return null;
+    const completed = subtasks.filter((s) => s.completed).length;
+    return `${completed} / ${subtasks.length} subtasks`;
+  };
+
+  assert.equal(getSubtaskProgress(null), null);
+  assert.equal(getSubtaskProgress([]), null);
+  assert.equal(getSubtaskProgress([{ completed: false }, { completed: true }, { completed: false }]), '1 / 3 subtasks');
+  assert.equal(getSubtaskProgress([{ completed: true }, { completed: true }]), '2 / 2 subtasks');
+  console.log('✓ 3. Subtask progress calculation helper formats correctly (hidden when 0, X / Y subtasks when > 0)');
+
+  // Test 4: Existing Log form submission omitting subtasks preserves all subtasks
+  // Simulates LogFormSheet submitting { id, title, description, deadline, projectId } with subtasks undefined
+  const logToUpdate = await stage2Repo.getLogById(newLogWithDrafts.id);
+  assert.ok(logToUpdate && logToUpdate.subtasks.length === 3);
+
+  const updatedLogPreserved = await stage2Repo.updateLog({
+    id: logToUpdate.id,
+    title: 'Renamed Parent Log Title',
+    deadline: '2035-06-01T12:00:00.000Z',
+    // subtasks intentionally omitted as in Stage 2 form submit
+  });
+  assert.equal(updatedLogPreserved.title, 'Renamed Parent Log Title');
+  assert.equal(updatedLogPreserved.deadline, '2035-06-01T12:00:00.000Z');
+  assert.equal(updatedLogPreserved.subtasks.length, 3);
+  assert.equal(updatedLogPreserved.subtasks[0].title, 'Draft Subtask A');
+  assert.equal(updatedLogPreserved.subtasks[1].title, 'Draft Subtask B');
+  assert.equal(updatedLogPreserved.subtasks[2].title, 'Draft Subtask C');
+  console.log('✓ 4. Existing Log form submission omitting subtasks strictly preserves all subtasks');
+
+  // Test 5: Subtask CRUD operations on completed logs
+  const completedLogWithSubtasks = await stage2Repo.createLog({
+    title: 'Completed Log for Subtask Operations',
+    deadline: '2030-01-20T12:00:00.000Z',
+  });
+  const stA = await stage2Repo.addSubtask(completedLogWithSubtasks.id, 'Subtask A');
+  const stB = await stage2Repo.addSubtask(completedLogWithSubtasks.id, 'Subtask B');
+  // Complete the parent (marks stA and stB complete)
+  await stage2Repo.toggleLogCompletion(completedLogWithSubtasks.id);
+
+  // Toggle subtask A to incomplete while parent is completed
+  await stage2Repo.toggleSubtaskCompletion(completedLogWithSubtasks.id, stA.id);
+  const logAfterStToggle = await stage2Repo.getLogById(completedLogWithSubtasks.id);
+  assert.equal(logAfterStToggle?.completed, true); // Parent remains completed
+  assert.equal(logAfterStToggle?.subtasks.find((s) => s.id === stA.id)?.completed, false); // Subtask A is now incomplete
+
+  // Edit subtask B title on completed parent
+  await stage2Repo.updateSubtaskTitle(completedLogWithSubtasks.id, stB.id, 'Subtask B Renamed');
+  const logAfterStRename = await stage2Repo.getLogById(completedLogWithSubtasks.id);
+  assert.equal(logAfterStRename?.completed, true); // Parent remains completed
+  assert.equal(logAfterStRename?.subtasks.find((s) => s.id === stB.id)?.title, 'Subtask B Renamed');
+
+  // Delete subtask A on completed parent
+  await stage2Repo.deleteSubtask(completedLogWithSubtasks.id, stA.id);
+  const logAfterStDelete = await stage2Repo.getLogById(completedLogWithSubtasks.id);
+  assert.equal(logAfterStDelete?.completed, true); // Parent remains completed
+  assert.equal(logAfterStDelete?.subtasks.length, 1);
+  assert.equal(logAfterStDelete?.subtasks[0].id, stB.id);
+  console.log('✓ 5. Subtask CRUD (toggle, edit title, delete) on completed logs functions properly and preserves parent completed state');
+
   // Restore original mock localStorage
   globalThis.localStorage = originalLocalStorage;
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3) PASSED ---');
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3 + PHASE 4 STAGE 1 + PHASE 4 STAGE 2) PASSED ---');
 }
 
 testRepository().catch((err) => {

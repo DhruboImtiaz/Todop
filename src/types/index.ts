@@ -1,3 +1,11 @@
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: string; // ISO 8601 string
+  updatedAt: string; // ISO 8601 string
+}
+
 export interface Log {
   id: string;
   title: string;
@@ -5,6 +13,7 @@ export interface Log {
   deadline: string; // ISO 8601 string, machine-readable
   projectId: string | null;
   completed: boolean;
+  subtasks: Subtask[];
   createdAt: string; // ISO 8601 string
   updatedAt: string; // ISO 8601 string
 }

@@ -145,6 +145,30 @@
   background-color: var(--border-subtle);
 }
 
+/* Subtasks Progress Indicator */
+.log-card-subtasks {
+  display: flex;
+  align-items: center;
+  margin-top: -2px;
+}
+
+.subtasks-progress-text {
+  font-family: var(--font-body);
+  font-size: 0.733rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background-color: var(--bg-card-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  line-height: 1.3;
+}
+
+.log-card.completed .subtasks-progress-text {
+  opacity: 0.85;
+}
+
 /* Countdown Display */
 .log-card-countdown {
   font-family: var(--font-heading);

@@ -149,6 +149,256 @@
   resize: vertical;
 }
 
+/* Subtasks Section */
+.subtasks-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subtasks-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subtasks-count-pill {
+  font-size: 0.733rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.subtasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+  transition: background-color 0.12s ease;
+}
+
+.subtask-row:hover {
+  background-color: var(--bg-card);
+}
+
+.subtask-checkbox {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--text-dim);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.subtask-checkbox::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.subtask-checkbox:hover {
+  border-color: var(--accent-primary);
+  background-color: var(--accent-tint);
+  color: var(--accent-primary);
+}
+
+.subtask-checkbox.completed {
+  border-color: var(--accent-primary);
+  background-color: var(--accent-primary);
+  color: var(--accent-text);
+}
+
+.subtask-checkbox.draft {
+  border-style: dashed;
+  cursor: default;
+}
+
+.subtask-text {
+  font-family: var(--font-body);
+  font-size: 0.933rem;
+  color: var(--text-primary);
+  line-height: 1.35;
+  word-break: break-word;
+  flex: 1;
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: var(--radius-sm);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.subtask-text:hover {
+  color: var(--accent-text-readable);
+}
+
+.subtask-text.completed {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.subtask-inline-edit-input {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 0.933rem;
+  color: var(--text-primary);
+  background-color: var(--bg-input);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  outline: none;
+  min-height: 36px;
+}
+
+.subtask-delete-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+.subtask-delete-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.subtask-delete-btn:hover {
+  color: var(--overdue-text);
+  background-color: rgba(255, 115, 92, 0.1);
+}
+
+.subtask-add-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent-primary);
+  background: transparent;
+  border: none;
+  padding: 8px 4px;
+  cursor: pointer;
+  width: fit-content;
+  min-height: 44px;
+  transition: color 0.15s ease;
+}
+
+.subtask-add-trigger:hover {
+  color: var(--accent-hover);
+}
+
+.subtask-add-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.subtask-add-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.933rem;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.subtask-add-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.subtask-add-btn-group {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.subtask-inline-btn {
+  padding: 8px 14px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 36px;
+  transition: background-color 0.12s ease, opacity 0.12s ease;
+}
+
+.subtask-inline-btn.primary {
+  background-color: var(--accent-primary);
+  color: var(--accent-text);
+  border: none;
+}
+
+.subtask-inline-btn.primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.subtask-inline-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.subtask-inline-btn.secondary {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.subtask-inline-btn.secondary:hover {
+  background-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
 .form-grid-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

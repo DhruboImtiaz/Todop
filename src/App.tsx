@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StorageProvider } from './context/StorageProvider';
 import { useStorage } from './hooks/useStorage';
 import type { NavigationTab, Log, Project } from './types';
@@ -28,7 +28,7 @@ const TodopMain: React.FC = () => {
     () => getInitialRoute().projectId ?? null
   );
 
-  const { activeLogs, projects, createLog, updateLog, toggleLogCompletion, deleteLog } =
+  const { activeLogs, projects, createLog, updateLog, toggleLogCompletion, deleteLog, addSubtask } =
     useStorage();
 
   // Resolve active project object from context (always fresh)
@@ -44,16 +44,20 @@ const TodopMain: React.FC = () => {
     }
   };
 
-  const handleNavigate = (tab: NavigationTab) => navigateTo(tab, null);
+  const handleNavigate = (tab: NavigationTab) => {
+    navigateTo(tab, null);
+  };
 
-  React.useEffect(() => {
-    const onPopState = () => {
-      const route = getRouteFromPath(window.location.pathname);
+  // Keep state in sync with browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = getInitialRoute();
       setCurrentTab(route.tab);
       setActiveProjectId(route.projectId ?? null);
     };
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -81,6 +85,7 @@ const TodopMain: React.FC = () => {
     description?: string;
     deadline: string;
     projectId?: string;
+    draftSubtasks?: string[];
   }) => {
     if (editingLog) {
       await updateLog({
@@ -91,12 +96,17 @@ const TodopMain: React.FC = () => {
         projectId: data.projectId ?? null,
       });
     } else {
-      await createLog({
+      const created = await createLog({
         title: data.title,
         description: data.description,
         deadline: data.deadline,
         projectId: data.projectId ?? null,
       });
+      if (data.draftSubtasks && data.draftSubtasks.length > 0) {
+        for (const stTitle of data.draftSubtasks) {
+          await addSubtask(created.id, stTitle);
+        }
+      }
     }
     handleCloseSheet();
   };

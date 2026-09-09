@@ -1,10 +1,11 @@
-import type { AppDataSchema, Log, Project, Settings } from '../../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types';
 
 export interface NewLogInput {
   title: string;
   description?: string;
   deadline: string; // ISO 8601 string
   projectId?: string | null;
+  subtasks?: Subtask[];
 }
 
 export interface UpdateLogInput {
@@ -14,6 +15,7 @@ export interface UpdateLogInput {
   deadline?: string;
   projectId?: string | null;
   completed?: boolean;
+  subtasks?: Subtask[];
 }
 
 export type StorageListener = () => void;
@@ -28,6 +30,12 @@ export interface StorageRepository {
   updateLog(input: UpdateLogInput): Promise<Log>;
   toggleLogCompletion(id: string): Promise<Log | null>;
   deleteLog(id: string): Promise<boolean>;
+
+  // Subtasks
+  addSubtask(logId: string, title: string): Promise<Subtask>;
+  updateSubtaskTitle(logId: string, subtaskId: string, title: string): Promise<Subtask>;
+  toggleSubtaskCompletion(logId: string, subtaskId: string): Promise<Subtask | null>;
+  deleteSubtask(logId: string, subtaskId: string): Promise<boolean>;
 
   // Projects
   getProjects(): Promise<Project[]>;
