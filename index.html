@@ -12,6 +12,27 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TODOP" />
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('todop_app_data_v1');
+          if (raw) {
+            var data = JSON.parse(raw);
+            if (data && data.settings) {
+              var theme = data.settings.theme === 'light' ? 'light' : 'dark';
+              var fontSize = (data.settings.fontSize === 'small' || data.settings.fontSize === 'large')
+                ? data.settings.fontSize
+                : 'medium';
+              document.documentElement.setAttribute('data-theme', theme);
+              document.documentElement.setAttribute('data-font-size', fontSize);
+              return;
+            }
+          }
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-font-size', 'medium');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,5 +1,5 @@
 import React, { useSyncExternalStore, useCallback, useMemo } from 'react';
-import type { AppDataSchema } from '../types';
+import type { AppDataSchema, Settings } from '../types';
 import type { NewLogInput, StorageRepository, UpdateLogInput } from '../services/storage/storageRepository';
 import { defaultStorageRepository, LocalStorageRepository } from '../services/storage/localStorageRepository';
 import { StorageContext } from './StorageContextCore';
@@ -98,6 +98,23 @@ export const StorageProvider: React.FC<{
     [repository]
   );
 
+  const updateSettings = useCallback(
+    async (patch: Partial<Settings>) => {
+      return repository.updateSettings(patch);
+    },
+    [repository]
+  );
+
+  // Synchronize data-theme and data-font-size to root element immediately when settings change
+  React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const currentTheme = settings?.theme || 'dark';
+      const currentFontSize = settings?.fontSize || 'medium';
+      document.documentElement.setAttribute('data-theme', currentTheme);
+      document.documentElement.setAttribute('data-font-size', currentFontSize);
+    }
+  }, [settings?.theme, settings?.fontSize]);
+
   const value = useMemo<StorageContextValue>(
     () => ({
       repository,
@@ -115,6 +132,7 @@ export const StorageProvider: React.FC<{
       deleteProject,
       reorderProjects,
       moveProject,
+      updateSettings,
     }),
     [
       repository,
@@ -131,6 +149,7 @@ export const StorageProvider: React.FC<{
       deleteProject,
       reorderProjects,
       moveProject,
+      updateSettings,
     ]
   );
 

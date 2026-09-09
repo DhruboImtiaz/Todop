@@ -17,9 +17,12 @@ export interface Project {
   updatedAt: string;
 }
 
+export type AppTheme = 'dark' | 'light';
+export type AppFontSize = 'small' | 'medium' | 'large';
+
 export interface Settings {
-  theme: 'dark';
-  fontSize: 'normal' | 'compact' | 'spacious';
+  theme: AppTheme;
+  fontSize: AppFontSize;
 }
 
 export interface AppDataSchema {

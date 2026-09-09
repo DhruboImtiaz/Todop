@@ -18,6 +18,7 @@ export interface StorageContextValue {
   deleteProject: (id: string) => Promise<boolean>;
   reorderProjects: (projectIds: string[]) => Promise<Project[]>;
   moveProject: (id: string, direction: 'up' | 'down') => Promise<Project[]>;
+  updateSettings: (patch: Partial<Settings>) => Promise<Settings>;
 }
 
 export const StorageContext = createContext<StorageContextValue | null>(null);

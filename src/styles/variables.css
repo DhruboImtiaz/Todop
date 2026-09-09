@@ -1,5 +1,6 @@
-:root {
-  /* Colors */
+:root,
+[data-theme="dark"] {
+  /* Colors - Dark Theme (Default) */
   --bg-base: #090A0C;
   --bg-card: #111318;
   --bg-card-hover: #161920;
@@ -22,7 +23,7 @@
   --cyan-tint: rgba(0, 217, 232, 0.10);
   --cyan-border-tint: rgba(0, 217, 232, 0.28);
 
-  /* Overdue State (Distinct without relying solely on harsh pure red) */
+  /* Overdue State */
   --overdue-text: #FF7761;
   --overdue-badge-bg: #211516;
   --overdue-border: #4D2121;
@@ -46,4 +47,57 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Colors - Light Theme Override */
+[data-theme="light"] {
+  --bg-base: #F4F5F7;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #EAECEF;
+  --bg-input: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-overlay: rgba(18, 20, 24, 0.45);
+
+  --text-primary: #121417;
+  --text-secondary: #565D6B;
+  --text-dim: #7C8494;
+
+  --border-subtle: #DCE0E8;
+  --border-focused: #00BCC9;
+  --border-strong: #C4CAD4;
+
+  /* Primary Accent - Cyan preserved */
+  --cyan-primary: #00D9E8;
+  --cyan-hover: #1AE2F0;
+  --cyan-active: #00BDCB;
+  --cyan-tint: rgba(0, 217, 232, 0.14);
+  --cyan-border-tint: rgba(0, 160, 172, 0.45);
+
+  /* Overdue State - Light Theme High Contrast */
+  --overdue-text: #D63024;
+  --overdue-badge-bg: #FEECEB;
+  --overdue-border: #F8C3BE;
+}
+
+/* Font Size Scaling */
+:root,
+[data-font-size="medium"] {
+  --font-size-base: 15px;
+  --font-size-sm: 13px;
+  --font-size-xs: 11px;
+  --font-size-lg: 17px;
+}
+
+[data-font-size="small"] {
+  --font-size-base: 13.5px;
+  --font-size-sm: 12px;
+  --font-size-xs: 10px;
+  --font-size-lg: 15.5px;
+}
+
+[data-font-size="large"] {
+  --font-size-base: 16.5px;
+  --font-size-sm: 14.5px;
+  --font-size-xs: 12px;
+  --font-size-lg: 18.5px;
 }

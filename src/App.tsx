@@ -11,7 +11,7 @@ import { FloatingAddButton } from './components/common/FloatingAddButton';
 import { ProjectsPage } from './components/projects/ProjectsPage';
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
 import { SearchPage } from './components/search/SearchPage';
-import { SettingsView } from './components/placeholders/SettingsView';
+import { SettingsPage } from './components/settings/SettingsPage';
 
 import { getRouteFromPath, getPathFromRoute } from './utils/routing';
 
@@ -153,9 +153,7 @@ const TodopMain: React.FC = () => {
           )}
 
           {currentTab === 'settings' && (
-            <SettingsView
-              onBackToUpcoming={() => handleNavigate('upcoming')}
-            />
+            <SettingsPage />
           )}
         </main>
 

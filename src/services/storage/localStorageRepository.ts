@@ -6,7 +6,7 @@ const CURRENT_SCHEMA_VERSION = 1;
 
 const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
-  fontSize: 'normal',
+  fontSize: 'medium',
 };
 
 function generateId(): string {
@@ -59,6 +59,25 @@ export class LocalStorageRepository implements StorageRepository {
 
       // Keep projects sorted by order
       parsed.projects.sort((a, b) => a.order - b.order);
+
+      // Normalize settings
+      if (!parsed.settings || typeof parsed.settings !== 'object') {
+        parsed.settings = { ...DEFAULT_SETTINGS };
+        modified = true;
+      } else {
+        if (parsed.settings.theme !== 'dark' && parsed.settings.theme !== 'light') {
+          parsed.settings.theme = 'dark';
+          modified = true;
+        }
+        if (
+          parsed.settings.fontSize !== 'small' &&
+          parsed.settings.fontSize !== 'medium' &&
+          parsed.settings.fontSize !== 'large'
+        ) {
+          parsed.settings.fontSize = 'medium';
+          modified = true;
+        }
+      }
 
       if (modified) {
         this.persistRawData(parsed);

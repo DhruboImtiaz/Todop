@@ -522,7 +522,170 @@ async function testRepository() {
   await repoAfterRefresh3.deleteLog(logCompletedNew.id);
   await repoAfterRefresh3.deleteProject(searchProj.id);
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B) PASSED ---');
+  // ==========================================
+  // Phase 2C: Settings System Tests
+  // ==========================================
+  console.log('\n--- Running Phase 2C Settings Tests ---');
+
+  // Test 1: Default settings are dark + medium on clean repository
+  // Create a clean mock storage space to test default initialization
+  const cleanStore: Record<string, string> = {};
+  const originalLocalStorage = globalThis.localStorage;
+  globalThis.localStorage = {
+    getItem: (key: string) => cleanStore[key] ?? null,
+    setItem: (key: string, val: string) => {
+      cleanStore[key] = val;
+    },
+    removeItem: (key: string) => {
+      delete cleanStore[key];
+    },
+    clear: () => {
+      for (const k in cleanStore) delete cleanStore[k];
+    },
+    length: 0,
+    key: () => null,
+  };
+
+  const freshRepo = new LocalStorageRepository();
+  const defaultSettings = await freshRepo.getSettings();
+  assert.equal(defaultSettings.theme, 'dark');
+  assert.equal(defaultSettings.fontSize, 'medium');
+  console.log('✓ 1. Default settings are dark + medium');
+
+  // Test 2: Settings can be persisted
+  const updatedSettings = await freshRepo.updateSettings({
+    theme: 'light',
+    fontSize: 'large',
+  });
+  assert.equal(updatedSettings.theme, 'light');
+  assert.equal(updatedSettings.fontSize, 'large');
+  console.log('✓ 2. Settings can be persisted');
+
+  // Test 3: Saved settings survive repository reload (simulating browser reload)
+  const reloadedRepo1 = new LocalStorageRepository();
+  const reloadedSettings1 = await reloadedRepo1.getSettings();
+  assert.equal(reloadedSettings1.theme, 'light');
+  assert.equal(reloadedSettings1.fontSize, 'large');
+  console.log('✓ 3. Saved settings survive repository reload');
+
+  // Test 4: Theme can change dark -> light
+  await freshRepo.updateSettings({ theme: 'dark' });
+  const toLight = await freshRepo.updateSettings({ theme: 'light' });
+  assert.equal(toLight.theme, 'light');
+  console.log('✓ 4. Theme can change dark -> light');
+
+  // Test 5: Theme can change light -> dark
+  const toDark = await freshRepo.updateSettings({ theme: 'dark' });
+  assert.equal(toDark.theme, 'dark');
+  console.log('✓ 5. Theme can change light -> dark');
+
+  // Test 6: Font size can change medium -> small
+  await freshRepo.updateSettings({ fontSize: 'medium' });
+  const toSmall = await freshRepo.updateSettings({ fontSize: 'small' });
+  assert.equal(toSmall.fontSize, 'small');
+  console.log('✓ 6. Font size can change medium -> small');
+
+  // Test 7: Font size can change medium -> large
+  await freshRepo.updateSettings({ fontSize: 'medium' });
+  const toLarge = await freshRepo.updateSettings({ fontSize: 'large' });
+  assert.equal(toLarge.fontSize, 'large');
+  console.log('✓ 7. Font size can change medium -> large');
+
+  // Test 8 & 9: Updating settings does not modify logs or projects
+  const sampleProject = await freshRepo.createProject('Settings Test Project');
+  const sampleLog = await freshRepo.createLog({
+    title: 'Settings Test Log',
+    deadline: createDateOffset(24),
+    projectId: sampleProject.id,
+  });
+
+  const logsBefore = await freshRepo.getLogs();
+  const projectsBefore = await freshRepo.getProjects();
+
+  // Change settings multiple times
+  await freshRepo.updateSettings({ theme: 'light' });
+  await freshRepo.updateSettings({ fontSize: 'small' });
+  await freshRepo.updateSettings({ theme: 'dark', fontSize: 'medium' });
+
+  const logsAfter = await freshRepo.getLogs();
+  const projectsAfter = await freshRepo.getProjects();
+
+  assert.equal(logsAfter.length, logsBefore.length);
+  assert.equal(logsAfter[0].id, sampleLog.id);
+  assert.equal(logsAfter[0].title, sampleLog.title);
+  assert.equal(logsAfter[0].deadline, sampleLog.deadline);
+  assert.equal(logsAfter[0].projectId, sampleProject.id);
+  console.log('✓ 8. Updating settings does not modify logs');
+
+  assert.equal(projectsAfter.length, projectsBefore.length);
+  assert.equal(projectsAfter[0].id, sampleProject.id);
+  assert.equal(projectsAfter[0].name, sampleProject.name);
+  console.log('✓ 9. Updating settings does not modify projects');
+
+  // Test 10: Invalid or missing stored settings safely fall back to defaults
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+    settings: {
+      theme: 'neon-punk', // invalid
+      fontSize: 'ultra-huge', // invalid
+    },
+  });
+  const fallbackRepo = new LocalStorageRepository();
+  const normalizedSettings = await fallbackRepo.getSettings();
+  assert.equal(normalizedSettings.theme, 'dark');
+  assert.equal(normalizedSettings.fontSize, 'medium');
+
+  // Missing settings completely
+  cleanStore['todop_app_data_v1'] = JSON.stringify({
+    version: 1,
+    logs: [],
+    projects: [],
+  });
+  const missingSettingsRepo = new LocalStorageRepository();
+  const fromMissingSettings = await missingSettingsRepo.getSettings();
+  assert.equal(fromMissingSettings.theme, 'dark');
+  assert.equal(fromMissingSettings.fontSize, 'medium');
+  console.log('✓ 10. Invalid/missing stored settings safely fall back to defaults');
+
+  // Test 11: Settings updates preserve unrelated settings
+  await missingSettingsRepo.updateSettings({ theme: 'light' });
+  let checkPartial = await missingSettingsRepo.getSettings();
+  assert.equal(checkPartial.theme, 'light');
+  assert.equal(checkPartial.fontSize, 'medium'); // fontSize preserved!
+
+  await missingSettingsRepo.updateSettings({ fontSize: 'large' });
+  checkPartial = await missingSettingsRepo.getSettings();
+  assert.equal(checkPartial.theme, 'light'); // theme preserved!
+  assert.equal(checkPartial.fontSize, 'large');
+  console.log('✓ 11. Settings updates preserve unrelated settings');
+
+  // Test 12: Existing logs/projects remain intact after settings persistence across repository instances
+  const finalLog = await missingSettingsRepo.createLog({
+    title: 'Persistent Log',
+    deadline: createDateOffset(10),
+  });
+  const finalProject = await missingSettingsRepo.createProject('Persistent Project');
+
+  await missingSettingsRepo.updateSettings({ theme: 'dark', fontSize: 'small' });
+
+  // Simulate fresh browser session reload
+  const sessionReloadRepo = new LocalStorageRepository();
+  const sessionLogs = await sessionReloadRepo.getLogs();
+  const sessionProjects = await sessionReloadRepo.getProjects();
+  const sessionSettings = await sessionReloadRepo.getSettings();
+
+  assert.equal(sessionSettings.theme, 'dark');
+  assert.equal(sessionSettings.fontSize, 'small');
+  assert.ok(sessionLogs.some((l) => l.id === finalLog.id));
+  assert.ok(sessionProjects.some((p) => p.id === finalProject.id));
+  console.log('✓ 12. Existing logs/projects remain intact after settings persistence');
+
+  // Restore original mock localStorage
+  globalThis.localStorage = originalLocalStorage;
+
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C) PASSED ---');
 }
 
 testRepository().catch((err) => {

@@ -1,0 +1,156 @@
+.settings-page {
+  padding: 16px var(--page-padding-x) 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Header ── */
+.settings-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-heading {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.settings-subtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* ── Sections ── */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-section-title {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0 2px;
+}
+
+.settings-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.15s ease, background-color 0.2s ease;
+}
+
+.settings-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settings-item-name {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.settings-item-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── Segmented Controls ── */
+.segmented-control {
+  display: flex;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+  width: 100%;
+}
+
+.segmented-control-btn {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.segmented-control-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background-color: var(--bg-card-hover);
+}
+
+.segmented-control-btn.active {
+  color: var(--cyan-primary);
+  background-color: var(--cyan-tint);
+  border-color: var(--cyan-border-tint);
+}
+
+.segmented-control-btn:focus-visible {
+  outline: 2px solid var(--cyan-primary);
+  outline-offset: 1px;
+}
+
+/* ── Storage / Info Meta List ── */
+.settings-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+
+.settings-meta-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settings-meta-label {
+  color: var(--text-secondary);
+}
+
+.settings-meta-value {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
