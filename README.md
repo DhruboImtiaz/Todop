@@ -26,7 +26,7 @@ A sleek, mobile-first, local-first progressive web application (PWA) designed fo
   - High-contrast visual states for overdue items, active tabs, and focus rings.
 
 ---
-
+ 
 ## Tech Stack
 
 - **Core Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)

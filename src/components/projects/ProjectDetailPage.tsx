@@ -133,9 +133,9 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
                     key={log.id}
                     log={log}
                     currentTimestamp={currentTimestamp}
-                    onComplete={handleComplete}
+                    onComplete={(id: string) => handleComplete(id)}
                     onEdit={handleOpenEdit}
-                    onDelete={handleDelete}
+                    onDelete={(id: string) => handleDelete(id)}
                   />
                 ))}
               </div>
@@ -151,9 +151,9 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
                     key={log.id}
                     log={log}
                     currentTimestamp={currentTimestamp}
-                    onComplete={handleComplete}
+                    onComplete={(id: string) => handleComplete(id)}
                     onEdit={handleOpenEdit}
-                    onDelete={handleDelete}
+                    onDelete={(id: string) => handleDelete(id)}
                   />
                 ))}
               </div>

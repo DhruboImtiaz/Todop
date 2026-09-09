@@ -175,11 +175,11 @@ const TodopMain: React.FC = () => {
             initialLog={editingLog}
             onClose={handleCloseSheet}
             onSubmit={handleFormSubmit}
-            onComplete={async (id) => {
+            onComplete={async (id: string) => {
               await handleComplete(id);
               handleCloseSheet();
             }}
-            onDelete={async (id) => {
+            onDelete={async (id: string) => {
               await handleDelete(id);
               handleCloseSheet();
             }}
