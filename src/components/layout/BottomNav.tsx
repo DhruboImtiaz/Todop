@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarClock, FolderGit2, Search } from 'lucide-react';
+import { CalendarClock, FolderGit2, Calendar, Search } from 'lucide-react';
 import type { NavigationTab } from '../../types';
 import './BottomNav.css';
 
@@ -36,6 +36,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
             <FolderGit2 size={20} strokeWidth={currentTab === 'projects' ? 2.2 : 1.8} />
           </div>
           <span className="bottom-nav-label">PROJECTS</span>
+        </button>
+
+        <button
+          type="button"
+          className={`bottom-nav-item ${currentTab === 'calendar' ? 'active' : ''}`}
+          onClick={() => onSelectTab('calendar')}
+          aria-label="Calendar"
+          aria-current={currentTab === 'calendar' ? 'page' : undefined}
+        >
+          <div className="bottom-nav-icon-wrap">
+            <Calendar size={20} strokeWidth={currentTab === 'calendar' ? 2.2 : 1.8} />
+          </div>
+          <span className="bottom-nav-label">CALENDAR</span>
         </button>
 
         <button

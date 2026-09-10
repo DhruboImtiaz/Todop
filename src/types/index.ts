@@ -41,7 +41,7 @@ export interface AppDataSchema {
   settings: Settings;
 }
 
-export type NavigationTab = 'upcoming' | 'projects' | 'search' | 'settings';
+export type NavigationTab = 'upcoming' | 'projects' | 'calendar' | 'search' | 'settings';
 
 export interface AppRoute {
   tab: NavigationTab;

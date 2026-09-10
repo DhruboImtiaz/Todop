@@ -1,0 +1,28 @@
+.calendar-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom);
+}
+
+.calendar-page-header {
+  margin-bottom: 20px;
+}
+
+.calendar-page-heading {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+}
+
+.calendar-page-subtitle {
+  font-size: 0.867rem;
+  color: var(--text-secondary);
+  margin: 0;
+}

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { getCountdown, getLogSection, localDateTimeToIso, isoToLocalDateAndTime } from '../src/utils/time';
 import { LocalStorageRepository } from '../src/services/storage/localStorageRepository';
 import { createBackup, validateBackup, CURRENT_BACKUP_VERSION, BACKUP_APP_IDENTIFIER } from '../src/utils/backup';
+import { buildMonthGrid, prevMonth, nextMonth, getLocalDateKey, todayLocalKey, groupLogsByLocalDate } from '../src/utils/calendar';
+import { getRouteFromPath, getPathFromRoute } from '../src/utils/routing';
 
 console.log('--- Running TODOP Logic & Unit Tests ---');
 
@@ -328,7 +330,6 @@ async function testRepository() {
   console.log('✓ Project deleted: log preserved with projectId = null (unassigned)');
 
   // Test 21: Routing resolution for /projects and /projects/:id
-  const { getRouteFromPath, getPathFromRoute } = await import('../src/utils/routing');
   const listRoute = getRouteFromPath('/projects');
   assert.equal(listRoute.tab, 'projects');
   assert.equal(listRoute.projectId, null);
@@ -1509,10 +1510,428 @@ async function testRepository() {
   assert.equal(logAfterStDelete?.subtasks[0].id, stB.id);
   console.log('✓ 5. Subtask CRUD (toggle, edit title, delete) on completed logs functions properly and preserves parent completed state');
 
+  // --- Phase 5: Calendar Tests ---
+  console.log('\n--- Phase 5: Calendar View Logic Tests ---');
+
+  // Test 1: buildMonthGrid returns exactly 42 days (6 rows x 7 cols)
+  const gridJan2025 = buildMonthGrid(2025, 0); // Jan 2025
+  assert.equal(gridJan2025.length, 42);
+  console.log('✓ 1. buildMonthGrid returns exactly 42 days (6 rows x 7 cols)');
+
+  // Test 2: Monday-first week grid verification
+  // 2025-01-01 is Wednesday. In Monday-first, index 0=Mon, 1=Tue, 2=Wed.
+  // Leading days: Dec 30 (index 0), Dec 31 (index 1). Jan 1 is index 2.
+  assert.equal(gridJan2025[0].isCurrentMonth, false);
+  assert.equal(gridJan2025[0].dayNumber, 30);
+  assert.equal(gridJan2025[0].dateKey, '2024-12-30');
+  assert.equal(gridJan2025[1].isCurrentMonth, false);
+  assert.equal(gridJan2025[1].dayNumber, 31);
+  assert.equal(gridJan2025[1].dateKey, '2024-12-31');
+  assert.equal(gridJan2025[2].isCurrentMonth, true);
+  assert.equal(gridJan2025[2].dayNumber, 1);
+  assert.equal(gridJan2025[2].dateKey, '2025-01-01');
+  console.log('✓ 2. Monday-first calendar grid correctly places Jan 1 2025 on Wednesday (index 2) with Dec 30-31 leading');
+
+  // Test 3: isCurrentMonth, dayNumber, dateKey properties are valid on all cells
+  for (const cell of gridJan2025) {
+    assert.ok(typeof cell.dayNumber === 'number' && cell.dayNumber >= 1 && cell.dayNumber <= 31);
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(cell.dateKey));
+    assert.ok(typeof cell.isCurrentMonth === 'boolean');
+    assert.ok(typeof cell.isToday === 'boolean');
+  }
+  const janDays = gridJan2025.filter((c) => c.isCurrentMonth);
+  assert.equal(janDays.length, 31);
+  console.log('✓ 3. All 42 grid cells contain valid dayNumber, dateKey, isCurrentMonth, isToday flags (31 days for Jan)');
+
+  // Test 4: prevMonth wraps from January (0) to December (11) of previous year
+  const prevFromJan = prevMonth(2025, 0);
+  assert.equal(prevFromJan.year, 2024);
+  assert.equal(prevFromJan.month, 11);
+  const prevFromMay = prevMonth(2025, 4);
+  assert.equal(prevFromMay.year, 2025);
+  assert.equal(prevFromMay.month, 3);
+  console.log('✓ 4. prevMonth correctly wraps Jan -> Dec of previous year and decrements regular months');
+
+  // Test 5: nextMonth wraps from December (11) to January (0) of next year
+  const nextFromDec = nextMonth(2024, 11);
+  assert.equal(nextFromDec.year, 2025);
+  assert.equal(nextFromDec.month, 0);
+  const nextFromMay = nextMonth(2025, 4);
+  assert.equal(nextFromMay.year, 2025);
+  assert.equal(nextFromMay.month, 5);
+  console.log('✓ 5. nextMonth correctly wraps Dec -> Jan of next year and increments regular months');
+
+  // Test 6: getLocalDateKey returns local YYYY-MM-DD without UTC day-shift
+  const sampleDate = new Date(2025, 5, 15, 23, 30); // June 15, 2025 23:30 local
+  const key = getLocalDateKey(sampleDate);
+  assert.equal(key, '2025-06-15');
+  console.log('✓ 6. getLocalDateKey returns correct local YYYY-MM-DD date key');
+
+  // Test 7: groupLogsByLocalDate groups logs by local deadline date
+  const logIso1 = localDateTimeToIso('2025-06-15', '10:00');
+  const logIso2 = localDateTimeToIso('2025-06-15', '18:00');
+  const logIso3 = localDateTimeToIso('2025-06-16', '09:00');
+  const dummyLogs = [
+    { id: '1', title: 'Task 1', deadline: logIso1, completed: false, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+    { id: '2', title: 'Task 2', deadline: logIso2, completed: false, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+    { id: '3', title: 'Task 3', deadline: logIso3, completed: false, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+  ];
+  const grouped = groupLogsByLocalDate(dummyLogs);
+  assert.equal(grouped.get('2025-06-15')?.length, 2);
+  assert.equal(grouped.get('2025-06-16')?.length, 1);
+  assert.equal(grouped.get('2025-06-17'), undefined);
+  console.log('✓ 7. groupLogsByLocalDate groups multiple logs correctly onto their respective local date keys');
+
+  // Test 8: Completed logs appear in groupLogsByLocalDate
+  const completedLogIso = localDateTimeToIso('2025-06-15', '14:00');
+  const logsWithCompleted = [
+    ...dummyLogs,
+    { id: '4', title: 'Completed Task', deadline: completedLogIso, completed: true, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+  ];
+  const groupedWithCompleted = groupLogsByLocalDate(logsWithCompleted);
+  const day15Logs = groupedWithCompleted.get('2025-06-15') || [];
+  assert.equal(day15Logs.length, 3);
+  const activeDay15 = day15Logs.filter((l) => !l.completed);
+  const completedDay15 = day15Logs.filter((l) => l.completed);
+  assert.equal(activeDay15.length, 2);
+  assert.equal(completedDay15.length, 1);
+  console.log('✓ 8. Completed logs are included in groupLogsByLocalDate and can be partitioned into active and completed');
+
+  // Test 9: Rescheduling moves log to new date key
+  const rescheduledCalLog = { ...dummyLogs[0], deadline: localDateTimeToIso('2025-06-20', '10:00') };
+  const groupedAfterReschedule = groupLogsByLocalDate([rescheduledCalLog, dummyLogs[1], dummyLogs[2]]);
+  assert.equal(groupedAfterReschedule.get('2025-06-15')?.length, 1);
+  assert.equal(groupedAfterReschedule.get('2025-06-20')?.length, 1);
+  console.log('✓ 9. Rescheduled log deadline immediately maps to its new calendar date key');
+
+  // Test 10: Completing a log keeps it on the same date key
+  const toggledLog = { ...dummyLogs[0], completed: true };
+  const groupedAfterToggle = groupLogsByLocalDate([toggledLog, dummyLogs[1]]);
+  const toggledList = groupedAfterToggle.get('2025-06-15') || [];
+  assert.equal(toggledList.length, 2);
+  assert.equal(toggledList.find((l) => l.id === dummyLogs[0].id)?.completed, true);
+  console.log('✓ 10. Toggling log completion preserves the calendar date key and reflects updated status');
+
+  // Test 11: todayLocalKey matches local YYYY-MM-DD of current date
+  const nowForCal = new Date();
+  const expectedTodayKey = `${nowForCal.getFullYear()}-${String(nowForCal.getMonth() + 1).padStart(2, '0')}-${String(nowForCal.getDate()).padStart(2, '0')}`;
+  assert.equal(todayLocalKey(), expectedTodayKey);
+  console.log('✓ 11. todayLocalKey matches today\'s local YYYY-MM-DD:', todayLocalKey());
+
+  // Test 12: Creating log with defaultDate pre-fill generates correct local ISO deadline
+  const prefillDate = '2025-11-20';
+  const prefillTime = '12:00';
+  const createdIso = localDateTimeToIso(prefillDate, prefillTime);
+  const roundtrip = isoToLocalDateAndTime(createdIso);
+  assert.equal(roundtrip.date, '2025-11-20');
+  assert.equal(roundtrip.time, '12:00');
+  assert.equal(getLocalDateKey(createdIso), '2025-11-20');
+  console.log('✓ 12. Pre-filled date + default time roundtrips cleanly and matches calendar date key');
+
+  // Test 13: Late night log (23:59 local) maps to correct local day
+  const lateNightIso = localDateTimeToIso('2025-07-31', '23:59');
+  assert.equal(getLocalDateKey(lateNightIso), '2025-07-31');
+  console.log('✓ 13. Late night local deadline (23:59) maps to the correct local day');
+
+  // Test 14: February non-leap year (2025: 28 days)
+  const feb2025 = buildMonthGrid(2025, 1);
+  const feb2025Days = feb2025.filter((c) => c.isCurrentMonth);
+  assert.equal(feb2025Days.length, 28);
+  assert.equal(feb2025.length, 42);
+  console.log('✓ 14. February in non-leap year (2025) has exactly 28 days in 42-cell grid');
+
+  // Test 15: February leap year (2024: 29 days)
+  const feb2024 = buildMonthGrid(2024, 1);
+  const feb2024Days = feb2024.filter((c) => c.isCurrentMonth);
+  assert.equal(feb2024Days.length, 29);
+  assert.equal(feb2024.length, 42);
+  console.log('✓ 15. February in leap year (2024) has exactly 29 days in 42-cell grid');
+
+  // Test 16: Defensive skip of invalid / missing deadlines
+  const weirdLogs = [
+    { id: 'w1', title: 'No deadline', deadline: '', completed: false, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+    { id: 'w2', title: 'Bad deadline', deadline: 'not-a-date', completed: false, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+    { id: 'w3', title: 'Good deadline', deadline: logIso1, completed: false, projectId: null, subtasks: [], createdAt: '', updatedAt: '' },
+  ];
+  const groupedWeird = groupLogsByLocalDate(weirdLogs);
+  assert.equal(groupedWeird.size, 1);
+  assert.equal(groupedWeird.get('2025-06-15')?.length, 1);
+  console.log('✓ 16. groupLogsByLocalDate defensively ignores missing/invalid deadlines');
+
+  // Test 17: Route parsing and generation for /calendar
+  assert.deepEqual(getRouteFromPath('/calendar'), { tab: 'calendar' });
+  assert.deepEqual(getRouteFromPath('/calendar/'), { tab: 'calendar' });
+  assert.equal(getPathFromRoute({ tab: 'calendar' }), '/calendar');
+  console.log('✓ 17. Routing correctly handles /calendar tab path and route mapping');
+
+  // --- Phase 5: Calendar Deletion Regression Tests ---
+  console.log('\n--- Phase 5: Calendar Deletion Regression Tests ---');
+  const calRepo = new LocalStorageRepository();
+
+  // Test 18: Delete active log -> disappears from Calendar
+  const calActiveLog = await calRepo.createLog({
+    title: 'Active Calendar Task',
+    deadline: '2026-10-15T10:00:00.000Z',
+  });
+  let calLogs = await calRepo.getLogs();
+  let calMap = groupLogsByLocalDate(calLogs);
+  const activeDateKey = getLocalDateKey(calActiveLog.deadline);
+  assert.equal(calMap.get(activeDateKey)?.length, 1);
+  assert.equal(calMap.get(activeDateKey)?.[0].id, calActiveLog.id);
+
+  await calRepo.deleteLog(calActiveLog.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  assert.equal(calMap.get(activeDateKey), undefined);
+  console.log('✓ 18. Deleting active log removes it immediately from Calendar date grouping');
+
+  // Test 19: Delete completed log -> disappears from Calendar
+  const calCompLog = await calRepo.createLog({
+    title: 'Completed Calendar Task',
+    deadline: '2026-10-16T14:00:00.000Z',
+  });
+  await calRepo.toggleLogCompletion(calCompLog.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  const compDateKey = getLocalDateKey(calCompLog.deadline);
+  assert.equal(calMap.get(compDateKey)?.length, 1);
+  assert.equal(calMap.get(compDateKey)?.[0].completed, true);
+
+  await calRepo.deleteLog(calCompLog.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  assert.equal(calMap.get(compDateKey), undefined);
+  console.log('✓ 19. Deleting completed log removes it immediately from Calendar date grouping');
+
+  // Test 20: Delete the last log on a date -> that date's log indicator disappears
+  const soloLog = await calRepo.createLog({
+    title: 'Solo Log on Date',
+    deadline: '2026-10-17T09:00:00.000Z',
+  });
+  const soloDateKey = getLocalDateKey(soloLog.deadline);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  assert.ok(calMap.has(soloDateKey));
+
+  await calRepo.deleteLog(soloLog.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  assert.equal(calMap.has(soloDateKey), false);
+  console.log('✓ 20. Deleting the last log on a date completely clears that date key from Calendar map');
+
+  // Test 21: Delete one of multiple logs -> remaining logs/indicators remain correct
+  const multi1 = await calRepo.createLog({
+    title: 'Multi Task 1 (Active)',
+    deadline: '2026-10-18T10:00:00.000Z',
+  });
+  const multi2 = await calRepo.createLog({
+    title: 'Multi Task 2 (Completed)',
+    deadline: '2026-10-18T16:00:00.000Z',
+  });
+  await calRepo.toggleLogCompletion(multi2.id);
+  const multiDateKey = getLocalDateKey(multi1.deadline);
+
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  let dayList = calMap.get(multiDateKey) || [];
+  assert.equal(dayList.length, 2);
+  assert.ok(dayList.some((l) => !l.completed)); // Has active
+  assert.ok(dayList.some((l) => l.completed)); // Has completed
+
+  // Delete active log -> only completed remains
+  await calRepo.deleteLog(multi1.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  dayList = calMap.get(multiDateKey) || [];
+  assert.equal(dayList.length, 1);
+  assert.equal(dayList[0].id, multi2.id);
+  assert.equal(dayList[0].completed, true);
+
+  // Delete completed log -> zero remain
+  await calRepo.deleteLog(multi2.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  assert.equal(calMap.get(multiDateKey), undefined);
+  console.log('✓ 21. Deleting one of multiple logs on same date correctly transitions remaining logs and indicators');
+
+  // Test 22: Delete a log with subtasks -> entire log including subtasks is removed
+  const logWithSubs = await calRepo.createLog({
+    title: 'Log With Subtasks to Delete',
+    deadline: '2026-10-19T11:00:00.000Z',
+  });
+  await calRepo.addSubtask(logWithSubs.id, 'Sub A');
+  await calRepo.addSubtask(logWithSubs.id, 'Sub B');
+  const subsDateKey = getLocalDateKey(logWithSubs.deadline);
+
+  calLogs = await calRepo.getLogs();
+  assert.equal(calLogs.find((l) => l.id === logWithSubs.id)?.subtasks.length, 2);
+
+  await calRepo.deleteLog(logWithSubs.id);
+  calLogs = await calRepo.getLogs();
+  calMap = groupLogsByLocalDate(calLogs);
+  assert.equal(calLogs.find((l) => l.id === logWithSubs.id), undefined);
+  assert.equal(calMap.get(subsDateKey), undefined);
+  console.log('✓ 22. Deleting log with subtasks removes parent log and all subtasks from repository and Calendar');
+
+  // Test 23: Delete through LogCard overflow action path (direct deleteLog(log.id))
+  const cardDeleteLog = await calRepo.createLog({
+    title: 'Card Overflow Delete',
+    deadline: '2026-10-20T12:00:00.000Z',
+  });
+  const cardDateKey = getLocalDateKey(cardDeleteLog.deadline);
+  // Simulates LogCard handleDelete calling onDelete(log.id) -> deleteLog(id)
+  const deleteResult1 = await calRepo.deleteLog(cardDeleteLog.id);
+  assert.equal(deleteResult1, true);
+  calLogs = await calRepo.getLogs();
+  assert.equal(calLogs.find((l) => l.id === cardDeleteLog.id), undefined);
+  assert.equal(groupLogsByLocalDate(calLogs).get(cardDateKey), undefined);
+  console.log('✓ 23. LogCard overflow delete path directly purges log from Calendar data source');
+
+  // Test 24: Delete through LogFormSheet confirmation path (onDelete(initialLog.id))
+  const sheetDeleteLog = await calRepo.createLog({
+    title: 'Sheet Confirm Delete',
+    deadline: '2026-10-21T12:00:00.000Z',
+  });
+  const sheetDateKey = getLocalDateKey(sheetDeleteLog.deadline);
+  // Simulates LogFormSheet handleConfirmDelete calling onDelete(initialLog.id) -> deleteLog(id)
+  const deleteResult2 = await calRepo.deleteLog(sheetDeleteLog.id);
+  assert.equal(deleteResult2, true);
+  calLogs = await calRepo.getLogs();
+  assert.equal(calLogs.find((l) => l.id === sheetDeleteLog.id), undefined);
+  assert.equal(groupLogsByLocalDate(calLogs).get(sheetDateKey), undefined);
+  console.log('✓ 24. LogFormSheet confirmation delete path directly purges log from Calendar data source');
+
+  // Test 25: Delete active log from within Projects view -> absent everywhere including Calendar
+  const projectA = await calRepo.createProject('Project A');
+  const projActiveLog = await calRepo.createLog({
+    title: 'Project Active Task',
+    deadline: '2026-10-22T10:00:00.000Z',
+    projectId: projectA.id,
+  });
+  const projActiveDateKey = getLocalDateKey(projActiveLog.deadline);
+  assert.equal((await calRepo.getLogs()).filter((l) => l.projectId === projectA.id).length, 1);
+  assert.equal(groupLogsByLocalDate(await calRepo.getLogs()).get(projActiveDateKey)?.length, 1);
+
+  // Delete the log from within the project
+  await calRepo.deleteLog(projActiveLog.id);
+  const logsAfterProjLogDel = await calRepo.getLogs();
+  assert.equal(logsAfterProjLogDel.find((l) => l.id === projActiveLog.id), undefined);
+  assert.equal(groupLogsByLocalDate(logsAfterProjLogDel).get(projActiveDateKey), undefined);
+  console.log('✓ 25. Deleting an active log from within a Project permanently removes it from storage and Calendar');
+
+  // Test 26: Delete completed log from within Projects view -> absent everywhere including Calendar
+  const projCompLog = await calRepo.createLog({
+    title: 'Project Completed Task A',
+    deadline: '2026-10-23T15:00:00.000Z',
+    projectId: projectA.id,
+  });
+  await calRepo.addSubtask(projCompLog.id, 'Subtask 1');
+  await calRepo.addSubtask(projCompLog.id, 'Subtask 2');
+  await calRepo.addSubtask(projCompLog.id, 'Subtask 3');
+  await calRepo.toggleLogCompletion(projCompLog.id);
+  const projCompDateKey = getLocalDateKey(projCompLog.deadline);
+  
+  // Verify present in project completed and present on calendar
+  const compLogsBeforeDel = await calRepo.getCompletedLogs();
+  assert.equal(compLogsBeforeDel.find((l) => l.id === projCompLog.id)?.completed, true);
+  assert.equal(groupLogsByLocalDate(await calRepo.getLogs()).get(projCompDateKey)?.length, 1);
+
+  // Delete the completed log from within the project
+  await calRepo.deleteLog(projCompLog.id);
+  const logsAfterCompLogDel = await calRepo.getLogs();
+  assert.equal(logsAfterCompLogDel.find((l) => l.id === projCompLog.id), undefined);
+  assert.equal(groupLogsByLocalDate(logsAfterCompLogDel).get(projCompDateKey), undefined);
+  console.log('✓ 26. Deleting a completed log from within a Project permanently removes it from storage and Calendar');
+
+  // Test 27: Explicit distinction: Deleting a Project preserves logs as unassigned vs Deleting a Log purges it
+  const projectB = await calRepo.createProject('Project B');
+  const logInProjB = await calRepo.createLog({
+    title: 'Log in Project B',
+    deadline: '2026-10-24T12:00:00.000Z',
+    projectId: projectB.id,
+  });
+  const projBDateKey = getLocalDateKey(logInProjB.deadline);
+  
+  // Deleting Project B sets projectId = null
+  await calRepo.deleteProject(projectB.id);
+  const logsAfterProjDel = await calRepo.getLogs();
+  const preservedCalLog = logsAfterProjDel.find((l) => l.id === logInProjB.id);
+  assert.ok(preservedCalLog);
+  assert.equal(preservedCalLog.projectId, null); // Unassigned
+  assert.equal(groupLogsByLocalDate(logsAfterProjDel).get(projBDateKey)?.length, 1); // Still on calendar
+
+  // Now explicitly deleting the log itself purges it from calendar
+  await calRepo.deleteLog(logInProjB.id);
+  const logsAfterExplicitLogDel = await calRepo.getLogs();
+  assert.equal(logsAfterExplicitLogDel.find((l) => l.id === logInProjB.id), undefined);
+  assert.equal(groupLogsByLocalDate(logsAfterExplicitLogDel).get(projBDateKey), undefined);
+  console.log('✓ 27. Deleting a Project preserves logs as unassigned (on Calendar), while deleting a Log purges it everywhere');
+
+  // --- Phase 5 Refinement: Active Task Date Indicator Tests ---
+  console.log('\n--- Phase 5 Refinement: Active Task Date Indicator Tests ---');
+
+  const hasActiveIndicator = (logs?: { completed: boolean }[] | null): boolean => {
+    if (!logs || logs.length === 0) return false;
+    return logs.some((log) => !log.completed);
+  };
+
+  // Test 28: Date with only completed logs gets NO indicator
+  assert.equal(hasActiveIndicator([{ completed: true }]), false);
+  assert.equal(hasActiveIndicator([{ completed: true }, { completed: true }]), false);
+  assert.equal(hasActiveIndicator([]), false);
+  assert.equal(hasActiveIndicator(null), false);
+  console.log('✓ 28. Dates with zero logs or only completed logs produce NO dot indicator');
+
+  // Test 29: Date with active logs gets indicator
+  assert.equal(hasActiveIndicator([{ completed: false }]), true);
+  assert.equal(hasActiveIndicator([{ completed: false }, { completed: true }]), true);
+  assert.equal(hasActiveIndicator([{ completed: true }, { completed: false }]), true);
+  console.log('✓ 29. Dates with at least one active log produce a dot indicator');
+
+  // Test 30: Completion and reactivation state transitions update indicator dynamically
+  const transLog = await calRepo.createLog({
+    title: 'Indicator Transition Test',
+    deadline: '2026-11-05T10:00:00.000Z',
+  });
+  const transDateKey = getLocalDateKey(transLog.deadline);
+
+  // Active state -> DOT
+  let currentDayLogs = (groupLogsByLocalDate(await calRepo.getLogs())).get(transDateKey) || [];
+  assert.equal(hasActiveIndicator(currentDayLogs), true);
+
+  // Mark completed -> NO DOT
+  await calRepo.toggleLogCompletion(transLog.id);
+  currentDayLogs = (groupLogsByLocalDate(await calRepo.getLogs())).get(transDateKey) || [];
+  assert.equal(currentDayLogs.length, 1);
+  assert.equal(hasActiveIndicator(currentDayLogs), false);
+
+  // Reactivate / reopen -> DOT returns
+  await calRepo.toggleLogCompletion(transLog.id);
+  currentDayLogs = (groupLogsByLocalDate(await calRepo.getLogs())).get(transDateKey) || [];
+  assert.equal(hasActiveIndicator(currentDayLogs), true);
+
+  // Add a second log, complete first log -> DOT remains because 2nd log is active
+  const transLog2 = await calRepo.createLog({
+    title: 'Indicator Transition Test 2',
+    deadline: '2026-11-05T14:00:00.000Z',
+  });
+  await calRepo.toggleLogCompletion(transLog.id); // complete 1st
+  currentDayLogs = (groupLogsByLocalDate(await calRepo.getLogs())).get(transDateKey) || [];
+  assert.equal(currentDayLogs.length, 2);
+  assert.equal(hasActiveIndicator(currentDayLogs), true);
+
+  // Complete 2nd log -> NO DOT
+  await calRepo.toggleLogCompletion(transLog2.id); // complete 2nd
+  currentDayLogs = (groupLogsByLocalDate(await calRepo.getLogs())).get(transDateKey) || [];
+  assert.equal(currentDayLogs.length, 2);
+  assert.equal(hasActiveIndicator(currentDayLogs), false);
+
+  console.log('✓ 30. Completing all tasks removes date indicator, and reactivating any task immediately restores it');
+
   // Restore original mock localStorage
   globalThis.localStorage = originalLocalStorage;
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3 + PHASE 4 STAGE 1 + PHASE 4 STAGE 2) PASSED ---');
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3 + PHASE 4 STAGE 1 + PHASE 4 STAGE 2 + PHASE 5) PASSED ---');
 }
 
 testRepository().catch((err) => {

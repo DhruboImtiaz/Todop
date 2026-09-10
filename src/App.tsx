@@ -10,6 +10,7 @@ import { LogFormSheet } from './components/logs/LogFormSheet';
 import { FloatingAddButton } from './components/common/FloatingAddButton';
 import { ProjectsPage } from './components/projects/ProjectsPage';
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
+import { CalendarPage } from './components/calendar/CalendarPage';
 import { SearchPage } from './components/search/SearchPage';
 import { SettingsPage } from './components/settings/SettingsPage';
 
@@ -156,6 +157,10 @@ const TodopMain: React.FC = () => {
               project={activeProject}
               onBack={() => navigateTo('projects', null)}
             />
+          )}
+
+          {currentTab === 'calendar' && (
+            <CalendarPage />
           )}
 
           {currentTab === 'search' && (

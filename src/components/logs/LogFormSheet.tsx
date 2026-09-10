@@ -14,6 +14,8 @@ interface LogFormSheetProps {
   initialLog?: Log | null;
   /** When opening from a project detail page, pre-select this project */
   defaultProjectId?: string | null;
+  /** When opening from a calendar day panel, pre-select this date (YYYY-MM-DD) */
+  defaultDate?: string | null;
   onClose: () => void;
   onSubmit: (data: {
     title: string;
@@ -30,6 +32,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
   isOpen,
   initialLog,
   defaultProjectId,
+  defaultDate,
   onClose,
   onSubmit,
   onComplete,
@@ -86,7 +89,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
         setTitle('');
         setDescription('');
         const { date: d, time: t } = getDefaultNewLogDateTime();
-        setDate(d);
+        setDate(defaultDate || d);
         setTime(t);
         setProjectId(defaultProjectId || '');
       }
@@ -106,7 +109,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initialLog, defaultProjectId]);
+  }, [isOpen, initialLog, defaultProjectId, defaultDate]);
 
   useEffect(() => {
     if (!isOpen) return;

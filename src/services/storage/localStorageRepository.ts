@@ -20,6 +20,17 @@ export class LocalStorageRepository implements StorageRepository {
   private listeners: Set<StorageListener> = new Set();
   private cachedData: AppDataSchema | null = null;
 
+  constructor() {
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY || event.key === null) {
+          this.cachedData = this.loadRawData();
+          this.notifyListeners();
+        }
+      });
+    }
+  }
+
   public getSnapshot(): AppDataSchema {
     if (!this.cachedData) {
       this.cachedData = this.loadRawData();

@@ -14,6 +14,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
   const {
     projects,
     activeLogs,
+    completedLogs,
     createProject,
     updateProject,
     deleteProject,
@@ -275,7 +276,8 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
         project={deletingProject}
         affectedLogCount={
           deletingProject
-            ? activeLogs.filter((l) => l.projectId === deletingProject.id).length
+            ? activeLogs.filter((l) => l.projectId === deletingProject.id).length +
+              completedLogs.filter((l) => l.projectId === deletingProject.id).length
             : 0
         }
         onCancel={() => setDeletingProject(null)}
