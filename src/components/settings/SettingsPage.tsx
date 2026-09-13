@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Download, Moon, Sun, Type, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useStorage } from '../../hooks/useStorage';
+import { useAuth } from '../../context/AuthProvider';
 import type { AppDataSchema, AppFontSize, AppTheme } from '../../types';
 import { createBackup, downloadBackupFile, validateBackup } from '../../utils/backup';
 import './SettingsPage.css';
@@ -15,6 +16,7 @@ export const SettingsPage: React.FC = () => {
     exportData,
     importData,
   } = useStorage();
+  const { signOut, user } = useAuth();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -194,6 +196,38 @@ export const SettingsPage: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Account Section */}
+      <section className="settings-section" aria-labelledby="account-heading">
+        <h2 id="account-heading" className="settings-section-title">
+          ACCOUNT
+        </h2>
+
+        <div className="settings-card">
+          <div className="settings-item-info">
+            <span className="settings-item-name">Signed In As</span>
+            <span className="settings-item-desc">
+              <strong>{user?.email}</strong>
+            </span>
+          </div>
+
+          <div className="settings-data-actions">
+            <button
+              type="button"
+              className="settings-action-btn secondary"
+              onClick={async () => {
+                try {
+                  await signOut();
+                } catch (e) {
+                  console.error('Failed to sign out', e);
+                }
+              }}
+            >
+              <span>SIGN OUT</span>
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* Data Backup & Restore Section */}
       <section className="settings-section" aria-labelledby="data-heading">

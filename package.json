@@ -7,11 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "tsx tests/unit-and-logic.test.ts",
+    "test": "tsx tests/unit-and-logic.test.ts && tsx tests/auth.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "^5.3.0",
+    "@supabase/supabase-js": "^2.116.0",
     "lucide-react": "^1.43.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

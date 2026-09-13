@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StorageProvider } from './context/StorageProvider';
+import { AuthProvider, useAuth } from './context/AuthProvider';
 import { useStorage } from './hooks/useStorage';
 import type { NavigationTab, Log, Project } from './types';
 import { useRealtimeTicker } from './hooks/useRealtimeTicker';
@@ -15,10 +16,13 @@ import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
 import { CalendarPage } from './components/calendar/CalendarPage';
 import { SearchPage } from './components/search/SearchPage';
 import { SettingsPage } from './components/settings/SettingsPage';
+import { LoginPage } from './components/auth/LoginPage';
+import { SignUpPage } from './components/auth/SignUpPage';
+import { ForgotPasswordFlow } from './components/auth/ForgotPasswordFlow';
 
 import { getRouteFromPath, getPathFromRoute } from './utils/routing';
 
-const TodopMain: React.FC = () => {
+const ProtectedApp: React.FC = () => {
   const getInitialRoute = () => {
     if (typeof window !== 'undefined') {
       return getRouteFromPath(window.location.pathname);
@@ -221,10 +225,63 @@ const TodopMain: React.FC = () => {
   );
 };
 
-export default function App() {
+const AuthRouter: React.FC = () => {
+  const { session, loading, isRecovery } = useAuth();
+  const [authView, setAuthView] = useState<'login' | 'signup' | 'forgot_password'>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
+      if (path === '/signup') return 'signup';
+    }
+    return 'login';
+  });
+
+  if (loading) {
+    return (
+      <div className="auth-loading-splash">
+        <div className="auth-loading-spinner" />
+        <h2>Loading TODOP...</h2>
+      </div>
+    );
+  }
+
+  const isRecovering = isRecovery || authView === 'forgot_password';
+
+  if (isRecovering) {
+    return <ForgotPasswordFlow onReturnToLogin={() => setAuthView('login')} />;
+  }
+
+  if (!session) {
+    if (authView === 'signup') {
+      return <SignUpPage onNavigateToLogin={() => setAuthView('login')} />;
+    } else {
+      return (
+        <LoginPage 
+          onNavigateToSignUp={() => setAuthView('signup')} 
+          onNavigateToForgotPassword={() => setAuthView('forgot_password')}
+        />
+      );
+    }
+  }
+
+  // If authenticated user is on /login or /signup, normalize URL to /
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
+    if (path === '/login' || path === '/signup') {
+      window.history.replaceState(null, '', '/');
+    }
+  }
+
   return (
     <StorageProvider>
-      <TodopMain />
+      <ProtectedApp />
     </StorageProvider>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthRouter />
+    </AuthProvider>
   );
 }
