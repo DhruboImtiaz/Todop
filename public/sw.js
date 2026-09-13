@@ -1,9 +1,9 @@
-const CACHE_NAME = 'todop-cache-v2';
+const CACHE_NAME = 'todop-cache-v3';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
+  '/favicon.png',
 ];
 
 self.addEventListener('install', (event) => {
