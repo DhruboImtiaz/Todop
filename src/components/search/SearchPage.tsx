@@ -70,9 +70,11 @@ export const SearchPage: React.FC = () => {
   return (
     <div className="search-page">
       {/* Header */}
-      <div className="search-page-header">
-        <h1 className="search-page-heading">SEARCH</h1>
-        <p className="search-page-subtitle">Find a log by name.</p>
+      <div className="page-header">
+        <div className="page-header-main">
+          <h1 className="page-title">SEARCH</h1>
+          <p className="page-subtitle">Find a log by name.</p>
+        </div>
       </div>
 
       {/* Prominent Search Input */}

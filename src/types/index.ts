@@ -27,7 +27,8 @@ export interface Project {
 }
 
 export type AppTheme = 'dark' | 'light';
-export type AppFontSize = 'small' | 'medium' | 'large';
+export type AppFontSize = 'xs' | 'small' | 'medium' | 'large';
+
 
 export interface Settings {
   theme: AppTheme;

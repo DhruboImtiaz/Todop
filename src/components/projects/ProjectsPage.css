@@ -1,26 +1,9 @@
 .projects-page {
-  padding: 16px var(--page-padding-x) 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
-/* ── Header ── */
-.projects-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.projects-page-heading {
-  font-family: var(--font-heading);
-  font-size: 1.467rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--text-primary);
-  margin: 0;
-}
 
 .projects-add-btn {
   font-family: var(--font-heading);

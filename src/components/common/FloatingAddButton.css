@@ -25,3 +25,9 @@
   background-color: var(--accent-active);
 }
 
+@media (min-width: 1024px) {
+  .floating-add-btn {
+    right: calc(max(var(--desktop-page-padding-x), (100vw - var(--sidebar-width) - var(--desktop-content-max-width)) / 2 + var(--desktop-page-padding-x)));
+    bottom: calc(var(--safe-bottom) + 32px);
+  }
+}

@@ -1,8 +1,7 @@
 .project-detail-page {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 var(--page-padding-x) 32px;
+  gap: 24px;
 }
 
 /* ── Sub-header row ── */
@@ -11,7 +10,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px 0 2px;
 }
 
 .project-detail-back-btn {
@@ -66,7 +64,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text-primary);
-  margin: 0 0 12px;
+  margin: 0;
   line-height: 1.2;
   word-break: break-word;
 }

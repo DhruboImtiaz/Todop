@@ -1,31 +1,9 @@
 .settings-page {
-  padding: 16px var(--page-padding-x) 40px;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* ── Header ── */
-.settings-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.settings-heading {
-  font-family: var(--font-heading);
-  font-size: 1.467rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.settings-subtitle {
-  font-size: 0.867rem;
-  color: var(--text-dim);
-  margin: 0;
-}
 
 /* ── Feedback Banners ── */
 .settings-feedback-banner {

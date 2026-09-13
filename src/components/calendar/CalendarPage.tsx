@@ -138,9 +138,11 @@ export const CalendarPage: React.FC = () => {
 
   return (
     <div className="calendar-page">
-      <div className="calendar-page-header">
-        <h1 className="calendar-page-heading">CALENDAR</h1>
-        <p className="calendar-page-subtitle">View tasks by deadline.</p>
+      <div className="page-header">
+        <div className="page-header-main">
+          <h1 className="page-title">CALENDAR</h1>
+          <p className="page-subtitle">View tasks by deadline.</p>
+        </div>
       </div>
 
       <CalendarGrid

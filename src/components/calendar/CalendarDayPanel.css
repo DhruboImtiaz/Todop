@@ -5,6 +5,12 @@
   margin-top: 24px;
 }
 
+@media (min-width: 1024px) {
+  .calendar-day-panel {
+    margin-top: 0;
+  }
+}
+
 .calendar-day-panel-header {
   display: flex;
   align-items: center;

@@ -4,25 +4,6 @@
   gap: 24px;
 }
 
-.upcoming-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.upcoming-title {
-  font-family: var(--font-heading);
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.upcoming-subtitle {
-  font-size: 0.933rem;
-  color: var(--text-secondary);
-}
 
 .upcoming-sections {
   display: flex;

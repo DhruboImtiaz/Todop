@@ -56,6 +56,11 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Desktop Layout Tokens */
+  --sidebar-width: 240px;
+  --desktop-content-max-width: 860px;
+  --desktop-page-padding-x: 32px;
 }
 
 /* Colors - Dark Theme Override */
@@ -127,6 +132,11 @@
 [data-font-size="medium"] {
   --font-size-base: 15px;
   font-size: 15px;
+}
+
+[data-font-size="xs"] {
+  --font-size-base: 11px;
+  font-size: 11px;
 }
 
 [data-font-size="small"] {

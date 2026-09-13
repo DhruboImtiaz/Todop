@@ -100,8 +100,12 @@ export function buildMonthGrid(year: number, month: number): CalendarDay[] {
     });
   }
 
-  // 3. Trailing days from next month to fill 42 cells
-  const remainingCells = 42 - grid.length;
+  // 3. Trailing days from next month to fill complete weeks
+  const totalCellsSoFar = grid.length;
+  const requiredRows = Math.ceil(totalCellsSoFar / 7);
+  const totalCellsRequired = requiredRows * 7;
+  const remainingCells = totalCellsRequired - totalCellsSoFar;
+  
   for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
     const d = new Date(next.year, next.month, dayNum);
     const dateKey = getLocalDateKey(d);

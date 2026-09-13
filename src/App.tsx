@@ -3,8 +3,10 @@ import { StorageProvider } from './context/StorageProvider';
 import { useStorage } from './hooks/useStorage';
 import type { NavigationTab, Log, Project } from './types';
 import { useRealtimeTicker } from './hooks/useRealtimeTicker';
+import { useIsDesktop } from './hooks/useIsDesktop';
 import { TopBar } from './components/layout/TopBar';
 import { BottomNav } from './components/layout/BottomNav';
+import { Sidebar } from './components/layout/Sidebar';
 import { UpcomingPage } from './components/logs/UpcomingPage';
 import { LogFormSheet } from './components/logs/LogFormSheet';
 import { FloatingAddButton } from './components/common/FloatingAddButton';
@@ -124,83 +126,97 @@ const TodopMain: React.FC = () => {
   const showProjectDetail = currentTab === 'projects' && activeProject !== null;
   const showProjectList = currentTab === 'projects' && activeProject === null;
 
+  const isDesktop = useIsDesktop();
+
+  const renderContent = () => (
+    <>
+      {currentTab === 'upcoming' && (
+        <UpcomingPage
+          logs={activeLogs}
+          currentTimestamp={currentTimestamp}
+          onCompleteLog={handleComplete}
+          onEditLog={handleOpenEdit}
+          onDeleteLog={handleDelete}
+          onOpenCreateSheet={handleOpenCreate}
+        />
+      )}
+
+      {showProjectList && (
+        <ProjectsPage
+          onNavigateToProject={(projectId) => navigateTo('projects', projectId)}
+        />
+      )}
+
+      {showProjectDetail && activeProject && (
+        <ProjectDetailPage
+          project={activeProject}
+          onBack={() => navigateTo('projects', null)}
+        />
+      )}
+
+      {currentTab === 'calendar' && (
+        <CalendarPage />
+      )}
+
+      {currentTab === 'search' && (
+        <SearchPage />
+      )}
+
+      {currentTab === 'settings' && (
+        <SettingsPage />
+      )}
+
+      {/* Floating Add Button (only on Upcoming) */}
+      {currentTab === 'upcoming' && (
+        <FloatingAddButton onClick={handleOpenCreate} />
+      )}
+
+      {/* Add/Edit Log Bottom Sheet (Upcoming context only) */}
+      {currentTab === 'upcoming' && (
+        <LogFormSheet
+          isOpen={isSheetOpen}
+          initialLog={editingLog}
+          onClose={handleCloseSheet}
+          onSubmit={handleFormSubmit}
+          onComplete={async (id: string) => {
+            await handleComplete(id);
+            handleCloseSheet();
+          }}
+          onDelete={async (id: string) => {
+            await handleDelete(id);
+            handleCloseSheet();
+          }}
+        />
+      )}
+    </>
+  );
+
   return (
     <div className="app-viewport-wrapper">
-      <div className="app-container">
-        {/* Fixed Header */}
-        <TopBar
-          currentTab={currentTab}
-          onNavigate={handleNavigate}
-        />
-
-        {/* Main Content Area */}
-        <main className="app-content" id="main-content">
-          {currentTab === 'upcoming' && (
-            <UpcomingPage
-              logs={activeLogs}
-              currentTimestamp={currentTimestamp}
-              onCompleteLog={handleComplete}
-              onEditLog={handleOpenEdit}
-              onDeleteLog={handleDelete}
-              onOpenCreateSheet={handleOpenCreate}
-            />
-          )}
-
-          {showProjectList && (
-            <ProjectsPage
-              onNavigateToProject={(projectId) => navigateTo('projects', projectId)}
-            />
-          )}
-
-          {showProjectDetail && activeProject && (
-            <ProjectDetailPage
-              project={activeProject}
-              onBack={() => navigateTo('projects', null)}
-            />
-          )}
-
-          {currentTab === 'calendar' && (
-            <CalendarPage />
-          )}
-
-          {currentTab === 'search' && (
-            <SearchPage />
-          )}
-
-          {currentTab === 'settings' && (
-            <SettingsPage />
-          )}
-        </main>
-
-        {/* Floating Add Button (only on Upcoming) */}
-        {currentTab === 'upcoming' && (
-          <FloatingAddButton onClick={handleOpenCreate} />
-        )}
-
-        {/* Fixed Bottom Navigation */}
-        <BottomNav
-          currentTab={currentTab}
-          onSelectTab={handleNavigate}
-        />
-
-        {/* Add/Edit Log Bottom Sheet (Upcoming context only) */}
-        {currentTab === 'upcoming' && (
-          <LogFormSheet
-            isOpen={isSheetOpen}
-            initialLog={editingLog}
-            onClose={handleCloseSheet}
-            onSubmit={handleFormSubmit}
-            onComplete={async (id: string) => {
-              await handleComplete(id);
-              handleCloseSheet();
-            }}
-            onDelete={async (id: string) => {
-              await handleDelete(id);
-              handleCloseSheet();
-            }}
+      {isDesktop ? (
+        <div className="app-shell-desktop">
+          <Sidebar currentTab={currentTab} onSelectTab={handleNavigate} />
+          <main className="app-main-area" id="main-content">
+            <div className="app-content">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
+      ) : (
+        <div className="app-container">
+          <TopBar
+            currentTab={currentTab}
+            onNavigate={handleNavigate}
           />
-        )}
-      </div>
+          <main className="app-content" id="main-content">
+            {renderContent()}
+          </main>
+          <BottomNav
+            currentTab={currentTab}
+            onSelectTab={handleNavigate}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -132,6 +132,7 @@ export class LocalStorageRepository implements StorageRepository {
           modified = true;
         }
         if (
+          parsed.settings.fontSize !== 'xs' &&
           parsed.settings.fontSize !== 'small' &&
           parsed.settings.fontSize !== 'medium' &&
           parsed.settings.fontSize !== 'large'

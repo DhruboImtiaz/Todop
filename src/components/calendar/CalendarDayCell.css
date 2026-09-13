@@ -5,8 +5,8 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  aspect-ratio: 1;
-  min-height: 44px;
+  height: 52px;
+  box-sizing: border-box;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);

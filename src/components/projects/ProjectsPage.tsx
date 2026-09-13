@@ -124,8 +124,10 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
 
   return (
     <div className="projects-page">
-      <div className="projects-page-header">
-        <h1 className="projects-page-heading">Projects</h1>
+      <div className="page-header">
+        <div className="page-header-main">
+          <h1 className="page-title">Projects</h1>
+        </div>
         <button
           type="button"
           id="new-project-btn-top"

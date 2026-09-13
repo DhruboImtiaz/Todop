@@ -26,9 +26,10 @@ export const SettingsPage: React.FC = () => {
 
   const currentTheme: AppTheme = settings?.theme === 'dark' ? 'dark' : 'light';
   const currentFontSize: AppFontSize =
-    settings?.fontSize === 'small' || settings?.fontSize === 'large'
+    settings?.fontSize === 'xs' || settings?.fontSize === 'small' || settings?.fontSize === 'large'
       ? settings?.fontSize
       : 'medium';
+
 
   const handleThemeChange = async (theme: AppTheme) => {
     if (theme === currentTheme) return;
@@ -150,9 +151,11 @@ export const SettingsPage: React.FC = () => {
       />
 
       {/* Header */}
-      <div className="settings-header">
-        <h1 className="settings-heading">SETTINGS</h1>
-        <p className="settings-subtitle">Customize your TODOP experience.</p>
+      <div className="page-header">
+        <div className="page-header-main">
+          <h1 className="page-title">SETTINGS</h1>
+          <p className="page-subtitle">Customize your TODOP experience.</p>
+        </div>
       </div>
 
       {/* Feedback Messages */}
@@ -291,6 +294,17 @@ export const SettingsPage: React.FC = () => {
             role="radiogroup"
             aria-label="Text Size"
           >
+            <button
+              type="button"
+              className={`segmented-control-btn ${currentFontSize === 'xs' ? 'active' : ''}`}
+              role="radio"
+              aria-checked={currentFontSize === 'xs'}
+              onClick={() => handleFontSizeChange('xs')}
+            >
+              <Type size={11} strokeWidth={2} />
+              <span>XS</span>
+            </button>
+
             <button
               type="button"
               className={`segmented-control-btn ${currentFontSize === 'small' ? 'active' : ''}`}

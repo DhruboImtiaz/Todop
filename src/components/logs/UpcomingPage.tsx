@@ -59,11 +59,13 @@ export const UpcomingPage: React.FC<UpcomingPageProps> = ({
 
   return (
     <section className="upcoming-page" aria-labelledby="upcoming-page-heading">
-      <div className="upcoming-header">
-        <h1 id="upcoming-page-heading" className="upcoming-title">
-          UPCOMING
-        </h1>
-        <p className="upcoming-subtitle">Your tasks, at a glance</p>
+      <div className="page-header">
+        <div className="page-header-main">
+          <h1 id="upcoming-page-heading" className="page-title">
+            UPCOMING
+          </h1>
+          <p className="page-subtitle">Your tasks, at a glance</p>
+        </div>
       </div>
 
       {!hasLogs ? (

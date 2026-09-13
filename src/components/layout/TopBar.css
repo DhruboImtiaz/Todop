@@ -64,3 +64,8 @@
   color: var(--accent-nav-active);
 }
 
+@media (min-width: 1024px) {
+  .top-bar-header {
+    display: none;
+  }
+}

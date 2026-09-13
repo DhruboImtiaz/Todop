@@ -58,3 +58,9 @@
   justify-content: center;
   position: relative;
 }
+
+@media (min-width: 1024px) {
+  .bottom-nav-bar {
+    display: none;
+  }
+}

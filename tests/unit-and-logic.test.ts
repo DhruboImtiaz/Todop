@@ -594,6 +594,13 @@ async function testRepository() {
   assert.equal(toLarge.fontSize, 'large');
   console.log('✓ 7. Font size can change medium -> large');
 
+  // Test 7b: Font size can change medium -> xs
+  await freshRepo.updateSettings({ fontSize: 'medium' });
+  const toXs = await freshRepo.updateSettings({ fontSize: 'xs' });
+  assert.equal(toXs.fontSize, 'xs');
+  console.log('✓ 7b. Font size can change medium -> xs');
+
+
   // Test 8 & 9: Updating settings does not modify logs or projects
   const sampleProject = await freshRepo.createProject('Settings Test Project');
   const sampleLog = await freshRepo.createLog({
@@ -1513,10 +1520,10 @@ async function testRepository() {
   // --- Phase 5: Calendar Tests ---
   console.log('\n--- Phase 5: Calendar View Logic Tests ---');
 
-  // Test 1: buildMonthGrid returns exactly 42 days (6 rows x 7 cols)
+  // Test 1: buildMonthGrid returns complete weeks based on required days
   const gridJan2025 = buildMonthGrid(2025, 0); // Jan 2025
-  assert.equal(gridJan2025.length, 42);
-  console.log('✓ 1. buildMonthGrid returns exactly 42 days (6 rows x 7 cols)');
+  assert.equal(gridJan2025.length, 35);
+  console.log('✓ 1. buildMonthGrid returns complete weeks based on required days (Jan 2025 -> 35 cells)');
 
   // Test 2: Monday-first week grid verification
   // 2025-01-01 is Wednesday. In Monday-first, index 0=Mon, 1=Tue, 2=Wed.
@@ -1541,7 +1548,8 @@ async function testRepository() {
   }
   const janDays = gridJan2025.filter((c) => c.isCurrentMonth);
   assert.equal(janDays.length, 31);
-  console.log('✓ 3. All 42 grid cells contain valid dayNumber, dateKey, isCurrentMonth, isToday flags (31 days for Jan)');
+  console.log('✓ 3. All cells contain valid properties');
+
 
   // Test 4: prevMonth wraps from January (0) to December (11) of previous year
   const prevFromJan = prevMonth(2025, 0);
@@ -1633,19 +1641,33 @@ async function testRepository() {
   assert.equal(getLocalDateKey(lateNightIso), '2025-07-31');
   console.log('✓ 13. Late night local deadline (23:59) maps to the correct local day');
 
-  // Test 14: February non-leap year (2025: 28 days)
+  // Test 14: February non-leap year (2025: 28 days, starts Saturday, needs 35 cells)
   const feb2025 = buildMonthGrid(2025, 1);
   const feb2025Days = feb2025.filter((c) => c.isCurrentMonth);
   assert.equal(feb2025Days.length, 28);
-  assert.equal(feb2025.length, 42);
-  console.log('✓ 14. February in non-leap year (2025) has exactly 28 days in 42-cell grid');
+  assert.equal(feb2025.length, 35);
+  console.log('✓ 14. February in non-leap year (2025) has exactly 28 days in 35-cell grid');
 
-  // Test 15: February leap year (2024: 29 days)
+  // Test 15: February leap year (2024: 29 days, starts Thursday, needs 35 cells)
   const feb2024 = buildMonthGrid(2024, 1);
   const feb2024Days = feb2024.filter((c) => c.isCurrentMonth);
   assert.equal(feb2024Days.length, 29);
-  assert.equal(feb2024.length, 42);
-  console.log('✓ 15. February in leap year (2024) has exactly 29 days in 42-cell grid');
+  assert.equal(feb2024.length, 35);
+  console.log('✓ 15. February in leap year (2024) has exactly 29 days in 35-cell grid');
+
+  // Test 15b: Dynamic row generation tests
+  const sep2026 = buildMonthGrid(2026, 8); // Sept 2026: 30 days, starts Tuesday -> 35 cells
+  assert.equal(sep2026.length, 35);
+  console.log('✓ 15b-1. September 2026 produces 35 cells (5 rows)');
+
+  const feb2021 = buildMonthGrid(2021, 1); // Feb 2021: 28 days, starts Monday -> 28 cells
+  assert.equal(feb2021.length, 28);
+  console.log('✓ 15b-2. February 2021 produces 28 cells (4 rows)');
+
+  const may2021 = buildMonthGrid(2021, 4); // May 2021: 31 days, starts Saturday -> 42 cells
+  assert.equal(may2021.length, 42);
+  console.log('✓ 15b-3. May 2021 produces 42 cells (6 rows)');
+
 
   // Test 16: Defensive skip of invalid / missing deadlines
   const weirdLogs = [
