@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light dark;
   /* Colors - Light Theme (Default) */
   --bg-base: #F4F5F7;
   --bg-card: #FFFFFF;
@@ -65,6 +66,7 @@
 
 /* Colors - Dark Theme Override */
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-base: #090A0C;
   --bg-card: #111318;
   --bg-card-hover: #161920;
@@ -98,6 +100,7 @@
 
 /* Explicit Light Theme attribute (matches root default) */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-base: #F4F5F7;
   --bg-card: #FFFFFF;
   --bg-card-hover: #EAECEF;
