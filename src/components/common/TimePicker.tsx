@@ -68,10 +68,6 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, disable
 
     if (window.innerWidth < 480) {
       setPopoverStyle({
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
         zIndex: 100000,
         opacity: 1,
         pointerEvents: 'auto',
@@ -145,7 +141,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, disable
           
           return (
             <div
-              key={num}
+              key={`${mode}-${num}`}
               className={`clock-number ${isActive ? 'active' : ''}`}
               style={{ left: `${cx}px`, top: `${cy}px` }}
               onClick={() => {

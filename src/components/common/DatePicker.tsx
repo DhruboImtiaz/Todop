@@ -65,10 +65,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disable
 
     if (window.innerWidth < 480) {
       setPopoverStyle({
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
         zIndex: 100000,
         opacity: 1,
         pointerEvents: 'auto',
