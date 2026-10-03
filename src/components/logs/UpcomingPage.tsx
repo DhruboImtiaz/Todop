@@ -23,12 +23,15 @@ export const UpcomingPage: React.FC<UpcomingPageProps> = ({
   onOpenCreateSheet,
 }) => {
   // Sort logs primarily by deadline ascending (overdue first, then nearest upcoming deadlines)
+  // Only include logs that have a deadline
   const sortedLogs = useMemo(() => {
-    return [...logs].sort((a, b) => {
-      const timeA = new Date(a.deadline).getTime();
-      const timeB = new Date(b.deadline).getTime();
-      return timeA - timeB;
-    });
+    return [...logs]
+      .filter((log) => log.deadline !== undefined)
+      .sort((a, b) => {
+        const timeA = new Date(a.deadline!).getTime();
+        const timeB = new Date(b.deadline!).getTime();
+        return timeA - timeB;
+      });
   }, [logs]);
 
   // Group into sections
@@ -55,7 +58,7 @@ export const UpcomingPage: React.FC<UpcomingPageProps> = ({
     };
   }, [sortedLogs, currentTimestamp]);
 
-  const hasLogs = logs.length > 0;
+  const hasLogs = overdueLogs.length > 0 || todayLogs.length > 0 || upcomingLogs.length > 0;
 
   return (
     <section className="upcoming-page" aria-labelledby="upcoming-page-heading">

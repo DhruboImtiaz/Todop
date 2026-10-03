@@ -3,7 +3,7 @@ import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types
 export interface NewLogInput {
   title: string;
   description?: string;
-  deadline: string; // ISO 8601 string
+  deadline?: string; // ISO 8601 string, optional for project logs
   projectId?: string | null;
   subtasks?: Subtask[];
 }

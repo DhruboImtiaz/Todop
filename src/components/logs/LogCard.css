@@ -146,10 +146,16 @@
 }
 
 /* Subtasks Progress Indicator */
+.log-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .log-card-subtasks {
   display: flex;
   align-items: center;
-  margin-top: -2px;
 }
 
 .subtasks-progress-text {

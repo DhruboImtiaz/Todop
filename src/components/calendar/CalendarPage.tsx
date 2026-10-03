@@ -100,7 +100,7 @@ export const CalendarPage: React.FC = () => {
   const handleFormSubmit = async (data: {
     title: string;
     description?: string;
-    deadline: string;
+    deadline?: string;
     projectId?: string;
     draftSubtasks?: string[];
   }) => {

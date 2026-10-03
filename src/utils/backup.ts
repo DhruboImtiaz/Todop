@@ -169,11 +169,13 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
         error: `MALFORMED LOG RECORD: Log "${String(l.id)}" is missing a valid title.`,
       };
     }
-    if (typeof l.deadline !== 'string' || isNaN(Date.parse(l.deadline))) {
-      return {
-        valid: false,
-        error: `MALFORMED LOG RECORD: Log "${String(l.title)}" has an invalid deadline.`,
-      };
+    if (l.deadline !== undefined) {
+      if (typeof l.deadline !== 'string' || isNaN(Date.parse(l.deadline))) {
+        return {
+          valid: false,
+          error: `MALFORMED LOG RECORD: Log "${String(l.title)}" has an invalid deadline.`,
+        };
+      }
     }
     if (typeof l.completed !== 'boolean') {
       return {
@@ -256,7 +258,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
       id: l.id as string,
       title: (l.title as string).trim(),
       description: typeof l.description === 'string' ? l.description.trim() || undefined : undefined,
-      deadline: l.deadline as string,
+      deadline: l.deadline as string | undefined,
       projectId: (l.projectId as string | null) ?? null,
       completed: l.completed as boolean,
       subtasks: validatedSubtasks,

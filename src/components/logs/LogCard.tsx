@@ -129,23 +129,29 @@ export const LogCard: React.FC<LogCardProps> = ({
         </div>
       </div>
 
-      {log.subtasks && log.subtasks.length > 0 && (
-        <div className="log-card-subtasks" aria-hidden="true">
-          <span className="subtasks-progress-text">
-            {log.subtasks.filter((s) => s.completed).length} / {log.subtasks.length} subtasks
-          </span>
+      {((log.subtasks && log.subtasks.length > 0) || (log.deadline || log.completed)) && (
+        <div className="log-card-footer">
+          {log.subtasks && log.subtasks.length > 0 && (
+            <div className="log-card-subtasks" aria-hidden="true">
+              <span className="subtasks-progress-text">
+                {log.subtasks.filter((s) => s.completed).length} / {log.subtasks.length} subtasks
+              </span>
+            </div>
+          )}
+
+          {(!log.deadline && !log.completed) ? null : (
+            <div className="log-card-countdown" aria-live="polite">
+              {log.completed ? (
+                <span className="completed-tag">COMPLETED</span>
+              ) : countdown.isOverdue ? (
+                <span className="overdue-tag">OVERDUE</span>
+              ) : (
+                <span>{countdown.label}</span>
+              )}
+            </div>
+          )}
         </div>
       )}
-
-      <div className="log-card-countdown" aria-live="polite">
-        {log.completed ? (
-          <span className="completed-tag">COMPLETED</span>
-        ) : countdown.isOverdue ? (
-          <span className="overdue-tag">OVERDUE</span>
-        ) : (
-          <span>{countdown.label}</span>
-        )}
-      </div>
 
       {menuOpen && (
         <div ref={menuRef} className="log-overflow-dropdown" role="menu">

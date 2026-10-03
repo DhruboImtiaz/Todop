@@ -274,7 +274,7 @@ export class LocalStorageRepository implements StorageRepository {
       ...current,
       title: input.title !== undefined ? input.title.trim() : current.title,
       description: input.description !== undefined ? input.description.trim() || undefined : current.description,
-      deadline: input.deadline !== undefined ? input.deadline : current.deadline,
+      deadline: 'deadline' in input ? input.deadline : current.deadline,
       projectId: input.projectId !== undefined ? input.projectId : current.projectId ?? null,
       completed: willBeCompleted,
       subtasks: nextSubtasks,

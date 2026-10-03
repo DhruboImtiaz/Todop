@@ -7,6 +7,8 @@ import {
   localDateTimeToIso,
 } from '../../utils/time';
 import { useStorage } from '../../hooks/useStorage';
+import { TimePicker } from '../common/TimePicker';
+import { DatePicker } from '../common/DatePicker';
 import './LogFormSheet.css';
 
 interface LogFormSheetProps {
@@ -20,7 +22,7 @@ interface LogFormSheetProps {
   onSubmit: (data: {
     title: string;
     description?: string;
-    deadline: string;
+    deadline?: string;
     projectId?: string;
     draftSubtasks?: string[];
   }) => void;
@@ -60,6 +62,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [projectId, setProjectId] = useState('');
+  const [deadlineMode, setDeadlineMode] = useState<'none' | 'set'>('set');
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -81,17 +84,31 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
       if (initialLog) {
         setTitle(initialLog.title);
         setDescription(initialLog.description || '');
-        const { date: d, time: t } = isoToLocalDateAndTime(initialLog.deadline);
-        setDate(d);
-        setTime(t);
+        if (initialLog.deadline) {
+          const { date: d, time: t } = isoToLocalDateAndTime(initialLog.deadline);
+          setDate(d);
+          setTime(t);
+          setDeadlineMode('set');
+        } else {
+          setDate('');
+          setTime('');
+          setDeadlineMode('none');
+        }
         setProjectId(initialLog.projectId || '');
       } else {
         setTitle('');
         setDescription('');
-        const { date: d, time: t } = getDefaultNewLogDateTime();
-        setDate(defaultDate || d);
-        setTime(t);
         setProjectId(defaultProjectId || '');
+        if (defaultProjectId) {
+          setDate('');
+          setTime('');
+          setDeadlineMode('none');
+        } else {
+          const { date: d, time: t } = getDefaultNewLogDateTime();
+          setDate(defaultDate || d);
+          setTime(t);
+          setDeadlineMode('set');
+        }
       }
       setDraftSubtasks([]);
       setIsAddingSubtask(false);
@@ -197,12 +214,15 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
       titleInputRef.current?.focus();
       return;
     }
-    if (!date) {
+    const isProjectContext = Boolean(projectId);
+    const isNoDeadline = isProjectContext && deadlineMode === 'none';
+
+    if (!isNoDeadline && !date) {
       setError('Please select a deadline date');
       return;
     }
 
-    const isoDeadline = localDateTimeToIso(date, time || '23:59');
+    const isoDeadline = !isNoDeadline && date ? localDateTimeToIso(date, time || '23:59') : undefined;
 
     if (initialLog) {
       // For existing logs, subtasks are already saved directly in repository
@@ -524,34 +544,63 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
             )}
           </div>
 
-          <div className="form-grid-row">
+          {Boolean(projectId) && (
             <div className="form-field">
-              <label htmlFor="log-date-input" className="form-label">
-                Deadline Date
-              </label>
-              <input
-                id="log-date-input"
-                type="date"
-                className="form-input"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
+              <span className="form-label">DEADLINE</span>
+              <div className="deadline-mode-toggle" style={{ display: 'flex', gap: '16px', marginTop: '8px', marginBottom: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="deadlineMode"
+                    value="none"
+                    checked={deadlineMode === 'none'}
+                    onChange={() => {
+                      setDeadlineMode('none');
+                      setDate('');
+                      setTime('');
+                    }}
+                    style={{ margin: 0, cursor: 'pointer' }}
+                  />
+                  No deadline
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="deadlineMode"
+                    value="set"
+                    checked={deadlineMode === 'set'}
+                    onChange={() => setDeadlineMode('set')}
+                    style={{ margin: 0, cursor: 'pointer' }}
+                  />
+                  Set deadline
+                </label>
+              </div>
             </div>
+          )}
 
-            <div className="form-field">
-              <label htmlFor="log-time-input" className="form-label">
-                Deadline Time
-              </label>
-              <input
-                id="log-time-input"
-                type="time"
-                className="form-input"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
+          {(!projectId || deadlineMode === 'set') && (
+            <div className="form-grid-row">
+              <div className="form-field">
+                <label htmlFor="log-date-input" className="form-label">
+                  Deadline Date
+                </label>
+                <DatePicker
+                  value={date}
+                  onChange={setDate}
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">
+                  Deadline Time
+                </label>
+                <TimePicker
+                  value={time}
+                  onChange={(val) => setTime(val)}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="form-field">
             <label htmlFor="log-project-input" className="form-label">

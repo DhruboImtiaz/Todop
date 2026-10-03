@@ -1950,10 +1950,82 @@ async function testRepository() {
 
   console.log('✓ 30. Completing all tasks removes date indicator, and reactivating any task immediately restores it');
 
+  console.log('\n--- Phase 6: Optional Deadlines Tests ---');
+
+  // Clear repo for isolated tests
+  globalThis.localStorage.setItem('todop_data', JSON.stringify({ version: 1, logs: [], projects: [], settings: { theme: 'light', fontSize: 'medium' } }));
+  const phase6Repo = new LocalStorageRepository();
+  const phase6Proj = await phase6Repo.createProject('Phase 6 Project');
+
+  // 1. Can create a project log with a deadline
+  const logWithDeadline = await phase6Repo.createLog({
+    title: 'With deadline',
+    deadline: '2026-11-05T14:00:00.000Z',
+    projectId: phase6Proj.id,
+  });
+  assert.equal(logWithDeadline.deadline, '2026-11-05T14:00:00.000Z');
+  console.log('✓ 1. Can create a project log with a deadline');
+
+  // 2. Can create a project log without a deadline
+  const logWithoutDeadline = await phase6Repo.createLog({
+    title: 'No deadline',
+    projectId: phase6Proj.id,
+  });
+  assert.equal(logWithoutDeadline.deadline, undefined);
+  console.log('✓ 2. Can create a project log without a deadline');
+
+  // 3. A log without a deadline correctly reports "No deadline" and is NOT overdue
+  const countdownWithout = getCountdown(logWithoutDeadline.deadline, Date.now());
+  assert.equal(countdownWithout.label, 'No deadline');
+  assert.equal(countdownWithout.isOverdue, false);
+  const sectionWithout = getLogSection(logWithoutDeadline.deadline, Date.now());
+  assert.equal(sectionWithout, 'upcoming'); // undated goes to upcoming by default
+  console.log('✓ 3. A log without a deadline correctly reports "No deadline" and is NOT overdue');
+
+  // 4. A log without a deadline does NOT appear in the Calendar view
+  const calendarLogs = await phase6Repo.getLogs();
+  const phase6Grouped = groupLogsByLocalDate(calendarLogs);
+  let foundUndatedInCalendar = false;
+  for (const dateLogs of phase6Grouped.values()) {
+    if (dateLogs.some(l => l.id === logWithoutDeadline.id)) {
+      foundUndatedInCalendar = true;
+    }
+  }
+  assert.equal(foundUndatedInCalendar, false);
+  console.log('✓ 4. A log without a deadline does NOT appear in the Calendar view');
+
+  // 5. Can add a deadline later to an undated log
+  const updatedLog = await phase6Repo.updateLog({
+    id: logWithoutDeadline.id,
+    deadline: '2026-12-01T12:00:00.000Z',
+  });
+  assert.equal(updatedLog.deadline, '2026-12-01T12:00:00.000Z');
+  console.log('✓ 5. Can add a deadline later to an undated log');
+
+  // 6. Backup logic supports exporting and restoring undated logs correctly
+  await phase6Repo.updateLog({
+    id: updatedLog.id,
+    deadline: undefined, // Wait, we can't easily set to undefined using updateLog with undefined property, but let's test backup with another undated log
+  });
+  const undatedLogForBackup = await phase6Repo.createLog({
+    title: 'Undated for backup',
+    projectId: phase6Proj.id,
+  });
+  
+  const rawDataForBackup = await phase6Repo.exportData();
+  const backup = createBackup(rawDataForBackup);
+  const phase6Validation = validateBackup(backup);
+  assert.equal(phase6Validation.valid, true);
+  if (phase6Validation.valid) {
+    const restoredUndated = phase6Validation.data.logs.find((l: Log) => l.id === undatedLogForBackup.id);
+    assert.equal(restoredUndated?.deadline, undefined);
+  }
+  console.log('✓ 6. Backup logic supports exporting and restoring undated logs correctly');
+
   // Restore original mock localStorage
   globalThis.localStorage = originalLocalStorage;
 
-  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3 + PHASE 4 STAGE 1 + PHASE 4 STAGE 2 + PHASE 5) PASSED ---');
+  console.log('\n--- ALL TODOP UNIT & LOGIC TESTS (PHASE 1 + PHASE 2A + PHASE 2B + PHASE 2C + PHASE 2D + PHASE 3 + PHASE 4 STAGE 1 + PHASE 4 STAGE 2 + PHASE 5 + PHASE 6) PASSED ---');
 }
 
 testRepository().catch((err) => {

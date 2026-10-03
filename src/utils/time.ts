@@ -39,7 +39,10 @@ export function isoToLocalDateAndTime(isoStr: string): { date: string; time: str
  * - Less than 1 hour: X M
  * - No seconds, no negative values.
  */
-export function getCountdown(deadlineIso: string, currentTimestamp: number = Date.now()): CountdownInfo {
+export function getCountdown(deadlineIso?: string | null, currentTimestamp: number = Date.now()): CountdownInfo {
+  if (!deadlineIso) {
+    return { label: 'No deadline', isOverdue: false };
+  }
   const target = new Date(deadlineIso).getTime();
   const diff = target - currentTimestamp;
 
@@ -80,7 +83,10 @@ export function getCountdown(deadlineIso: string, currentTimestamp: number = Dat
 /**
  * Determines whether a deadline belongs to 'overdue', 'today', or 'upcoming'.
  */
-export function getLogSection(deadlineIso: string, currentTimestamp: number = Date.now()): 'overdue' | 'today' | 'upcoming' {
+export function getLogSection(deadlineIso?: string | null, currentTimestamp: number = Date.now()): 'overdue' | 'today' | 'upcoming' {
+  if (!deadlineIso) {
+    return 'upcoming';
+  }
   const targetDate = new Date(deadlineIso);
   const targetTime = targetDate.getTime();
 

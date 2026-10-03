@@ -10,7 +10,7 @@ export interface Log {
   id: string;
   title: string;
   description?: string;
-  deadline: string; // ISO 8601 string, machine-readable
+  deadline?: string; // ISO 8601 string, machine-readable, optional for project logs
   projectId: string | null;
   completed: boolean;
   subtasks: Subtask[];

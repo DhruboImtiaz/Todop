@@ -34,10 +34,11 @@ export function searchLogs(logs: Log[], query: string): SearchResults {
 
   const active = matchingLogs
     .filter((log) => !log.completed)
-    .sort(
-      (a, b) =>
-        new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
-    );
+    .sort((a, b) => {
+      const timeA = a.deadline ? new Date(a.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+      const timeB = b.deadline ? new Date(b.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+      return timeA - timeB;
+    });
 
   const completed = matchingLogs
     .filter((log) => log.completed)
