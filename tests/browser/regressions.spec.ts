@@ -318,10 +318,11 @@ test('a worker update preserves open-app data and unrelated caches', async ({ pa
         && registration.active === navigator.serviceWorker.controller;
     });
     expect(await readData(reopened)).toEqual(before);
+    await expect.poll(() => reopened.evaluate(async () =>
+      (await caches.keys()).filter(key => key.startsWith('todop-cache-')),
+    )).toEqual([expect.stringMatching(/-upgrade$/)]);
     const keys = await reopened.evaluate(() => caches.keys());
     expect(keys).toContain('unrelated-app-cache');
-    expect(keys.filter(key => key.startsWith('todop-cache-'))).toHaveLength(1);
-    expect(keys.some(key => key.endsWith('-upgrade'))).toBe(true);
   } finally {
     await request.post('/__test/worker-revision');
   }
