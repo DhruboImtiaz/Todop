@@ -16,7 +16,7 @@ A sleek, mobile-first, local-first progressive web application (PWA) designed fo
   - **Global Font Scaling**: Responsive root `rem` scaling with **Small**, **Medium**, and **Large** settings.
   - **Typography**: 100% offline bundled [Plus Jakarta Sans](https://fontsource.org/fonts/plus-jakarta-sans) with zero external CDN dependencies.
 - **Local-First & Offline PWA**:
-  - Service Worker v2 caching application shell and bundled assets for seamless offline operation.
+  - Build-versioned service worker precaching the full application shell, bundled assets, fonts, and install icons before offline use. Updates activate after existing app tabs close.
   - Web App Manifest configured for standalone mobile installation.
   - Zero cloud, authentication, or network dependencies — all data is saved locally on the user's device.
 - **Atomic Backup & Restore**:
@@ -24,7 +24,7 @@ A sleek, mobile-first, local-first progressive web application (PWA) designed fo
   - Comprehensive pre-import validation and confirmation dialog before data replacement, with automatic rollback if persistence fails.
 - **Accessibility & Mobile Ergonomics**:
   - Full keyboard support (`Escape` key dismisses sheets, modals, and overflow menus cleanly).
-  - Minimum 44×44px touch targets on interactive controls for mobile comfort.
+  - Responsive picker dialogs with keyboard controls, focus restoration, and scrollable content on short mobile viewports.
   - High-contrast visual states for overdue items, active tabs, and focus rings.
 
 ---
@@ -67,7 +67,8 @@ TODOP/
 │   ├── App.tsx            # Main application layout & view router
 │   └── main.tsx           # Entry point & PWA service worker registration
 ├── tests/
-│   └── unit-and-logic.test.ts # 92 automated regression and logic tests
+│   ├── browser/             # Chrome/WebKit production regression tests
+│   └── unit-and-logic.test.ts # Storage, time, Search, Calendar and backup logic tests
 ├── netlify.toml           # Netlify build and routing configuration
 └── package.json
 ```
@@ -78,7 +79,7 @@ TODOP/
 
 ### Prerequisites
 
-- **Node.js**: v18.0.0 or later
+- **Node.js**: v24 or later (the version used in CI)
 - **npm**: v9.0.0 or later
 
 ### Installation
@@ -109,6 +110,19 @@ Execute the automated unit and logic test suite:
 npm test
 ```
 
+### Production Browser Tests
+
+Install the browser engines once, then run the mobile regression suite:
+
+```bash
+npx playwright install chromium webkit
+npm run test:e2e
+```
+
+The suite builds and serves the production app, including the same script policy as Netlify. It covers 390×844 scheduling, the 479/480px breakpoint, short viewports, countdown updates, Calendar/subtasks, project assignment/deletion, archive Search, first-visit offline reload, all text-size backup round trips, failed restores, and service-worker upgrades. Shared fixtures keep the checks consistent across Chromium and WebKit. Reports and failure traces are written to `playwright-report/` and `test-results/`.
+
+For a locally installed Google Chrome, use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:e2e`. Physical-device keyboard and installed-PWA behavior still require a device check.
+
 ### Code Quality & Linting
 
 Run Oxlint across the codebase:
@@ -125,7 +139,7 @@ Compile TypeScript and build the production distribution bundle:
 npm run build
 ```
 
-The optimized static assets will be output to the `dist/` directory.
+The optimized static assets will be output to the `dist/` directory. The final build step generates `dist/sw.js` from every emitted asset; run the complete build command when deploying rather than calling Vite alone.
 
 ### Preview Production Build
 
@@ -142,6 +156,10 @@ Visit `http://localhost:4173` in your browser.
 ## Deployment
 
 TODOP is live at **[todop7.netlify.app](https://todop7.netlify.app/)**, deployed via [Netlify](https://www.netlify.com/) with automatic continuous deployment from the `main` branch.
+
+### Script Policy
+
+The production response uses `script-src 'self'`. Startup appearance settings run in the bundled entry point, so no inline scripts are required. This also prevents Netlify's injected badge from covering mobile navigation, as described in [Netlify's badge documentation](https://docs.netlify.com/manage/projects/powered-by-netlify-badge/). Validate the header on the deployment when changing hosting configuration.
 
 ### Netlify Configuration
 

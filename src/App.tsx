@@ -1,3 +1,4 @@
+import { useLogFormSubmit } from './hooks/useLogFormSubmit';
 import React, { useState, useEffect } from 'react';
 import { StorageProvider } from './context/StorageProvider';
 import { useStorage } from './hooks/useStorage';
@@ -31,7 +32,7 @@ const TodopMain: React.FC = () => {
     () => getInitialRoute().projectId ?? null
   );
 
-  const { activeLogs, projects, createLog, updateLog, toggleLogCompletion, deleteLog, addSubtask } =
+  const { activeLogs, projects, toggleLogCompletion, deleteLog } =
     useStorage();
 
   // Resolve active project object from context (always fresh)
@@ -83,36 +84,7 @@ const TodopMain: React.FC = () => {
     setEditingLog(null);
   };
 
-  const handleFormSubmit = async (data: {
-    title: string;
-    description?: string;
-    deadline?: string;
-    projectId?: string;
-    draftSubtasks?: string[];
-  }) => {
-    if (editingLog) {
-      await updateLog({
-        id: editingLog.id,
-        title: data.title,
-        description: data.description,
-        deadline: data.deadline,
-        projectId: data.projectId ?? null,
-      });
-    } else {
-      const created = await createLog({
-        title: data.title,
-        description: data.description,
-        deadline: data.deadline,
-        projectId: data.projectId ?? null,
-      });
-      if (data.draftSubtasks && data.draftSubtasks.length > 0) {
-        for (const stTitle of data.draftSubtasks) {
-          await addSubtask(created.id, stTitle);
-        }
-      }
-    }
-    handleCloseSheet();
-  };
+  const handleFormSubmit = useLogFormSubmit(editingLog, handleCloseSheet);
 
   const handleComplete = async (id: string) => {
     await toggleLogCompletion(id);

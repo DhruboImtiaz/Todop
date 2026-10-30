@@ -1,3 +1,4 @@
+import { useLogFormSubmit } from '../../hooks/useLogFormSubmit';
 import React, { useState } from 'react';
 import type { Log } from '../../types';
 import { useStorage } from '../../hooks/useStorage';
@@ -18,11 +19,8 @@ export const CalendarPage: React.FC = () => {
   const {
     activeLogs,
     completedLogs,
-    createLog,
-    updateLog,
     toggleLogCompletion,
     deleteLog,
-    addSubtask,
   } = useStorage();
 
   const currentTimestamp = useRealtimeTicker(5000);
@@ -97,36 +95,7 @@ export const CalendarPage: React.FC = () => {
     setEditingLog(null);
   };
 
-  const handleFormSubmit = async (data: {
-    title: string;
-    description?: string;
-    deadline?: string;
-    projectId?: string;
-    draftSubtasks?: string[];
-  }) => {
-    if (editingLog) {
-      await updateLog({
-        id: editingLog.id,
-        title: data.title,
-        description: data.description,
-        deadline: data.deadline,
-        projectId: data.projectId ?? null,
-      });
-    } else {
-      const created = await createLog({
-        title: data.title,
-        description: data.description,
-        deadline: data.deadline,
-        projectId: data.projectId || null,
-      });
-      if (data.draftSubtasks && data.draftSubtasks.length > 0) {
-        for (const stTitle of data.draftSubtasks) {
-          await addSubtask(created.id, stTitle);
-        }
-      }
-    }
-    handleCloseSheet();
-  };
+  const handleFormSubmit = useLogFormSubmit(editingLog, handleCloseSheet);
 
   const handleComplete = async (id: string) => {
     await toggleLogCompletion(id);

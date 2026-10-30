@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, Trash2, Plus } from 'lucide-react';
-import type { Log } from '../../types';
+import type { Log, LogFormValues } from '../../types';
 import {
   getDefaultNewLogDateTime,
   isoToLocalDateAndTime,
@@ -19,19 +19,16 @@ interface LogFormSheetProps {
   /** When opening from a calendar day panel, pre-select this date (YYYY-MM-DD) */
   defaultDate?: string | null;
   onClose: () => void;
-  onSubmit: (data: {
-    title: string;
-    description?: string;
-    deadline?: string;
-    projectId?: string;
-    draftSubtasks?: string[];
-  }) => void;
+  onSubmit: (data: LogFormValues) => void | Promise<void>;
   onComplete?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export const LogFormSheet: React.FC<LogFormSheetProps> = ({
-  isOpen,
+export const LogFormSheet: React.FC<LogFormSheetProps> = (props) => props.isOpen ? (
+  <LogFormContent key={props.initialLog?.id ?? 'new'} {...props} />
+) : null;
+
+const LogFormContent: React.FC<LogFormSheetProps> = ({
   initialLog,
   defaultProjectId,
   defaultDate,
@@ -57,13 +54,20 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
       initialLog
     : null;
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [deadlineMode, setDeadlineMode] = useState<'none' | 'set'>('set');
+  const [title, setTitle] = useState(initialLog?.title ?? '');
+  const [description, setDescription] = useState(initialLog?.description ?? '');
+  const [projectId, setProjectId] = useState(initialLog?.projectId ?? defaultProjectId ?? '');
+  const [schedule, setSchedule] = useState<{ date: string; time: string; mode: 'none' | 'set' }>(() => {
+    if (initialLog?.deadline) return { ...isoToLocalDateAndTime(initialLog.deadline), mode: 'set' };
+    if (initialLog || defaultProjectId) return { date: '', time: '', mode: 'none' };
+    const defaults = getDefaultNewLogDateTime();
+    return { ...defaults, date: defaultDate || defaults.date, mode: 'set' };
+  });
+  const { date, time, mode: deadlineMode } = schedule;
+  const updateSchedule = (patch: Partial<typeof schedule>) => setSchedule(current => ({ ...current, ...patch }));
+  const canOmitDeadline = Boolean(projectId) || Boolean(initialLog && !initialLog.deadline);
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Subtasks state
@@ -80,56 +84,11 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
   const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      if (initialLog) {
-        setTitle(initialLog.title);
-        setDescription(initialLog.description || '');
-        if (initialLog.deadline) {
-          const { date: d, time: t } = isoToLocalDateAndTime(initialLog.deadline);
-          setDate(d);
-          setTime(t);
-          setDeadlineMode('set');
-        } else {
-          setDate('');
-          setTime('');
-          setDeadlineMode('none');
-        }
-        setProjectId(initialLog.projectId || '');
-      } else {
-        setTitle('');
-        setDescription('');
-        setProjectId(defaultProjectId || '');
-        if (defaultProjectId) {
-          setDate('');
-          setTime('');
-          setDeadlineMode('none');
-        } else {
-          const { date: d, time: t } = getDefaultNewLogDateTime();
-          setDate(defaultDate || d);
-          setTime(t);
-          setDeadlineMode('set');
-        }
-      }
-      setDraftSubtasks([]);
-      setIsAddingSubtask(false);
-      setSubtaskInput('');
-      setEditingSubtaskId(null);
-      setEditingTitle('');
-      setEditingDraftIndex(null);
-      setEditingDraftTitle('');
-      setError('');
-      setShowDeleteConfirm(false);
-
-      // Auto-focus title after sheet opens
-      const timer = setTimeout(() => {
-        titleInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, initialLog, defaultProjectId, defaultDate]);
+    const timer = setTimeout(() => titleInputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
@@ -142,9 +101,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showDeleteConfirm, onClose]);
-
-  if (!isOpen) return null;
+  }, [showDeleteConfirm, onClose]);
 
   // Subtask handlers for existing logs
   const handleAddSubtask = async () => {
@@ -206,16 +163,16 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
     setDraftSubtasks((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
     const cleanTitle = title.trim();
     if (!cleanTitle) {
       setError('Please enter a log name');
       titleInputRef.current?.focus();
       return;
     }
-    const isProjectContext = Boolean(projectId);
-    const isNoDeadline = isProjectContext && deadlineMode === 'none';
+    const isNoDeadline = canOmitDeadline && deadlineMode === 'none';
 
     if (!isNoDeadline && !date) {
       setError('Please select a deadline date');
@@ -224,23 +181,19 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
 
     const isoDeadline = !isNoDeadline && date ? localDateTimeToIso(date, time || '23:59') : undefined;
 
-    if (initialLog) {
-      // For existing logs, subtasks are already saved directly in repository
-      onSubmit({
+    setIsSaving(true);
+    try {
+      await onSubmit({
         title: cleanTitle,
         description: description.trim() || undefined,
         deadline: isoDeadline,
         projectId: projectId || undefined,
+        draftSubtasks: !initialLog && draftSubtasks.length ? draftSubtasks : undefined,
       });
-    } else {
-      // For new logs, pass draftSubtasks so they are created after the parent Log is created
-      onSubmit({
-        title: cleanTitle,
-        description: description.trim() || undefined,
-        deadline: isoDeadline,
-        projectId: projectId || undefined,
-        draftSubtasks: draftSubtasks.length > 0 ? draftSubtasks : undefined,
-      });
+    } catch {
+      setError('Could not save this log. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -544,33 +497,31 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
             )}
           </div>
 
-          {Boolean(projectId) && (
+          {canOmitDeadline && (
             <div className="form-field">
               <span className="form-label">DEADLINE</span>
-              <div className="deadline-mode-toggle" style={{ display: 'flex', gap: '16px', marginTop: '8px', marginBottom: '8px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+              <div className="deadline-mode-toggle" >
+                <label >
                   <input
                     type="radio"
                     name="deadlineMode"
                     value="none"
                     checked={deadlineMode === 'none'}
                     onChange={() => {
-                      setDeadlineMode('none');
-                      setDate('');
-                      setTime('');
+                      updateSchedule({ mode: 'none', date: '', time: '' });
                     }}
-                    style={{ margin: 0, cursor: 'pointer' }}
+
                   />
                   No deadline
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+                <label >
                   <input
                     type="radio"
                     name="deadlineMode"
                     value="set"
                     checked={deadlineMode === 'set'}
-                    onChange={() => setDeadlineMode('set')}
-                    style={{ margin: 0, cursor: 'pointer' }}
+                    onChange={() => updateSchedule({ mode: 'set' })}
+
                   />
                   Set deadline
                 </label>
@@ -578,25 +529,27 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
             </div>
           )}
 
-          {(!projectId || deadlineMode === 'set') && (
+          {(!canOmitDeadline || deadlineMode === 'set') && (
             <div className="form-grid-row">
               <div className="form-field">
                 <label htmlFor="log-date-input" className="form-label">
                   Deadline Date
                 </label>
                 <DatePicker
+                  id="log-date-input"
                   value={date}
-                  onChange={setDate}
+                  onChange={date => updateSchedule({ date })}
                 />
               </div>
 
               <div className="form-field">
-                <label className="form-label">
+                <label htmlFor="log-time-input" className="form-label">
                   Deadline Time
                 </label>
                 <TimePicker
+                  id="log-time-input"
                   value={time}
-                  onChange={(val) => setTime(val)}
+                  onChange={time => updateSchedule({ time })}
                 />
               </div>
             </div>
@@ -639,7 +592,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
           {/* Actions */}
           {isEditing && initialLog ? (
             <div className="form-sheet-actions edit-actions-stack">
-              <button type="submit" className="form-btn form-btn-primary">
+              <button type="submit" className="form-btn form-btn-primary" disabled={isSaving}>
                 Save Changes
               </button>
 
@@ -698,7 +651,7 @@ export const LogFormSheet: React.FC<LogFormSheetProps> = ({
               >
                 Cancel
               </button>
-              <button type="submit" className="form-btn form-btn-primary">
+              <button type="submit" className="form-btn form-btn-primary" disabled={isSaving}>
                 Create Log
               </button>
             </div>

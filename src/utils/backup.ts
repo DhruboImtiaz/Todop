@@ -1,3 +1,4 @@
+import { DEFAULT_SETTINGS, FONT_SIZES, isFontSize } from './settings';
 import type { AppDataSchema, Log, Project, Settings, Subtask } from '../types';
 
 export const CURRENT_BACKUP_VERSION = 1;
@@ -36,7 +37,7 @@ export function createBackup(data: AppDataSchema, exportedAt?: string): TodopBac
         subtasks: (l.subtasks || []).map((s) => ({ ...s })),
       })),
       projects: JSON.parse(JSON.stringify(data.projects || [])),
-      settings: JSON.parse(JSON.stringify(data.settings || { theme: 'light', fontSize: 'medium' })),
+      settings: JSON.parse(JSON.stringify(data.settings || DEFAULT_SETTINGS)),
     },
   };
 }
@@ -325,10 +326,10 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
       error: 'MALFORMED SETTINGS: Theme must be either "light" or "dark".',
     };
   }
-  if (s.fontSize !== 'small' && s.fontSize !== 'medium' && s.fontSize !== 'large') {
+  if (!isFontSize(s.fontSize)) {
     return {
       valid: false,
-      error: 'MALFORMED SETTINGS: Font size must be "small", "medium", or "large".',
+      error: `MALFORMED SETTINGS: Font size must be one of ${FONT_SIZES.join(', ')}.`,
     };
   }
 
@@ -336,10 +337,10 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
   const validSchema: AppDataSchema = {
     version: schemaVer as number,
     logs: validatedLogs,
-    projects: (dataPayload.projects as Project[]).sort((a, b) => a.order - b.order),
+    projects: [...dataPayload.projects as Project[]].sort((a, b) => a.order - b.order),
     settings: {
       theme: s.theme as 'light' | 'dark',
-      fontSize: s.fontSize as 'small' | 'medium' | 'large',
+      fontSize: s.fontSize,
     },
   };
 
