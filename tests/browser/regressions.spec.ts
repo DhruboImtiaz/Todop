@@ -310,6 +310,13 @@ test('a worker update preserves open-app data and unrelated caches', async ({ pa
     await context.setOffline(true);
     await reopened.goto('/settings');
     await expect(reopened.getByRole('heading', { name: 'SETTINGS', exact: true })).toBeVisible();
+    // Rendering can finish while the replacement worker is still activating.
+    await reopened.waitForFunction(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      return registration?.active?.state === 'activated'
+        && !registration.waiting && !registration.installing
+        && registration.active === navigator.serviceWorker.controller;
+    });
     expect(await readData(reopened)).toEqual(before);
     const keys = await reopened.evaluate(() => caches.keys());
     expect(keys).toContain('unrelated-app-cache');
