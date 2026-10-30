@@ -22,6 +22,11 @@
   background-color: var(--bg-card-hover);
 }
 
+/* Keep the menu above adjacent cards when :active creates a transform context. */
+.log-card.menu-open {
+  z-index: 21;
+}
+
 .log-card:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;

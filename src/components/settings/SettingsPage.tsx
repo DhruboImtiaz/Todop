@@ -1,3 +1,4 @@
+import { FONT_SIZES, isFontSize } from '../../utils/settings';
 import React, { useRef, useState, useEffect } from 'react';
 import { Download, Moon, Sun, Type, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useStorage } from '../../hooks/useStorage';
@@ -25,11 +26,7 @@ export const SettingsPage: React.FC = () => {
   const [restoreSuccess, setRestoreSuccess] = useState<string | null>(null);
 
   const currentTheme: AppTheme = settings?.theme === 'dark' ? 'dark' : 'light';
-  const currentFontSize: AppFontSize =
-    settings?.fontSize === 'xs' || settings?.fontSize === 'small' || settings?.fontSize === 'large'
-      ? settings?.fontSize
-      : 'medium';
-
+  const currentFontSize: AppFontSize = isFontSize(settings?.fontSize) ? settings.fontSize : 'medium';
 
   const handleThemeChange = async (theme: AppTheme) => {
     if (theme === currentTheme) return;
@@ -294,49 +291,14 @@ export const SettingsPage: React.FC = () => {
             role="radiogroup"
             aria-label="Text Size"
           >
-            <button
-              type="button"
-              className={`segmented-control-btn ${currentFontSize === 'xs' ? 'active' : ''}`}
-              role="radio"
-              aria-checked={currentFontSize === 'xs'}
-              onClick={() => handleFontSizeChange('xs')}
-            >
-              <Type size={11} strokeWidth={2} />
-              <span>XS</span>
-            </button>
-
-            <button
-              type="button"
-              className={`segmented-control-btn ${currentFontSize === 'small' ? 'active' : ''}`}
-              role="radio"
-              aria-checked={currentFontSize === 'small'}
-              onClick={() => handleFontSizeChange('small')}
-            >
-              <Type size={13} strokeWidth={2} />
-              <span>SMALL</span>
-            </button>
-
-            <button
-              type="button"
-              className={`segmented-control-btn ${currentFontSize === 'medium' ? 'active' : ''}`}
-              role="radio"
-              aria-checked={currentFontSize === 'medium'}
-              onClick={() => handleFontSizeChange('medium')}
-            >
-              <Type size={15} strokeWidth={2} />
-              <span>MEDIUM</span>
-            </button>
-
-            <button
-              type="button"
-              className={`segmented-control-btn ${currentFontSize === 'large' ? 'active' : ''}`}
-              role="radio"
-              aria-checked={currentFontSize === 'large'}
-              onClick={() => handleFontSizeChange('large')}
-            >
-              <Type size={17} strokeWidth={2.2} />
-              <span>LARGE</span>
-            </button>
+            {FONT_SIZES.map((size, index) => (
+              <button key={size} type="button" role="radio"
+                className={`segmented-control-btn ${currentFontSize === size ? 'active' : ''}`}
+                aria-checked={currentFontSize === size} onClick={() => handleFontSizeChange(size)}>
+                <Type size={11 + index * 2} strokeWidth={2} />
+                <span>{size.toUpperCase()}</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>

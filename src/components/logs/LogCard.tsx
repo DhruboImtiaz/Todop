@@ -94,7 +94,7 @@ export const LogCard: React.FC<LogCardProps> = ({
 
   return (
     <article
-      className={`log-card ${log.completed ? 'completed' : countdown.isOverdue ? 'overdue' : ''}`}
+      className={`log-card ${log.completed ? 'completed' : countdown.isOverdue ? 'overdue' : ''} ${menuOpen ? 'menu-open' : ''}`}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       tabIndex={0}

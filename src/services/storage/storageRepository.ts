@@ -6,6 +6,7 @@ export interface NewLogInput {
   deadline?: string; // ISO 8601 string, optional for project logs
   projectId?: string | null;
   subtasks?: Subtask[];
+  draftSubtasks?: string[];
 }
 
 export interface UpdateLogInput {

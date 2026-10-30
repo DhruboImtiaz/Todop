@@ -1,19 +1,20 @@
+import { DEFAULT_SETTINGS, STORAGE_KEY, isFontSize } from '../../utils/settings';
 import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types';
 import type { NewLogInput, StorageListener, StorageRepository, UpdateLogInput } from './storageRepository';
 
-const STORAGE_KEY = 'todop_app_data_v1';
 const CURRENT_SCHEMA_VERSION = 1;
-
-const DEFAULT_SETTINGS: Settings = {
-  theme: 'light',
-  fontSize: 'medium',
-};
 
 function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
   return `todop_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function createSubtask(title: string, now: string): Subtask {
+  const cleanTitle = title.trim();
+  if (!cleanTitle) throw new Error('Subtask title cannot be empty');
+  return { id: generateId(), title: cleanTitle, completed: false, createdAt: now, updatedAt: now };
 }
 
 export class LocalStorageRepository implements StorageRepository {
@@ -131,12 +132,7 @@ export class LocalStorageRepository implements StorageRepository {
           parsed.settings.theme = 'light';
           modified = true;
         }
-        if (
-          parsed.settings.fontSize !== 'xs' &&
-          parsed.settings.fontSize !== 'small' &&
-          parsed.settings.fontSize !== 'medium' &&
-          parsed.settings.fontSize !== 'large'
-        ) {
+        if (!isFontSize(parsed.settings.fontSize)) {
           parsed.settings.fontSize = 'medium';
           modified = true;
         }
@@ -229,7 +225,7 @@ export class LocalStorageRepository implements StorageRepository {
       deadline: input.deadline,
       projectId: input.projectId !== undefined ? input.projectId : null,
       completed: false,
-      subtasks: input.subtasks ? [...input.subtasks] : [],
+      subtasks: [...input.subtasks ?? [], ...(input.draftSubtasks ?? []).map(title => createSubtask(title, now))],
       createdAt: now,
       updatedAt: now,
     };
@@ -337,11 +333,8 @@ export class LocalStorageRepository implements StorageRepository {
   // --- Subtasks API ---
 
   public async addSubtask(logId: string, title: string): Promise<Subtask> {
-    const cleanTitle = title.trim();
-    if (!cleanTitle) {
-      throw new Error('Subtask title cannot be empty');
-    }
-
+    const now = new Date().toISOString();
+    const newSubtask = createSubtask(title, now);
     const data = this.loadRawData();
     const index = data.logs.findIndex((log) => log.id === logId);
     if (index === -1) {
@@ -349,16 +342,6 @@ export class LocalStorageRepository implements StorageRepository {
     }
 
     const current = data.logs[index];
-    const now = new Date().toISOString();
-
-    const newSubtask: Subtask = {
-      id: generateId(),
-      title: cleanTitle,
-      completed: false,
-      createdAt: now,
-      updatedAt: now,
-    };
-
     const updatedSubtasks = [...(current.subtasks || []), newSubtask];
     const updated: Log = {
       ...current,

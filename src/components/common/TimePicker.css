@@ -1,90 +1,4 @@
-.time-picker-container {
-  position: relative;
-  width: 100%;
-}
-
-.time-picker-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
-  cursor: pointer;
-  background-color: var(--bg-input);
-  transition: all 0.2s ease;
-}
-
-.time-picker-trigger:hover:not(:disabled) {
-  border-color: var(--border-focused);
-}
-
-.time-picker-trigger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: var(--bg-base);
-}
-
-.time-picker-icon {
-  color: var(--text-secondary);
-}
-
-.time-picker-popover {
-  z-index: 100000;
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  width: 260px;
-  overflow: hidden;
-  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.time-picker-mobile-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 99999;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (max-width: 479px) {
-  .time-picker-popover {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    animation: popInMobile 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-}
-
-@keyframes popInMobile {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) translateY(10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) translateY(0) scale(1);
-  }
-}
+.time-picker-popover { --picker-width: 260px; }
 
 .time-picker-header {
   background-color: var(--accent-primary);
@@ -103,6 +17,8 @@
 }
 
 .time-part {
+  font-size: inherit;
+  font-weight: inherit;
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.2s ease;
@@ -224,39 +140,4 @@
   height: 8px;
   border-radius: 50%;
   background-color: var(--accent-primary);
-}
-
-.time-picker-footer {
-  padding: 12px 20px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.footer-btn {
-  background: transparent;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.footer-btn.cancel {
-  color: var(--text-secondary);
-}
-
-.footer-btn.cancel:hover {
-  background-color: var(--bg-card-hover);
-}
-
-.footer-btn.ok {
-  color: var(--accent-primary);
-}
-
-.footer-btn.ok:hover {
-  background-color: rgba(142, 102, 255, 0.1);
 }

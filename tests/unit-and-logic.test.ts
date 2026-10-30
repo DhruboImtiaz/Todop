@@ -1,3 +1,5 @@
+import type { Log } from '../src/types';
+import { FONT_SIZES, STORAGE_KEY } from '../src/utils/settings';
 import assert from 'node:assert/strict';
 import { getCountdown, getLogSection, localDateTimeToIso, isoToLocalDateAndTime } from '../src/utils/time';
 import { LocalStorageRepository } from '../src/services/storage/localStorageRepository';
@@ -1953,7 +1955,7 @@ async function testRepository() {
   console.log('\n--- Phase 6: Optional Deadlines Tests ---');
 
   // Clear repo for isolated tests
-  globalThis.localStorage.setItem('todop_data', JSON.stringify({ version: 1, logs: [], projects: [], settings: { theme: 'light', fontSize: 'medium' } }));
+  globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, logs: [], projects: [], settings: { theme: 'light', fontSize: 'medium' } }));
   const phase6Repo = new LocalStorageRepository();
   const phase6Proj = await phase6Repo.createProject('Phase 6 Project');
 
@@ -2005,8 +2007,9 @@ async function testRepository() {
   // 6. Backup logic supports exporting and restoring undated logs correctly
   await phase6Repo.updateLog({
     id: updatedLog.id,
-    deadline: undefined, // Wait, we can't easily set to undefined using updateLog with undefined property, but let's test backup with another undated log
+    deadline: undefined,
   });
+  assert.equal((await phase6Repo.getLogById(updatedLog.id))?.deadline, undefined);
   const undatedLogForBackup = await phase6Repo.createLog({
     title: 'Undated for backup',
     projectId: phase6Proj.id,
@@ -2021,6 +2024,38 @@ async function testRepository() {
     assert.equal(restoredUndated?.deadline, undefined);
   }
   console.log('✓ 6. Backup logic supports exporting and restoring undated logs correctly');
+
+  // Round-trip every supported setting through validation and actual persistence.
+  for (const fontSize of FONT_SIZES) {
+    await phase6Repo.updateSettings({ fontSize });
+    const source = await phase6Repo.exportData();
+    const generated = createBackup(source);
+    const untouched = JSON.stringify(generated);
+    const validated = validateBackup(generated);
+    assert.equal(validated.valid, true, `Backup must support ${fontSize}`);
+    assert.equal(JSON.stringify(generated), untouched, 'Validation must not mutate the backup');
+    if (validated.valid) {
+      globalThis.localStorage.removeItem(STORAGE_KEY);
+      await new LocalStorageRepository().importData(validated.data);
+      assert.deepEqual(await new LocalStorageRepository().exportData(), source);
+    }
+  }
+  console.log('✓ All supported font sizes and undated logs survive a full backup/import/reload round trip');
+
+  const atomicRepo = new LocalStorageRepository();
+  const atomicBefore = await atomicRepo.exportData();
+  const originalSetItem = globalThis.localStorage.setItem;
+  globalThis.localStorage.setItem = () => { throw new Error('Simulated failed write'); };
+  try {
+    await assert.rejects(atomicRepo.createLog({ title: 'Atomic task', draftSubtasks: ['One', 'Two'] }));
+  } finally {
+    globalThis.localStorage.setItem = originalSetItem;
+  }
+  assert.deepEqual(await new LocalStorageRepository().exportData(), atomicBefore);
+  const atomicLog = await atomicRepo.createLog({ title: 'Atomic task', draftSubtasks: [' One ', 'Two'] });
+  assert.deepEqual(atomicLog.subtasks.map(subtask => subtask.title), ['One', 'Two']);
+  assert.equal(new Set(atomicLog.subtasks.map(subtask => subtask.id)).size, 2);
+  console.log('✓ New logs and drafted subtasks persist atomically, including failed-write recovery');
 
   // Restore original mock localStorage
   globalThis.localStorage = originalLocalStorage;

@@ -26,6 +26,14 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface LogFormValues {
+  title: string;
+  description?: string;
+  deadline?: string;
+  projectId?: string;
+  draftSubtasks?: string[];
+}
+
 export type AppTheme = 'dark' | 'light';
 export type AppFontSize = 'xs' | 'small' | 'medium' | 'large';
 

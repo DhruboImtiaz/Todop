@@ -1,3 +1,4 @@
+import { useLogFormSubmit } from '../../hooks/useLogFormSubmit';
 import React, { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import type { Log } from '../../types';
@@ -9,7 +10,7 @@ import { LogFormSheet } from '../logs/LogFormSheet';
 import './SearchPage.css';
 
 export const SearchPage: React.FC = () => {
-  const { activeLogs, completedLogs, updateLog, toggleLogCompletion, deleteLog } =
+  const { activeLogs, completedLogs, toggleLogCompletion, deleteLog } =
     useStorage();
   const currentTimestamp = useRealtimeTicker(5000);
 
@@ -40,24 +41,7 @@ export const SearchPage: React.FC = () => {
     setEditingLog(null);
   };
 
-  const handleFormSubmit = async (data: {
-    title: string;
-    description?: string;
-    deadline?: string;
-    projectId?: string;
-    draftSubtasks?: string[];
-  }) => {
-    if (editingLog) {
-      await updateLog({
-        id: editingLog.id,
-        title: data.title,
-        description: data.description,
-        deadline: data.deadline,
-        projectId: data.projectId ?? null,
-      });
-    }
-    handleCloseSheet();
-  };
+  const handleFormSubmit = useLogFormSubmit(editingLog, handleCloseSheet);
 
   const handleComplete = async (id: string) => {
     await toggleLogCompletion(id);

@@ -1,81 +1,33 @@
-const CACHE_NAME = 'todop-cache-v3';
-const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.png',
-];
+// The production build injects every emitted asset and a content-based revision.
+const CACHE_NAME = 'todop-cache-__BUILD_ID__';
+const PRECACHE_URLS = [];
+const PRECACHE_PATHS = new Set(PRECACHE_URLS);
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
-  );
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(PRECACHE_URLS.map(url => new Request(url, { cache: 'reload' })));
+    // Updates wait for existing tabs to close, keeping each open app on one build.
+  })());
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
-    ).then(() => self.clients.claim())
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key.startsWith('todop-cache-') && key !== CACHE_NAME).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
-  // Only intercept GET requests
-  if (event.request.method !== 'GET') return;
-
-  const url = new URL(event.request.url);
-
-  // Only handle http / https schemes (ignore blob:, data:, chrome-extension:, etc.)
-  if (!url.protocol.startsWith('http')) return;
-
-  // Ignore cross-origin requests
-  if (url.origin !== self.location.origin) return;
-
-  // Never cache user-generated backup JSON files
-  if (url.pathname.includes('backup') && url.pathname.endsWith('.json')) return;
-
-  // For navigation requests (e.g. visiting /projects or /settings directly)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', responseToCache));
-          }
-          return networkResponse;
-        })
-        .catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
-
-  // For static assets: stale-while-revalidate or cache-first with network fallback
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            (networkResponse.type === 'basic' || networkResponse.type === 'cors')
-          ) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
-  );
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  const path = request.mode === 'navigate' ? '/index.html' : url.pathname;
+  // Cache only build assets; never user files, backups or arbitrary responses.
+  if (!PRECACHE_PATHS.has(path)) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    return await cache.match(path) || fetch(request);
+  })());
 });
