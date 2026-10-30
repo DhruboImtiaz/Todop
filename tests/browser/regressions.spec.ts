@@ -305,7 +305,15 @@ test('a worker update preserves open-app data and unrelated caches', async ({ pa
     await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())!.update());
     await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistration())?.waiting?.state === 'installed');
     expect(await readData(page)).toEqual(before);
+    const workers = await Promise.all(context.serviceWorkers().map(async worker => ({
+      worker, version: await worker.evaluate<string>('CACHE_NAME'),
+    })));
+    const replacement = workers.find(worker => worker.version.endsWith('-upgrade'))?.worker;
     await page.close();
+    // Observe activation without opening another controlled client that could delay it.
+    if (replacement) {
+      await expect.poll(() => replacement.evaluate('self.serviceWorker.state')).toBe('activated');
+    }
     const reopened = await context.newPage();
     await context.setOffline(true);
     await reopened.goto('/settings');
