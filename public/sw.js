@@ -27,7 +27,7 @@ self.addEventListener('fetch', event => {
   // Cache only build assets; never user files, backups or arbitrary responses.
   if (!PRECACHE_PATHS.has(path)) return;
   event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    return await cache.match(path) || fetch(request);
+    // A late fetch from the old worker must not recreate its deleted cache.
+    return await caches.match(path, { cacheName: CACHE_NAME }) || fetch(request);
   })());
 });
