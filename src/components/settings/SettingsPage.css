@@ -271,7 +271,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-dialog);
   animation: scaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -367,7 +367,7 @@
 .restore-modal-btn.confirm {
   background-color: var(--overdue-text);
   border: 1px solid var(--overdue-text);
-  color: #FFFFFF;
+  color: var(--on-danger);
 }
 
 .restore-modal-btn.confirm:hover {

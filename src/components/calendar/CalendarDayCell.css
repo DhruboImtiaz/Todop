@@ -40,7 +40,7 @@
 
 .calendar-day-cell.today .calendar-day-number-wrap {
   background-color: var(--accent-primary);
-  color: #111114; /* contrast text on lavender badge */
+  color: var(--accent-text);
   font-weight: 700;
 }
 
@@ -52,7 +52,7 @@
 }
 
 .calendar-day-cell.today .calendar-day-number {
-  color: #111114;
+  color: var(--accent-text);
 }
 
 .calendar-day-cell.other-month .calendar-day-number {

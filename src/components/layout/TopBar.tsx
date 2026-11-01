@@ -1,3 +1,4 @@
+import { BrandLogo } from '../common/BrandLogo';
 import React from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import type { NavigationTab } from '../../types';
@@ -18,8 +19,7 @@ export const TopBar: React.FC<TopBarProps> = ({ currentTab, onNavigate }) => {
           onClick={() => onNavigate('upcoming')}
           aria-label="TODOP Home - Navigate to Upcoming"
         >
-          <span>TODOP</span>
-          <span className="top-bar-brand-dot" aria-hidden="true" />
+          <BrandLogo />
         </button>
 
         <button

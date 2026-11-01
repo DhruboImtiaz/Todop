@@ -24,7 +24,7 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  box-shadow: 0 8px 30px rgb(0 0 0 / 15%);
+  box-shadow: var(--shadow-popover);
   transform: var(--picker-transform);
   animation: picker-appear 0.2s ease-out;
 }

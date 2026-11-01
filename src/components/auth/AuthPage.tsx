@@ -1,3 +1,4 @@
+import { BrandLogo } from '../common/BrandLogo';
 import { useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowUpRight, Check, LockKeyhole } from 'lucide-react';
 import { supabase, authRedirect } from '../../services/supabase/client';
@@ -47,7 +48,7 @@ export function AuthPage() {
   return <main className="auth-page">
     <button className="auth-back" onClick={() => navigate('/')}><ArrowLeft size={17} /> Back to Todop</button>
     <div className="auth-layout">
-      <div className="auth-story"><span className="auth-wordmark"><span>✓</span> todop.</span><p className="auth-eyebrow">YOUR DAY, WITH A LITTLE DIRECTION</p><h1>{title}</h1><p>One quiet place for your tasks, projects, and everything coming up next.</p><div className="auth-note"><LockKeyhole size={18} /><span>Your planner belongs to you. Your account keeps it together across devices.</span></div></div>
+      <div className="auth-story"><div className="auth-wordmark"><BrandLogo /></div><p className="auth-eyebrow">YOUR DAY, WITH A LITTLE DIRECTION</p><h1>{title}</h1><p>One quiet place for your tasks, projects, and everything coming up next.</p><div className="auth-note"><LockKeyhole size={18} /><span>Your planner belongs to you. Your account keeps it together across devices.</span></div></div>
       <section className="auth-card" aria-labelledby="auth-title">
         <h2 id="auth-title">{{ signin: 'Welcome back', signup: 'Create your account', reset: 'Reset your password', recovery: 'Choose a new password' }[mode]}</h2>
         {session && mode !== 'recovery' && <button className="auth-submit" onClick={() => navigate('/app')}>Open your planner <ArrowUpRight size={18} /></button>}

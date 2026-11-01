@@ -32,13 +32,6 @@
   cursor: pointer;
 }
 
-.sidebar-brand-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--radius-full);
-  background-color: var(--accent-primary);
-  display: inline-block;
-}
 
 .sidebar-nav {
   display: flex;

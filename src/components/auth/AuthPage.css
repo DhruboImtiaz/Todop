@@ -2,7 +2,6 @@
 .auth-back { display:flex; align-items:center; gap:8px; font-size:13px; }
 .auth-layout { max-width:1040px; margin:90px auto; display:grid; grid-template-columns:1.1fr 1fr; gap:100px; align-items:center; }
 .auth-wordmark { display:flex; align-items:center; gap:10px; font-size:32px; font-weight:800; letter-spacing:-2px; }
-.auth-wordmark>span { display:grid; place-items:center; width:34px; height:34px; background:#d8f270; border-radius:10px; font-size:24px; }
 .auth-eyebrow { margin-top:55px; font-size:10px; letter-spacing:2px; font-weight:700; }
 .auth-story h1 { font-size:54px; line-height:1.06; letter-spacing:-3px; text-transform:none; color:inherit; margin:20px 0; }
 .auth-story>p:last-of-type { font-size:16px; line-height:1.8; color:#696972; }

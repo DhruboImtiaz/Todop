@@ -1,30 +1,43 @@
-:root {
-  color-scheme: light dark;
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --brand-lime: #D8EF8B;
+  --brand-ink: #24252E;
+  --brand-purple: #5B4CC4;
+  --surface-hover: var(--bg-card-hover);
+  --success-fill: var(--brand-lime);
+  --success-mark-ink: #3C4F23;
+  --success-text: #506831;
+  --success-tint: #F3F7E9;
+  --success-border: #D4DFBC;
+  --shadow-floating: 0 8px 24px rgb(36 37 46 / 12%);
+  --shadow-popover: 0 8px 24px rgb(36 37 46 / 10%);
+  --shadow-dialog: 0 24px 64px rgb(36 37 46 / 16%);
   /* Colors - Light Theme (Default) */
-  --bg-base: #F4F5F7;
+  --bg-base: #FAFAF6;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #EAECEF;
-  --bg-input: #FFFFFF;
+  --bg-card-hover: #F1F1E9;
+  --bg-input: #FAFAF7;
   --bg-elevated: #FFFFFF;
   --bg-overlay: rgba(18, 20, 24, 0.45);
 
-  --text-primary: #121417;
-  --text-secondary: #565D6B;
-  --text-dim: #7C8494;
+  --text-primary: #24252E;
+  --text-secondary: #686872;
+  --text-dim: #707078;
 
-  --border-subtle: #DCE0E8;
-  --border-focused: #AEACFF;
-  --border-strong: #C4CAD4;
+  --border-subtle: #E3E3DC;
+  --border-focused: #5B4CC4;
+  --border-strong: #D2D2C8;
 
-  /* Primary Accent - Lavender #AEACFF */
-  --accent-primary: #AEACFF;
-  --accent-hover: #BFBDFF;
-  --accent-active: #9B98F5;
-  --accent-text: #0D0E15; /* Accessible dark text on lavender surfaces */
-  --accent-text-readable: #5450E4; /* High-contrast accessible accent for text/icons on light surfaces */
-  --accent-nav-active: #5450E4; /* High-contrast active navigation text/icon on light theme */
-  --accent-tint: rgba(174, 172, 255, 0.16);
-  --accent-border-tint: rgba(174, 172, 255, 0.38);
+  /* Front-page purple, with readable text on filled controls */
+  --accent-primary: #5B4CC4;
+  --accent-hover: #4D3DB2;
+  --accent-active: #4433A1;
+  --accent-text: #FFFFFF;
+  --accent-text-readable: #5B4CC4; /* High-contrast accessible accent for text/icons on light surfaces */
+  --accent-nav-active: #5B4CC4; /* High-contrast active navigation text/icon on light theme */
+  --accent-tint: rgba(91, 76, 196, 0.08);
+  --accent-border-tint: rgba(91, 76, 196, 0.24);
 
   /* Legacy aliases for non-destructive backwards-compatibility */
   --cyan-primary: var(--accent-primary);
@@ -34,6 +47,7 @@
   --cyan-border-tint: var(--accent-border-tint);
 
   /* Overdue State - Light Theme High Contrast */
+  --on-danger: #FFFFFF;
   --overdue-text: #D63024;
   --overdue-badge-bg: #FEECEB;
   --overdue-border: #F8C3BE;
@@ -67,67 +81,42 @@
 /* Colors - Dark Theme Override */
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg-base: #090A0C;
-  --bg-card: #111318;
-  --bg-card-hover: #161920;
-  --bg-input: #14171E;
-  --bg-elevated: #181B22;
+  --success-text: #D8EF8B;
+  --success-tint: #303A25;
+  --success-border: #52643A;
+  --shadow-floating: 0 8px 24px rgb(0 0 0 / 25%);
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 30%);
+  --shadow-dialog: 0 24px 64px rgb(0 0 0 / 40%);
+  --bg-base: #1F2027;
+  --bg-card: #292A32;
+  --bg-card-hover: #32343C;
+  --bg-input: #24252D;
+  --bg-elevated: #30313A;
   --bg-overlay: rgba(0, 0, 0, 0.72);
 
-  --text-primary: #F2F4F7;
-  --text-secondary: #8A8F98;
-  --text-dim: #545965;
+  --text-primary: #F3F2EA;
+  --text-secondary: #C0BEBF;
+  --text-dim: #A8A6AE;
 
-  --border-subtle: #1F232D;
-  --border-focused: #AEACFF;
-  --border-strong: #2F3545;
+  --border-subtle: #40404B;
+  --border-focused: #B9ACEB;
+  --border-strong: #585862;
 
-  /* Primary Accent - Lavender #AEACFF on Dark */
-  --accent-primary: #AEACFF;
-  --accent-hover: #BFBDFF;
-  --accent-active: #9B98F5;
-  --accent-text: #0D0E15;
-  --accent-text-readable: #AEACFF;
-  --accent-nav-active: #AEACFF;
-  --accent-tint: rgba(174, 172, 255, 0.14);
-  --accent-border-tint: rgba(174, 172, 255, 0.32);
+  /* A softer version of the same purple for dark surfaces */
+  --accent-primary: #B9ACEB;
+  --accent-hover: #C9BDF5;
+  --accent-active: #A89AD9;
+  --accent-text: #24252E;
+  --accent-text-readable: #B9ACEB;
+  --accent-nav-active: #B9ACEB;
+  --accent-tint: rgba(185, 172, 235, 0.12);
+  --accent-border-tint: rgba(185, 172, 235, 0.3);
 
   /* Overdue State - Dark Theme */
+  --on-danger: #24252E;
   --overdue-text: #FF7761;
   --overdue-badge-bg: #211516;
   --overdue-border: #4D2121;
-}
-
-/* Explicit Light Theme attribute (matches root default) */
-[data-theme="light"] {
-  color-scheme: light;
-  --bg-base: #F4F5F7;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #EAECEF;
-  --bg-input: #FFFFFF;
-  --bg-elevated: #FFFFFF;
-  --bg-overlay: rgba(18, 20, 24, 0.45);
-
-  --text-primary: #121417;
-  --text-secondary: #565D6B;
-  --text-dim: #7C8494;
-
-  --border-subtle: #DCE0E8;
-  --border-focused: #AEACFF;
-  --border-strong: #C4CAD4;
-
-  --accent-primary: #AEACFF;
-  --accent-hover: #BFBDFF;
-  --accent-active: #9B98F5;
-  --accent-text: #0D0E15;
-  --accent-text-readable: #5450E4;
-  --accent-nav-active: #5450E4;
-  --accent-tint: rgba(174, 172, 255, 0.16);
-  --accent-border-tint: rgba(174, 172, 255, 0.38);
-
-  --overdue-text: #D63024;
-  --overdue-badge-bg: #FEECEB;
-  --overdue-border: #F8C3BE;
 }
 
 /* Font Size Scaling */
