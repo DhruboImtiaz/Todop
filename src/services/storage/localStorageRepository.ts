@@ -1,20 +1,24 @@
-import { DEFAULT_SETTINGS, STORAGE_KEY, isFontSize } from '../../utils/settings';
+import { DEFAULT_SETTINGS, STORAGE_KEY, LEGACY_STORAGE_KEY, isFontSize } from '../../utils/settings';
 import type { AppDataSchema, Subtask } from '../../types';
 import type { StorageListener } from './storageRepository';
 import { createBackup, validateBackup } from '../../utils/backup';
 import { PlannerRepository } from './plannerRepository';
 
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2;
 
 export class LocalStorageRepository extends PlannerRepository {
+  private key: string;
+  private seed?: AppDataSchema;
   private listeners: Set<StorageListener> = new Set();
   private cachedData: AppDataSchema | null = null;
 
-  constructor() {
+  constructor(privateKey = STORAGE_KEY, seed?: AppDataSchema) {
     super();
+    this.key = privateKey;
+    this.seed = seed;
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('storage', (event) => {
-        if (event.key === STORAGE_KEY || event.key === null) {
+        if (event.key === this.key || event.key === null) {
           this.cachedData = this.loadRawData();
           this.notifyListeners();
         }
@@ -31,7 +35,7 @@ export class LocalStorageRepository extends PlannerRepository {
 
   private loadRawData(): AppDataSchema {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(this.key) ?? (this.key === STORAGE_KEY ? localStorage.getItem(LEGACY_STORAGE_KEY) : null);
       if (!raw) {
         return this.initializeStorage();
       }
@@ -41,7 +45,9 @@ export class LocalStorageRepository extends PlannerRepository {
       }
 
       // Ensure backward-compatibility: normalize undefined projectId to null, and missing subtasks to []
-      let modified = false;
+      let modified = parsed.version === 1 || parsed.trash === undefined;
+      if (parsed.trash === undefined) parsed.trash = [];
+      if (parsed.version === 1) parsed.version = 2;
       if (Array.isArray(parsed.logs)) {
         for (const log of parsed.logs) {
           if (log.projectId === undefined) {
@@ -138,8 +144,8 @@ export class LocalStorageRepository extends PlannerRepository {
       return parsed;
     } catch (e) {
       console.error('Failed to parse TODOP storage data; retaining a recovery copy', e);
-      const original = localStorage.getItem(STORAGE_KEY);
-      if (original) localStorage.setItem(`${STORAGE_KEY}_recovery`, original);
+      const original = localStorage.getItem(this.key);
+      if (original) localStorage.setItem(`${this.key}_recovery`, original);
       return this.initializeStorage();
     }
   }
@@ -148,11 +154,13 @@ export class LocalStorageRepository extends PlannerRepository {
     const initial: AppDataSchema = {
       version: CURRENT_SCHEMA_VERSION,
       logs: [],
+      trash: [],
       projects: [],
       settings: DEFAULT_SETTINGS,
     };
-    this.persistRawData(initial);
-    return initial;
+    const data = this.seed ? structuredClone(this.seed) : initial;
+    this.persistRawData(data);
+    return data;
   }
 
   private persistRawData(data: AppDataSchema): void {
@@ -161,7 +169,7 @@ export class LocalStorageRepository extends PlannerRepository {
       // Sort projects by order
       data.projects.sort((a, b) => a.order - b.order);
       const json = JSON.stringify(data);
-      localStorage.setItem(STORAGE_KEY, json);
+      localStorage.setItem(this.key, json);
       this.cachedData = data;
       this.notifyListeners();
     } catch (e) {

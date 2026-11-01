@@ -133,7 +133,7 @@ test('clearing and restoring a project deadline updates every scheduling view', 
   const card = page.locator('.log-card').filter({ has: page.getByRole('heading', { name: 'QA early', exact: true }) });
   await expect(card.locator('.log-card-countdown')).toHaveCount(0);
   await page.goto('/app');
-  await expect(page.getByRole('heading', { name: 'QA early', exact: true })).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'QA early', exact: true })).toBeVisible();
   await page.goto('/calendar');
   await expect(page.getByRole('heading', { name: 'QA early', exact: true })).toBeHidden();
   await page.getByRole('button', { name: 'Search', exact: true }).click();
@@ -155,7 +155,7 @@ test('first online visit fully precaches the app for offline reload and editing'
   await page.reload();
   await expect(page.getByRole('heading', { name: 'SETTINGS', exact: true })).toBeVisible();
   expect(await readData(page)).toEqual(before);
-  for (const [path, heading] of [['/app', 'UPCOMING'], ['/projects', 'Projects'], ['/projects/alpha', 'Alpha'], ['/search', 'SEARCH'], ['/calendar', 'CALENDAR'], ['/settings', 'SETTINGS']]) {
+  for (const [path, heading] of [['/app', 'Upcoming'], ['/projects', 'Projects'], ['/projects/alpha', 'Alpha'], ['/search', 'SEARCH'], ['/calendar', 'CALENDAR'], ['/settings', 'SETTINGS']]) {
     await page.goto(path);
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   }
@@ -266,7 +266,7 @@ for (const fontSize of FONT_SIZES) {
     await selectBackup(page, backup);
     await page.getByRole('alertdialog').getByRole('button', { name: 'RESTORE DATA', exact: true }).click();
     await page.reload();
-    expect(await readData(page)).toEqual(data);
+    expect(await readData(page)).toEqual({ ...data, version: 2, trash: [] });
     await expect(page.locator('html')).toHaveAttribute('data-font-size', fontSize);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });

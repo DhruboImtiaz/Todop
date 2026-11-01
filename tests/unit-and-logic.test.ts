@@ -635,7 +635,7 @@ async function testRepository() {
   console.log('✓ 9. Updating settings does not modify projects');
 
   // Test 10: Invalid or missing stored settings safely fall back to defaults
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -650,7 +650,7 @@ async function testRepository() {
   assert.equal(normalizedSettings.fontSize, 'medium');
 
   // Missing settings completely
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -700,7 +700,7 @@ async function testRepository() {
   console.log('\n--- Phase 2D: Backup & Restore Tests ---');
 
   // Setup rich data for backup testing
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -790,7 +790,7 @@ async function testRepository() {
   console.log('✓ 8. Backup generation does not mutate original data');
 
   // 9. Valid backup restores logs
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -907,7 +907,7 @@ async function testRepository() {
   console.log('✓ 21. Restored settings can be applied to the UI state');
 
   // 22. Default settings are light + medium
-  cleanStore['todop_app_data_v1'] = '';
+  cleanStore[STORAGE_KEY] = '';
   const freshLightRepo = new LocalStorageRepository();
   const freshLightSettings = await freshLightRepo.getSettings();
   assert.equal(freshLightSettings.theme, 'light');
@@ -915,7 +915,7 @@ async function testRepository() {
   console.log('✓ 22. Default settings are light + medium');
 
   // 23. Existing dark preference remains preserved for users who already saved dark
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -931,7 +931,7 @@ async function testRepository() {
   console.log('✓ 23. Existing dark preference remains preserved for users who already saved dark');
 
   // 24. Existing font-size preference remains preserved
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -950,7 +950,7 @@ async function testRepository() {
   console.log('\n--- Phase 3: Defensive Normalization & QA Tests ---');
 
   // 1. Orphaned project reference in log is defensively normalized to null without discarding the log
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [
       {
@@ -985,7 +985,7 @@ async function testRepository() {
   console.log('✓ 1. Orphaned project reference in log is defensively normalized to null');
 
   // 2. Valid project reference in log is strictly preserved
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [
       {
@@ -1019,7 +1019,7 @@ async function testRepository() {
   console.log('✓ 2. Valid project reference in log is strictly preserved');
 
   // 3. Corrupted project ordering is deterministically normalized to 0, 1, 2... preserving relative order
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [
@@ -1067,7 +1067,7 @@ async function testRepository() {
   console.log('\n--- Phase 4 Stage 1: Subtask Data Model & Storage Tests ---');
 
   // Test 1: Existing Log without subtasks normalizes to []
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [
       {
@@ -1332,7 +1332,7 @@ async function testRepository() {
   console.log('✓ 19. Backup export includes subtasks');
 
   // Test 20: Backup restore preserves subtasks
-  cleanStore['todop_app_data_v1'] = JSON.stringify({
+  cleanStore[STORAGE_KEY] = JSON.stringify({
     version: 1,
     logs: [],
     projects: [],
@@ -1809,7 +1809,7 @@ async function testRepository() {
   calLogs = await calRepo.getLogs();
   assert.equal(calLogs.find((l) => l.id === cardDeleteLog.id), undefined);
   assert.equal(groupLogsByLocalDate(calLogs).get(cardDateKey), undefined);
-  console.log('✓ 23. LogCard overflow delete path directly purges log from Calendar data source');
+  console.log('✓ 23. LogCard overflow delete path removes the log from Calendar and keeps it in recovery');
 
   // Test 24: Delete through LogFormSheet confirmation path (onDelete(initialLog.id))
   const sheetDeleteLog = await calRepo.createLog({
@@ -1823,7 +1823,7 @@ async function testRepository() {
   calLogs = await calRepo.getLogs();
   assert.equal(calLogs.find((l) => l.id === sheetDeleteLog.id), undefined);
   assert.equal(groupLogsByLocalDate(calLogs).get(sheetDateKey), undefined);
-  console.log('✓ 24. LogFormSheet confirmation delete path directly purges log from Calendar data source');
+  console.log('✓ 24. LogFormSheet confirmation delete path removes the log from Calendar and keeps it in recovery');
 
   // Test 25: Delete active log from within Projects view -> absent everywhere including Calendar
   const projectA = await calRepo.createProject('Project A');
@@ -1841,7 +1841,7 @@ async function testRepository() {
   const logsAfterProjLogDel = await calRepo.getLogs();
   assert.equal(logsAfterProjLogDel.find((l) => l.id === projActiveLog.id), undefined);
   assert.equal(groupLogsByLocalDate(logsAfterProjLogDel).get(projActiveDateKey), undefined);
-  console.log('✓ 25. Deleting an active log from within a Project permanently removes it from storage and Calendar');
+  console.log('✓ 25. Deleting an active log from within a Project moves it to recovery and removes it from Calendar');
 
   // Test 26: Delete completed log from within Projects view -> absent everywhere including Calendar
   const projCompLog = await calRepo.createLog({
@@ -1865,9 +1865,9 @@ async function testRepository() {
   const logsAfterCompLogDel = await calRepo.getLogs();
   assert.equal(logsAfterCompLogDel.find((l) => l.id === projCompLog.id), undefined);
   assert.equal(groupLogsByLocalDate(logsAfterCompLogDel).get(projCompDateKey), undefined);
-  console.log('✓ 26. Deleting a completed log from within a Project permanently removes it from storage and Calendar');
+  console.log('✓ 26. Deleting a completed log from within a Project moves it to recovery and removes it from Calendar');
 
-  // Test 27: Explicit distinction: Deleting a Project preserves logs as unassigned vs Deleting a Log purges it
+  // Test 27: Explicit distinction: Deleting a Project preserves logs as unassigned vs deleting a Log moves it to recovery
   const projectB = await calRepo.createProject('Project B');
   const logInProjB = await calRepo.createLog({
     title: 'Log in Project B',
@@ -1884,12 +1884,12 @@ async function testRepository() {
   assert.equal(preservedCalLog.projectId, null); // Unassigned
   assert.equal(groupLogsByLocalDate(logsAfterProjDel).get(projBDateKey)?.length, 1); // Still on calendar
 
-  // Now explicitly deleting the log itself purges it from calendar
+  // Now explicitly deleting the log itself removes it from calendar
   await calRepo.deleteLog(logInProjB.id);
   const logsAfterExplicitLogDel = await calRepo.getLogs();
   assert.equal(logsAfterExplicitLogDel.find((l) => l.id === logInProjB.id), undefined);
   assert.equal(groupLogsByLocalDate(logsAfterExplicitLogDel).get(projBDateKey), undefined);
-  console.log('✓ 27. Deleting a Project preserves logs as unassigned (on Calendar), while deleting a Log purges it everywhere');
+  console.log('✓ 27. Deleting a Project preserves logs as unassigned (on Calendar), while deleting a Log moves it to recovery');
 
   // --- Phase 5 Refinement: Active Task Date Indicator Tests ---
   console.log('\n--- Phase 5 Refinement: Active Task Date Indicator Tests ---');

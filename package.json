@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/build-service-worker.mjs",
     "lint": "oxlint",
-    "test": "node --import tsx tests/unit-and-logic.test.ts && node --import tsx tests/storage-regressions.test.ts",
+    "test": "node --import tsx tests/unit-and-logic.test.ts && node --import tsx tests/storage-regressions.test.ts && node --import tsx tests/planning.test.ts",
     "preview": "vite preview",
     "test:e2e": "playwright test"
   },

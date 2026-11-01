@@ -1,6 +1,8 @@
-import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask, TaskPriority, RecurrenceRule } from '../../types';
 
 export interface NewLogInput {
+  priority?: TaskPriority;
+  recurrence?: RecurrenceRule;
   title: string;
   description?: string;
   deadline?: string; // ISO 8601 string, optional for project logs
@@ -10,8 +12,10 @@ export interface NewLogInput {
 }
 
 export interface UpdateLogInput {
-  expectedFields?: Pick<Log, 'title' | 'description' | 'deadline' | 'projectId'>;
+  expectedFields?: Pick<Log, 'title' | 'description' | 'deadline' | 'projectId' | 'priority' | 'recurrence'>;
   id: string;
+  priority?: TaskPriority;
+  recurrence?: RecurrenceRule;
   title?: string;
   description?: string;
   deadline?: string;
@@ -30,8 +34,12 @@ export interface StorageRepository {
   getLogById(id: string): Promise<Log | null>;
   createLog(input: NewLogInput): Promise<Log>;
   updateLog(input: UpdateLogInput): Promise<Log>;
+  changeLogCompletion(id: string): Promise<{ previous: Log; updated: Log } | null>;
   toggleLogCompletion(id: string): Promise<Log | null>;
   deleteLog(id: string): Promise<boolean>;
+  restoreLog(id: string): Promise<boolean>;
+  planMyDay(id: string, date: string | null): Promise<Log>;
+  undoCompletion(previous: Log, expectedUpdatedAt: string): Promise<boolean>;
 
   // Subtasks
   addSubtask(logId: string, title: string): Promise<Subtask>;

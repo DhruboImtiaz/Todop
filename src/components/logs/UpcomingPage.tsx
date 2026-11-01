@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
-import type { Log } from '../../types';
-import { getLogSection } from '../../utils/time';
-import { LogCard } from './LogCard';
-import { EmptyState } from './EmptyState';
-import './UpcomingPage.css';
-
+import { useMemo } from "react";
+import { Plus } from "lucide-react";
+import type { Log } from "../../types";
+import { getLogSection } from "../../utils/time";
+import { LogCard } from "./LogCard";
+import { EmptyState } from "./EmptyState";
+import "./UpcomingPage.css";
 interface UpcomingPageProps {
   logs: Log[];
   currentTimestamp: number;
@@ -13,135 +13,111 @@ interface UpcomingPageProps {
   onDeleteLog: (id: string) => void;
   onOpenCreateSheet: () => void;
 }
-
-export const UpcomingPage: React.FC<UpcomingPageProps> = ({
+export function UpcomingPage({
   logs,
   currentTimestamp,
   onCompleteLog,
   onEditLog,
   onDeleteLog,
   onOpenCreateSheet,
-}) => {
-  // Sort logs primarily by deadline ascending (overdue first, then nearest upcoming deadlines)
-  // Only include logs that have a deadline
-  const sortedLogs = useMemo(() => {
-    return [...logs]
-      .filter((log) => log.deadline !== undefined)
-      .sort((a, b) => {
-        const timeA = new Date(a.deadline!).getTime();
-        const timeB = new Date(b.deadline!).getTime();
-        return timeA - timeB;
-      });
-  }, [logs]);
-
-  // Group into sections
-  const { overdueLogs, todayLogs, upcomingLogs } = useMemo(() => {
-    const overdue: Log[] = [];
-    const today: Log[] = [];
-    const upcoming: Log[] = [];
-
-    for (const log of sortedLogs) {
-      const section = getLogSection(log.deadline, currentTimestamp);
-      if (section === 'overdue') {
-        overdue.push(log);
-      } else if (section === 'today') {
-        today.push(log);
-      } else {
-        upcoming.push(log);
-      }
-    }
-
-    return {
-      overdueLogs: overdue,
-      todayLogs: today,
-      upcomingLogs: upcoming,
+}: UpcomingPageProps) {
+  const sections = useMemo(() => {
+    const groups = {
+      overdue: [] as Log[],
+      today: [] as Log[],
+      upcoming: [] as Log[],
+      anytime: [] as Log[],
     };
-  }, [sortedLogs, currentTimestamp]);
-
-  const hasLogs = overdueLogs.length > 0 || todayLogs.length > 0 || upcomingLogs.length > 0;
-
+    [...logs]
+      .sort(
+        (a, b) =>
+          (a.deadline ? Date.parse(a.deadline) : Infinity) -
+          (b.deadline ? Date.parse(b.deadline) : Infinity),
+      )
+      .forEach((log) =>
+        groups[
+          log.deadline
+            ? getLogSection(log.deadline, currentTimestamp)
+            : "anytime"
+        ].push(log),
+      );
+    return [
+      {
+        key: "overdue",
+        title: "Overdue",
+        label: "Overdue tasks",
+        logs: groups.overdue,
+      },
+      {
+        key: "today",
+        title: "Today",
+        label: "Tasks due today",
+        logs: groups.today,
+      },
+      {
+        key: "upcoming",
+        title: "Upcoming",
+        label: "Upcoming future tasks",
+        logs: groups.upcoming,
+      },
+      {
+        key: "anytime",
+        title: "Anytime",
+        label: "Tasks without a deadline",
+        logs: groups.anytime,
+      },
+    ];
+  }, [logs, currentTimestamp]);
   return (
     <section className="upcoming-page" aria-labelledby="upcoming-page-heading">
       <div className="page-header">
         <div className="page-header-main">
           <h1 id="upcoming-page-heading" className="page-title">
-            UPCOMING
+            Upcoming
           </h1>
-          <p className="page-subtitle">Your tasks, at a glance</p>
+          <p className="page-subtitle">
+            Your tasks, with a little perspective.
+          </p>
         </div>
+        <button className="workspace-secondary" onClick={onOpenCreateSheet}>
+          <Plus size={16} />
+          New task
+        </button>
       </div>
-
-      {!hasLogs ? (
+      {logs.length === 0 ? (
         <EmptyState onCreateLog={onOpenCreateSheet} />
       ) : (
         <div className="upcoming-sections">
-          {/* Overdue Section */}
-          {overdueLogs.length > 0 && (
-            <div className="log-section overdue-section" aria-label="Overdue tasks">
-              <div className="log-section-header">
-                <span className="log-section-title">OVERDUE</span>
-                <span className="log-section-count">{overdueLogs.length}</span>
+          {sections
+            .filter((section) => section.logs.length)
+            .map((section) => (
+              <div
+                className={`log-section ${section.key === "overdue" ? "overdue-section" : ""}`}
+                aria-label={section.label}
+                key={section.key}
+              >
+                <div className="log-section-header">
+                  <span className="log-section-title">{section.title}</span>
+                  <span className="log-section-count">
+                    {section.logs.length}
+                  </span>
+                </div>
+                <div className="log-section-cards">
+                  {section.logs.map((log) => (
+                    <LogCard
+                      key={log.id}
+                      log={log}
+                      currentTimestamp={currentTimestamp}
+                      onComplete={onCompleteLog}
+                      onEdit={onEditLog}
+                      onDelete={onDeleteLog}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="log-section-cards">
-                {overdueLogs.map((log) => (
-                  <LogCard
-                    key={log.id}
-                    log={log}
-                    currentTimestamp={currentTimestamp}
-                    onComplete={onCompleteLog}
-                    onEdit={onEditLog}
-                    onDelete={onDeleteLog}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Today Section */}
-          {todayLogs.length > 0 && (
-            <div className="log-section" aria-label="Tasks due today">
-              <div className="log-section-header">
-                <span className="log-section-title">TODAY</span>
-                <span className="log-section-count">{todayLogs.length}</span>
-              </div>
-              <div className="log-section-cards">
-                {todayLogs.map((log) => (
-                  <LogCard
-                    key={log.id}
-                    log={log}
-                    currentTimestamp={currentTimestamp}
-                    onComplete={onCompleteLog}
-                    onEdit={onEditLog}
-                    onDelete={onDeleteLog}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming Section */}
-          {upcomingLogs.length > 0 && (
-            <div className="log-section" aria-label="Upcoming future tasks">
-              <div className="log-section-header">
-                <span className="log-section-title">UPCOMING</span>
-                <span className="log-section-count">{upcomingLogs.length}</span>
-              </div>
-              <div className="log-section-cards">
-                {upcomingLogs.map((log) => (
-                  <LogCard
-                    key={log.id}
-                    log={log}
-                    currentTimestamp={currentTimestamp}
-                    onComplete={onCompleteLog}
-                    onEdit={onEditLog}
-                    onDelete={onDeleteLog}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+            ))}
         </div>
       )}
     </section>
   );
-};
+}

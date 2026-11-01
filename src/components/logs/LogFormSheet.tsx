@@ -1,16 +1,21 @@
-import { runUiAction } from '../../utils/asyncAction';
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, Trash2, Plus } from 'lucide-react';
-import type { Log, LogFormValues } from '../../types';
+import { runUiAction } from "../../utils/asyncAction";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Check, Trash2, Plus } from "lucide-react";
+import type {
+  Log,
+  LogFormValues,
+  RecurrenceRule,
+  TaskPriority,
+} from "../../types";
 import {
   getDefaultNewLogDateTime,
   isoToLocalDateAndTime,
   localDateTimeToIso,
-} from '../../utils/time';
-import { useStorage } from '../../hooks/useStorage';
-import { TimePicker } from '../common/TimePicker';
-import { DatePicker } from '../common/DatePicker';
-import './LogFormSheet.css';
+} from "../../utils/time";
+import { useStorage } from "../../hooks/useStorage";
+import { TimePicker } from "../common/TimePicker";
+import { DatePicker } from "../common/DatePicker";
+import "./LogFormSheet.css";
 
 interface LogFormSheetProps {
   isOpen: boolean;
@@ -19,20 +24,23 @@ interface LogFormSheetProps {
   defaultProjectId?: string | null;
   /** When opening from a calendar day panel, pre-select this date (YYYY-MM-DD) */
   defaultDate?: string | null;
+  defaultNoDeadline?: boolean;
   onClose: () => void;
   onSubmit: (data: LogFormValues) => void | Promise<void>;
   onComplete?: (id: string) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
 }
 
-export const LogFormSheet: React.FC<LogFormSheetProps> = (props) => props.isOpen ? (
-  <LogFormContent key={props.initialLog?.id ?? 'new'} {...props} />
-) : null;
+export const LogFormSheet: React.FC<LogFormSheetProps> = (props) =>
+  props.isOpen ? (
+    <LogFormContent key={props.initialLog?.id ?? "new"} {...props} />
+  ) : null;
 
 const LogFormContent: React.FC<LogFormSheetProps> = ({
   initialLog,
   defaultProjectId,
   defaultDate,
+  defaultNoDeadline,
   onClose,
   onSubmit,
   onComplete,
@@ -56,30 +64,49 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
       initialLog
     : null;
 
-  const [title, setTitle] = useState(initialLog?.title ?? '');
-  const [description, setDescription] = useState(initialLog?.description ?? '');
-  const [projectId, setProjectId] = useState(initialLog?.projectId ?? defaultProjectId ?? '');
-  const [schedule, setSchedule] = useState<{ date: string; time: string; mode: 'none' | 'set' }>(() => {
-    if (initialLog?.deadline) return { ...isoToLocalDateAndTime(initialLog.deadline), mode: 'set' };
-    if (initialLog || defaultProjectId) return { date: '', time: '', mode: 'none' };
+  const [priority, setPriority] = useState<TaskPriority>(
+    initialLog?.priority ?? "normal",
+  );
+  const [frequency, setFrequency] = useState<
+    RecurrenceRule["frequency"] | "none"
+  >(initialLog?.recurrence?.frequency ?? "none");
+  const [interval, setInterval] = useState(
+    initialLog?.recurrence?.interval ?? 1,
+  );
+  const [title, setTitle] = useState(initialLog?.title ?? "");
+  const [description, setDescription] = useState(initialLog?.description ?? "");
+  const [projectId, setProjectId] = useState(
+    initialLog?.projectId ?? defaultProjectId ?? "",
+  );
+  const [schedule, setSchedule] = useState<{
+    date: string;
+    time: string;
+    mode: "none" | "set";
+  }>(() => {
+    if (initialLog?.deadline)
+      return { ...isoToLocalDateAndTime(initialLog.deadline), mode: "set" };
+    if (initialLog || defaultProjectId || defaultNoDeadline)
+      return { date: "", time: "", mode: "none" };
     const defaults = getDefaultNewLogDateTime();
-    return { ...defaults, date: defaultDate || defaults.date, mode: 'set' };
+    return { ...defaults, date: defaultDate || defaults.date, mode: "set" };
   });
   const { date, time, mode: deadlineMode } = schedule;
-  const updateSchedule = (patch: Partial<typeof schedule>) => setSchedule(current => ({ ...current, ...patch }));
-  const canOmitDeadline = Boolean(projectId) || Boolean(initialLog && !initialLog.deadline);
-  const [error, setError] = useState('');
+  const updateSchedule = (patch: Partial<typeof schedule>) =>
+    setSchedule((current) => ({ ...current, ...patch }));
+  const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Subtasks state
   const [draftSubtasks, setDraftSubtasks] = useState<string[]>([]);
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
-  const [subtaskInput, setSubtaskInput] = useState('');
+  const [subtaskInput, setSubtaskInput] = useState("");
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
-  const [editingDraftIndex, setEditingDraftIndex] = useState<number | null>(null);
-  const [editingDraftTitle, setEditingDraftTitle] = useState('');
+  const [editingTitle, setEditingTitle] = useState("");
+  const [editingDraftIndex, setEditingDraftIndex] = useState<number | null>(
+    null,
+  );
+  const [editingDraftTitle, setEditingDraftTitle] = useState("");
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +119,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.stopPropagation();
         if (showDeleteConfirm) {
           setShowDeleteConfirm(false);
@@ -101,31 +128,45 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showDeleteConfirm, onClose]);
 
   // Subtask handlers for existing logs
   const handleAddSubtask = async () => {
     try {
-    const clean = subtaskInput.trim();
-    if (!clean) return;
-    if (initialLog) {
-      await addSubtask(initialLog.id, clean);
-    } else {
-      setDraftSubtasks((prev) => [...prev, clean]);
+      const clean = subtaskInput.trim();
+      if (!clean) return;
+      if (initialLog) {
+        await addSubtask(initialLog.id, clean);
+      } else {
+        setDraftSubtasks((prev) => [...prev, clean]);
+      }
+      setSubtaskInput("");
+      setTimeout(() => subtaskInputRef.current?.focus(), 30);
+    } catch (failure) {
+      dismissError();
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not save the subtask.",
+      );
     }
-    setSubtaskInput('');
-    setTimeout(() => subtaskInputRef.current?.focus(), 30);
-    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   const handleToggleSubtask = async (subtaskId: string) => {
     try {
-    if (initialLog) {
-      await toggleSubtaskCompletion(initialLog.id, subtaskId);
+      if (initialLog) {
+        await toggleSubtaskCompletion(initialLog.id, subtaskId);
+      }
+    } catch (failure) {
+      dismissError();
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not save the subtask.",
+      );
     }
-    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   const handleStartEditSubtask = (id: string, currentText: string) => {
@@ -136,21 +177,35 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
 
   const handleSaveSubtaskTitle = async (subtaskId: string) => {
     try {
-    const clean = editingTitle.trim();
-    if (clean && initialLog) {
-      await updateSubtaskTitle(initialLog.id, subtaskId, clean);
+      const clean = editingTitle.trim();
+      if (clean && initialLog) {
+        await updateSubtaskTitle(initialLog.id, subtaskId, clean);
+      }
+      setEditingSubtaskId(null);
+      setEditingTitle("");
+    } catch (failure) {
+      dismissError();
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not save the subtask.",
+      );
     }
-    setEditingSubtaskId(null);
-    setEditingTitle('');
-    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
     try {
-    if (initialLog) {
-      await deleteSubtask(initialLog.id, subtaskId);
+      if (initialLog) {
+        await deleteSubtask(initialLog.id, subtaskId);
+      }
+    } catch (failure) {
+      dismissError();
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not save the subtask.",
+      );
     }
-    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   // Subtask handlers for new logs (draft items)
@@ -166,7 +221,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
       setDraftSubtasks((prev) => prev.map((t, i) => (i === index ? clean : t)));
     }
     setEditingDraftIndex(null);
-    setEditingDraftTitle('');
+    setEditingDraftTitle("");
   };
 
   const handleDeleteDraft = (index: number) => {
@@ -178,31 +233,59 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
     if (isSaving) return;
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      setError('Please enter a log name');
+      setError("Please enter a log name");
       titleInputRef.current?.focus();
       return;
     }
-    const isNoDeadline = canOmitDeadline && deadlineMode === 'none';
+    const isNoDeadline = deadlineMode === "none";
 
     if (!isNoDeadline && !date) {
-      setError('Please select a deadline date');
+      setError("Please select a deadline date");
       return;
     }
 
-    const isoDeadline = !isNoDeadline && date ? localDateTimeToIso(date, time || '23:59') : undefined;
+    const isoDeadline =
+      !isNoDeadline && date
+        ? localDateTimeToIso(date, time || "23:59")
+        : undefined;
 
+    if (frequency !== "none" && !isoDeadline) {
+      setError("Recurring tasks need a deadline.");
+      return;
+    }
+    if (
+      frequency !== "none" &&
+      (!Number.isInteger(interval) || interval < 1 || interval > 365)
+    ) {
+      setError("Repeat interval must be from 1 to 365.");
+      return;
+    }
     setIsSaving(true);
     try {
       await onSubmit({
+        priority,
+        recurrence:
+          frequency === "none"
+            ? undefined
+            : {
+                frequency,
+                interval,
+                anchorDay: initialLog?.recurrence?.anchorDay,
+              },
         title: cleanTitle,
         description: description.trim() || undefined,
         deadline: isoDeadline,
         projectId: projectId || undefined,
-        draftSubtasks: !initialLog && draftSubtasks.length ? draftSubtasks : undefined,
+        draftSubtasks:
+          !initialLog && draftSubtasks.length ? draftSubtasks : undefined,
       });
     } catch (failure) {
       dismissError();
-      setError(failure instanceof Error ? failure.message : 'Could not save this log. Please try again.');
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not save this log. Please try again.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -240,7 +323,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
       >
         <div className="form-sheet-header">
           <h2 id="sheet-title" className="form-sheet-title">
-            {isEditing ? 'EDIT LOG' : 'NEW LOG'}
+            {isEditing ? "EDIT LOG" : "NEW LOG"}
           </h2>
           <button
             type="button"
@@ -258,9 +341,9 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
               <span className="form-label">Completion Status</span>
               <div className="form-status-badge">
                 <span
-                  className={`status-dot ${initialLog.completed ? 'completed' : 'active'}`}
+                  className={`status-dot ${initialLog.completed ? "completed" : "active"}`}
                 />
-                <span>{initialLog.completed ? 'COMPLETED' : 'ACTIVE'}</span>
+                <span>{initialLog.completed ? "COMPLETED" : "ACTIVE"}</span>
               </div>
             </div>
           )}
@@ -277,7 +360,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (error) setError('');
+                if (error) setError("");
               }}
               placeholder="e.g. Finish assignment"
               required
@@ -287,7 +370,8 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
 
           <div className="form-field">
             <label htmlFor="log-desc-input" className="form-label">
-              Description <span className="form-label-optional">(optional)</span>
+              Description{" "}
+              <span className="form-label-optional">(optional)</span>
             </label>
             <textarea
               id="log-desc-input"
@@ -304,11 +388,17 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
             <div className="subtasks-section-header">
               <span className="form-label">
                 SUBTASKS
-                {isEditing && currentReactiveLog && currentReactiveLog.subtasks.length > 0 && (
-                  <span className="subtasks-count-pill">
-                    {currentReactiveLog.subtasks.filter((s) => s.completed).length} / {currentReactiveLog.subtasks.length}
-                  </span>
-                )}
+                {isEditing &&
+                  currentReactiveLog &&
+                  currentReactiveLog.subtasks.length > 0 && (
+                    <span className="subtasks-count-pill">
+                      {
+                        currentReactiveLog.subtasks.filter((s) => s.completed)
+                          .length
+                      }{" "}
+                      / {currentReactiveLog.subtasks.length}
+                    </span>
+                  )}
                 {!isEditing && draftSubtasks.length > 0 && (
                   <span className="subtasks-count-pill">
                     {draftSubtasks.length}
@@ -318,74 +408,82 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
             </div>
 
             {/* Existing Log Subtasks List */}
-            {isEditing && currentReactiveLog && currentReactiveLog.subtasks.length > 0 && (
-              <div className="subtasks-list" role="list">
-                {currentReactiveLog.subtasks.map((st) => {
-                  const isEditingThis = editingSubtaskId === st.id;
-                  return (
-                    <div key={st.id} className="subtask-row" role="listitem">
-                      <button
-                        type="button"
-                        className={`subtask-checkbox ${st.completed ? 'completed' : ''}`}
-                        onClick={() => handleToggleSubtask(st.id)}
-                        role="checkbox"
-                        aria-checked={st.completed}
-                        aria-label={st.completed ? `Mark "${st.title}" as incomplete` : `Mark "${st.title}" as completed`}
-                      >
-                        <Check size={12} strokeWidth={2.8} />
-                      </button>
-
-                      {isEditingThis ? (
-                        <input
-                          ref={editInputRef}
-                          type="text"
-                          className="subtask-inline-edit-input"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleSaveSubtaskTitle(st.id);
-                            } else if (e.key === 'Escape') {
-                              e.stopPropagation();
-                              setEditingSubtaskId(null);
-                            }
-                          }}
-                          onBlur={() => handleSaveSubtaskTitle(st.id)}
-                          aria-label="Edit subtask title"
-                        />
-                      ) : (
-                        <span
-                          className={`subtask-text ${st.completed ? 'completed' : ''}`}
-                          onClick={() => handleStartEditSubtask(st.id, st.title)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label={`Subtask: ${st.title}. Tap or press Enter to edit.`}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handleStartEditSubtask(st.id, st.title);
-                            }
-                          }}
+            {isEditing &&
+              currentReactiveLog &&
+              currentReactiveLog.subtasks.length > 0 && (
+                <div className="subtasks-list" role="list">
+                  {currentReactiveLog.subtasks.map((st) => {
+                    const isEditingThis = editingSubtaskId === st.id;
+                    return (
+                      <div key={st.id} className="subtask-row" role="listitem">
+                        <button
+                          type="button"
+                          className={`subtask-checkbox ${st.completed ? "completed" : ""}`}
+                          onClick={() => handleToggleSubtask(st.id)}
+                          role="checkbox"
+                          aria-checked={st.completed}
+                          aria-label={
+                            st.completed
+                              ? `Mark "${st.title}" as incomplete`
+                              : `Mark "${st.title}" as completed`
+                          }
                         >
-                          {st.title}
-                        </span>
-                      )}
+                          <Check size={12} strokeWidth={2.8} />
+                        </button>
 
-                      <button
-                        type="button"
-                        className="subtask-delete-btn"
-                        onClick={() => handleDeleteSubtask(st.id)}
-                        aria-label={`Delete subtask "${st.title}"`}
-                        title="Delete subtask"
-                      >
-                        <Trash2 size={15} strokeWidth={1.8} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        {isEditingThis ? (
+                          <input
+                            ref={editInputRef}
+                            type="text"
+                            className="subtask-inline-edit-input"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSaveSubtaskTitle(st.id);
+                              } else if (e.key === "Escape") {
+                                e.stopPropagation();
+                                setEditingSubtaskId(null);
+                              }
+                            }}
+                            onBlur={() => handleSaveSubtaskTitle(st.id)}
+                            aria-label="Edit subtask title"
+                          />
+                        ) : (
+                          <span
+                            className={`subtask-text ${st.completed ? "completed" : ""}`}
+                            onClick={() =>
+                              handleStartEditSubtask(st.id, st.title)
+                            }
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Subtask: ${st.title}. Tap or press Enter to edit.`}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleStartEditSubtask(st.id, st.title);
+                              }
+                            }}
+                          >
+                            {st.title}
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          className="subtask-delete-btn"
+                          onClick={() => handleDeleteSubtask(st.id)}
+                          aria-label={`Delete subtask "${st.title}"`}
+                          title="Delete subtask"
+                        >
+                          <Trash2 size={15} strokeWidth={1.8} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
             {/* New Log Draft Subtasks List */}
             {!isEditing && draftSubtasks.length > 0 && (
@@ -394,7 +492,10 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                   const isEditingThis = editingDraftIndex === idx;
                   return (
                     <div key={idx} className="subtask-row" role="listitem">
-                      <span className="subtask-checkbox draft" aria-hidden="true" />
+                      <span
+                        className="subtask-checkbox draft"
+                        aria-hidden="true"
+                      />
 
                       {isEditingThis ? (
                         <input
@@ -404,10 +505,10 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                           value={editingDraftTitle}
                           onChange={(e) => setEditingDraftTitle(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
+                            if (e.key === "Enter") {
                               e.preventDefault();
                               handleSaveDraftTitle(idx);
-                            } else if (e.key === 'Escape') {
+                            } else if (e.key === "Escape") {
                               e.stopPropagation();
                               setEditingDraftIndex(null);
                             }
@@ -423,7 +524,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                           role="button"
                           aria-label={`Draft subtask: ${draftTitle}. Tap or press Enter to edit.`}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
+                            if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               handleStartEditDraft(idx, draftTitle);
                             }
@@ -455,7 +556,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                 className="subtask-add-trigger"
                 onClick={() => {
                   setIsAddingSubtask(true);
-                  setSubtaskInput('');
+                  setSubtaskInput("");
                   setTimeout(() => subtaskInputRef.current?.focus(), 50);
                 }}
               >
@@ -472,13 +573,13 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                   onChange={(e) => setSubtaskInput(e.target.value)}
                   placeholder="Enter subtask item..."
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleAddSubtask();
-                    } else if (e.key === 'Escape') {
+                    } else if (e.key === "Escape") {
                       e.stopPropagation();
                       setIsAddingSubtask(false);
-                      setSubtaskInput('');
+                      setSubtaskInput("");
                     }
                   }}
                   autoComplete="off"
@@ -498,7 +599,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                     className="subtask-inline-btn secondary"
                     onClick={() => {
                       setIsAddingSubtask(false);
-                      setSubtaskInput('');
+                      setSubtaskInput("");
                     }}
                   >
                     Cancel
@@ -508,39 +609,35 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
             )}
           </div>
 
-          {canOmitDeadline && (
-            <div className="form-field">
-              <span className="form-label">DEADLINE</span>
-              <div className="deadline-mode-toggle" >
-                <label >
-                  <input
-                    type="radio"
-                    name="deadlineMode"
-                    value="none"
-                    checked={deadlineMode === 'none'}
-                    onChange={() => {
-                      updateSchedule({ mode: 'none', date: '', time: '' });
-                    }}
-
-                  />
-                  No deadline
-                </label>
-                <label >
-                  <input
-                    type="radio"
-                    name="deadlineMode"
-                    value="set"
-                    checked={deadlineMode === 'set'}
-                    onChange={() => updateSchedule({ mode: 'set' })}
-
-                  />
-                  Set deadline
-                </label>
-              </div>
+          <div className="form-field">
+            <span className="form-label">DEADLINE</span>
+            <div className="deadline-mode-toggle">
+              <label>
+                <input
+                  type="radio"
+                  name="deadlineMode"
+                  value="none"
+                  checked={deadlineMode === "none"}
+                  onChange={() => {
+                    updateSchedule({ mode: "none", date: "", time: "" });
+                  }}
+                />
+                No deadline
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="deadlineMode"
+                  value="set"
+                  checked={deadlineMode === "set"}
+                  onChange={() => updateSchedule({ mode: "set" })}
+                />
+                Set deadline
+              </label>
             </div>
-          )}
+          </div>
 
-          {(!canOmitDeadline || deadlineMode === 'set') && (
+          {deadlineMode === "set" && (
             <div className="form-grid-row">
               <div className="form-field">
                 <label htmlFor="log-date-input" className="form-label">
@@ -549,7 +646,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                 <DatePicker
                   id="log-date-input"
                   value={date}
-                  onChange={date => updateSchedule({ date })}
+                  onChange={(date) => updateSchedule({ date })}
                 />
               </div>
 
@@ -560,7 +657,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                 <TimePicker
                   id="log-time-input"
                   value={time}
-                  onChange={time => updateSchedule({ time })}
+                  onChange={(time) => updateSchedule({ time })}
                 />
               </div>
             </div>
@@ -587,12 +684,77 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
             </select>
           </div>
 
+          <div className="form-grid-row">
+            <div className="form-field">
+              <label htmlFor="task-priority" className="form-label">
+                Priority
+              </label>
+              <select
+                id="task-priority"
+                className="form-select"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as TaskPriority)}
+              >
+                <option value="normal">Normal priority</option>
+                <option value="high">High priority</option>
+                <option value="low">Low priority</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor="task-repeat" className="form-label">
+                Repeat
+              </label>
+              <select
+                id="task-repeat"
+                className="form-select"
+                value={frequency}
+                onChange={(e) => {
+                  const value = e.target.value as typeof frequency;
+                  setFrequency(value);
+                  if (value !== "none" && deadlineMode === "none")
+                    updateSchedule({
+                      ...getDefaultNewLogDateTime(),
+                      mode: "set",
+                    });
+                }}
+              >
+                <option value="none">Doesn’t repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+          </div>
+          {frequency !== "none" && (
+            <div>
+              <label className="repeat-interval">
+                Every{" "}
+                <input
+                  aria-label="Repeat interval"
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={interval}
+                  onChange={(e) => setInterval(Number(e.target.value))}
+                />
+                {
+                  { daily: "day(s)", weekly: "week(s)", monthly: "month(s)" }[
+                    frequency
+                  ]
+                }
+              </label>
+              <p className="recurrence-help">
+                Completing this task archives it and creates the next
+                occurrence. Missed dates are skipped.
+              </p>
+            </div>
+          )}
           {error && (
             <div
               style={{
-                color: 'var(--overdue-text)',
-                fontSize: '13px',
-                marginTop: '-4px',
+                color: "var(--overdue-text)",
+                fontSize: "13px",
+                marginTop: "-4px",
               }}
               role="alert"
             >
@@ -603,7 +765,11 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
           {/* Actions */}
           {isEditing && initialLog ? (
             <div className="form-sheet-actions edit-actions-stack">
-              <button type="submit" className="form-btn form-btn-primary" disabled={isSaving}>
+              <button
+                type="submit"
+                className="form-btn form-btn-primary"
+                disabled={isSaving}
+              >
                 Save Changes
               </button>
 
@@ -613,10 +779,18 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
                     type="button"
                     className="form-btn form-btn-secondary"
                     onClick={handleCompleteClick}
-                    aria-label={initialLog.completed ? 'Mark as active' : 'Mark as complete'}
+                    aria-label={
+                      initialLog.completed
+                        ? "Mark as active"
+                        : "Mark as complete"
+                    }
                   >
                     <Check size={16} strokeWidth={2.2} />
-                    <span>{initialLog.completed ? 'Mark Active' : 'Mark as Complete'}</span>
+                    <span>
+                      {initialLog.completed
+                        ? "Mark Active"
+                        : "Mark as Complete"}
+                    </span>
                   </button>
 
                   <button
@@ -632,7 +806,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
               ) : (
                 <div className="delete-confirm-box" role="alert">
                   <p className="delete-confirm-text">
-                    Permanently delete this log? This action cannot be undone.
+                    Move this task to Recently Deleted? You can restore it for 30 days.
                   </p>
                   <div className="delete-confirm-actions">
                     <button
@@ -662,7 +836,11 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
               >
                 Cancel
               </button>
-              <button type="submit" className="form-btn form-btn-primary" disabled={isSaving}>
+              <button
+                type="submit"
+                className="form-btn form-btn-primary"
+                disabled={isSaving}
+              >
                 Create Log
               </button>
             </div>

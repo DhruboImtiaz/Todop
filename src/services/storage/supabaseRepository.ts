@@ -5,7 +5,7 @@ import { DEFAULT_SETTINGS } from '../../utils/settings';
 import { validateBackup } from '../../utils/backup';
 import { PlannerRepository } from './plannerRepository';
 
-export const emptyWorkspace = (): AppDataSchema => ({ version: 1, logs: [], projects: [], settings: { ...DEFAULT_SETTINGS } });
+export const emptyWorkspace = (): AppDataSchema => ({ version: 2, logs: [], trash: [], projects: [], settings: { ...DEFAULT_SETTINGS } });
 
 /** One atomic, versioned workspace per user. Cloud data never enters guest storage. */
 export class SupabaseRepository extends PlannerRepository {

@@ -6,11 +6,20 @@ export interface Subtask {
   updatedAt: string; // ISO 8601 string
 }
 
+export type TaskPriority = 'normal' | 'high' | 'low';
+export interface RecurrenceRule { frequency: 'daily' | 'weekly' | 'monthly'; interval: number; anchorDay?: number }
+export interface DeletedLog { log: Log; deletedAt: string }
+
 export interface Log {
   id: string;
   title: string;
   description?: string;
   deadline?: string; // ISO 8601 string, machine-readable, optional for project logs
+  priority?: TaskPriority;
+  myDay?: string;
+  recurrence?: RecurrenceRule;
+  seriesId?: string;
+  nextOccurrenceId?: string;
   projectId: string | null;
   completed: boolean;
   subtasks: Subtask[];
@@ -27,6 +36,8 @@ export interface Project {
 }
 
 export interface LogFormValues {
+  priority?: TaskPriority;
+  recurrence?: RecurrenceRule;
   title: string;
   description?: string;
   deadline?: string;
@@ -46,11 +57,12 @@ export interface Settings {
 export interface AppDataSchema {
   version: number;
   logs: Log[];
+  trash?: DeletedLog[];
   projects: Project[];
   settings: Settings;
 }
 
-export type NavigationTab = 'upcoming' | 'projects' | 'calendar' | 'search' | 'settings';
+export type NavigationTab = 'today' | 'trash' | 'upcoming' | 'projects' | 'calendar' | 'search' | 'settings';
 
 export interface AppRoute {
   tab: NavigationTab;

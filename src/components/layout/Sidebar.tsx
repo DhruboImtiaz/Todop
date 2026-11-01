@@ -1,6 +1,6 @@
 import { BrandLogo } from '../common/BrandLogo';
 import React from 'react';
-import { CalendarClock, FolderGit2, Calendar, Search, Settings } from 'lucide-react';
+import { CalendarClock, FolderGit2, Calendar, Search, Settings, Sunrise, Trash2 } from 'lucide-react';
 import type { NavigationTab } from '../../types';
 import './Sidebar.css';
 
@@ -17,6 +17,7 @@ interface NavItem {
 }
 
 const PRIMARY_NAV: NavItem[] = [
+  { tab: 'today', icon: <Sunrise size={20} strokeWidth={1.8} />, label: 'MY DAY', ariaLabel: 'My Day' },
   {
     tab: 'upcoming',
     icon: <CalendarClock size={20} strokeWidth={1.8} />,
@@ -76,8 +77,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
         <button
           type="button"
           className="sidebar-brand"
-          onClick={() => onSelectTab('upcoming')}
-          aria-label="TODOP — Navigate to Upcoming"
+          onClick={() => onSelectTab('today')}
+          aria-label="TODOP — Open My Day"
         >
           <BrandLogo />
         </button>
@@ -97,6 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
 
       {/* Settings at the bottom */}
       <div className="sidebar-footer">
+        <SidebarNavButton item={{ tab: 'trash', icon: <Trash2 size={19} strokeWidth={1.8} />, label: 'RECENTLY DELETED', ariaLabel: 'Recently deleted' }} isActive={currentTab === 'trash'} onSelectTab={onSelectTab} />
         <SidebarNavButton
           item={{
             tab: 'settings',

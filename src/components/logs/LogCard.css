@@ -1,102 +1,97 @@
+/* The same calm task row is shared by every workspace view. */
 .log-card {
   position: relative;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 18px;
+  min-height: 96px;
+  padding: 21px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
   cursor: pointer;
-  user-select: none;
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
 }
-
 .log-card:hover {
-  border-color: var(--border-strong);
-  background-color: var(--bg-card-hover);
+  border-color: var(--accent-border-tint);
+  background: var(--bg-card-hover);
 }
-
-.log-card:active {
-  transform: scale(0.99);
-  background-color: var(--bg-card-hover);
-}
-
-/* Keep the menu above adjacent cards when :active creates a transform context. */
 .log-card.menu-open {
   z-index: 21;
 }
-
 .log-card:focus-visible {
   outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
-
-.log-card.overdue {
-  border-color: var(--overdue-border);
-  background-color: var(--overdue-badge-bg);
-}
-
-.log-card.overdue:hover {
-  border-color: var(--overdue-text);
-}
-
 .log-card.completed {
-  border-color: var(--border-subtle);
-  opacity: 0.82;
+  background: color-mix(in srgb, var(--accent-primary) 5%, var(--bg-card));
+  border-color: var(--accent-border-tint);
 }
-
-.log-card.completed:hover {
-  opacity: 1;
-  border-color: var(--border-strong);
-}
-
 .log-card.completed .log-card-title {
-  color: var(--text-secondary);
+  color: var(--text-dim);
   text-decoration: line-through;
 }
-
-.log-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.log-card-title {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  line-height: 1.35;
-  word-break: break-word;
+.log-card-details {
   flex: 1;
+  min-width: 0;
 }
-
+.log-card-title {
+  text-transform: none;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.55;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.log-card-project {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: var(--text-dim);
+  font-size: 0.73rem;
+  line-height: 1.6;
+}
+.log-project-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-primary);
+  opacity: 0.55;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.log-card-subtasks {
+  font-size: 0.67rem;
+}
 .log-card-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 13px;
   flex-shrink: 0;
 }
-
-/* Circular Completion Control */
 .log-card-complete-btn {
   position: relative;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--text-dim);
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-strong);
   color: transparent;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  background: transparent;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    border-color 0.18s;
 }
-
-.log-card-complete-btn::after {
-  content: '';
+.log-card-complete-btn::after,
+.log-card-overflow-btn::after {
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -104,158 +99,110 @@
   width: 44px;
   height: 44px;
 }
-
 .log-card-complete-btn:hover {
-  border-color: var(--accent-primary);
-  background-color: var(--accent-tint);
   color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-tint);
 }
-
 .log-card-complete-btn.completed {
-  border-color: var(--success-fill);
-  background-color: var(--success-fill);
-  color: var(--success-mark-ink);
+  color: var(--accent-text);
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
 }
-
-.log-card-complete-btn:active {
-  transform: scale(0.92);
+.log-card-complete-btn:focus-visible,
+.log-card-overflow-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
 }
-
-/* Overflow Menu Button */
 .log-card-overflow-btn {
   position: relative;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  width: 24px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--text-dim);
 }
-
-.log-card-overflow-btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-}
-
 .log-card-overflow-btn:hover {
-  color: var(--text-primary);
-  background-color: var(--border-subtle);
-}
-
-/* Subtasks Progress Indicator */
-.log-card-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.log-card-subtasks {
-  display: flex;
-  align-items: center;
-}
-
-.subtasks-progress-text {
-  font-family: var(--font-body);
-  font-size: 0.733rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  background-color: var(--bg-card-hover);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 2px 7px;
-  line-height: 1.3;
-}
-
-.log-card.completed .subtasks-progress-text {
-  opacity: 0.85;
-}
-
-/* Countdown Display */
-.log-card-countdown {
-  font-family: var(--font-heading);
-  font-size: 1.067rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
   color: var(--accent-text-readable);
-  line-height: 1.2;
+  background: var(--accent-tint);
 }
-
-.log-card.overdue .log-card-countdown {
-  color: var(--overdue-text);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.log-card-countdown {
+  color: var(--text-dim);
+  font-size: 0.77rem;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 1.5;
+  white-space: nowrap;
 }
-
+.log-card.completed .log-card-countdown {
+  color: var(--accent-text-readable);
+}
 .overdue-tag {
-  font-size: 0.733rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  background-color: rgba(255, 115, 92, 0.15);
-  border: 1px solid rgba(255, 115, 92, 0.3);
+  font-size: 0.63rem;
   color: var(--overdue-text);
+  letter-spacing: 0.04em;
 }
-
-.completed-tag {
-  font-size: 0.733rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  background-color: var(--success-tint);
-  border: 1px solid var(--success-border);
-  color: var(--success-text);
-}
-
-/* Overflow Dropdown */
 .log-overflow-dropdown {
   position: absolute;
-  top: 42px;
+  top: calc(50% + 18px);
   right: 12px;
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-floating);
   z-index: 20;
-  min-width: 130px;
-  padding: 4px;
   display: flex;
   flex-direction: column;
+  min-width: 165px;
+  padding: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-floating);
 }
-
 .log-overflow-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: 0.867rem;
+  gap: 9px;
+  padding: 11px;
+  font-size: 0.78rem;
   color: var(--text-primary);
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   text-align: left;
-  cursor: pointer;
-  transition: background-color 0.12s ease;
 }
-
 .log-overflow-item:hover {
-  background-color: var(--border-subtle);
+  background: var(--accent-tint);
 }
-
 .log-overflow-item.delete-item {
   color: var(--overdue-text);
 }
-
 .log-overflow-item.delete-item:hover {
-  background-color: rgba(255, 115, 92, 0.12);
+  background: var(--overdue-badge-bg);
+}
+@media (max-width: 650px) {
+  .log-card {
+    gap: 12px;
+    padding: 17px 12px;
+    min-height: 88px;
+  }
+  .log-card-title {
+    font-size: 0.83rem;
+  }
+  .log-card-complete-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+  }
+  .log-card-project {
+    font-size: 0.66rem;
+  }
+  .log-card-actions {
+    gap: 5px;
+  }
+  .log-card-countdown {
+    font-size: 0.64rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .log-card,
+  .log-card-complete-btn {
+    transition: none;
+  }
 }
