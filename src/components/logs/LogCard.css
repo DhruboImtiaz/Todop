@@ -37,11 +37,14 @@
   flex: 1;
   min-width: 0;
 }
-.log-card-title {
-  text-transform: none;
+.log-card-title,
+.log-card-countdown {
   font-size: 0.94rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+.log-card-title {
+  text-transform: none;
   line-height: 1.55;
   letter-spacing: -0.025em;
   overflow-wrap: anywhere;
@@ -128,9 +131,6 @@
   background: var(--accent-tint);
 }
 .log-card-countdown {
-  color: var(--text-dim);
-  font-size: 1.05rem;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.015em;
   line-height: 1.5;
@@ -140,8 +140,6 @@
   color: var(--accent-text-readable);
 }
 .overdue-tag {
-  font-size: 0.63rem;
-  color: var(--overdue-text);
   letter-spacing: 0.04em;
 }
 .log-overflow-dropdown {
@@ -183,7 +181,8 @@
     padding: 17px 12px;
     min-height: 88px;
   }
-  .log-card-title {
+  .log-card-title,
+  .log-card-countdown {
     font-size: 0.83rem;
   }
   .log-card-complete-btn {
@@ -196,9 +195,6 @@
   }
   .log-card-actions {
     gap: 5px;
-  }
-  .log-card-countdown {
-    font-size: 0.88rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
