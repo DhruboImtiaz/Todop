@@ -8,7 +8,7 @@ export function useLogFormSubmit(editingLog: Log | null, onSaved: () => void) {
     const input = { ...values, projectId: values.projectId ?? null };
     if (editingLog) {
       await updateLog({ id: editingLog.id, ...input, description: input.description ?? '', expectedFields: {
-        title: editingLog.title, description: editingLog.description, deadline: editingLog.deadline, projectId: editingLog.projectId,
+        priority: editingLog.priority, recurrence: editingLog.recurrence, title: editingLog.title, description: editingLog.description, deadline: editingLog.deadline, projectId: editingLog.projectId,
       } });
     } else {
       await createLog({ ...input, draftSubtasks });

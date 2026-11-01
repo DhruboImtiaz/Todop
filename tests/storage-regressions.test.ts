@@ -19,7 +19,7 @@ await local.updateLog({ id: log.id, description: '' });
 assert.equal((await local.getLogById(log.id))?.description, undefined);
 const data = await local.exportData();
 for (const corrupt of [
-  { ...data, version: 2 },
+  { ...data, version: 99 },
   { ...data, logs: [...data.logs, data.logs[0]] },
   { ...data, logs: [{ ...log, createdAt: 'invalid' }] },
   { ...data, logs: [{ ...log, projectId: 'missing' }] },

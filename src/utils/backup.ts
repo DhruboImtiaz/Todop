@@ -1,5 +1,6 @@
+import { isDateKey, validRecurrence } from './planning';
 import { DEFAULT_SETTINGS, FONT_SIZES, isFontSize } from './settings';
-import type { AppDataSchema, Log, Project, Settings, Subtask } from '../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask, DeletedLog, TaskPriority, RecurrenceRule } from '../types';
 
 export const CURRENT_BACKUP_VERSION = 1;
 export const BACKUP_APP_IDENTIFIER = 'todop';
@@ -7,6 +8,7 @@ export const BACKUP_APP_IDENTIFIER = 'todop';
 export interface BackupDataPayload {
   schemaVersion: number;
   logs: Log[];
+  trash?: DeletedLog[];
   projects: Project[];
   settings: Settings;
 }
@@ -32,6 +34,7 @@ export function createBackup(data: AppDataSchema, exportedAt?: string): TodopBac
     exportedAt: exportedAt || new Date().toISOString(),
     data: {
       schemaVersion: data.version ?? 1,
+      trash: structuredClone(data.trash ?? []),
       logs: (data.logs || []).map((l) => ({
         ...l,
         subtasks: (l.subtasks || []).map((s) => ({ ...s })),
@@ -133,7 +136,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
 
   // Validate schema version
   const schemaVer = dataPayload.schemaVersion ?? dataPayload.version;
-  if (schemaVer !== 1) {
+  if (schemaVer !== 1 && schemaVer !== 2) {
     return {
       valid: false,
       error: 'INVALID BACKUP: Missing or invalid schemaVersion.',
@@ -255,7 +258,19 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
       }
     }
 
+    if ((l.priority !== undefined && !['normal','high','low'].includes(String(l.priority))) ||
+        (l.myDay !== undefined && !isDateKey(l.myDay)) ||
+        (l.recurrence !== undefined && (!validRecurrence(l.recurrence) || !l.deadline)) ||
+        (l.seriesId !== undefined && typeof l.seriesId !== 'string') ||
+        (l.nextOccurrenceId !== undefined && typeof l.nextOccurrenceId !== 'string')) {
+      return { valid: false, error: 'INVALID BACKUP: A task has invalid planning or recurrence fields.' };
+    }
     validatedLogs.push({
+      ...(l.priority !== undefined ? { priority: l.priority as TaskPriority } : {}),
+      ...(l.myDay !== undefined ? { myDay: l.myDay as string } : {}),
+      ...(l.recurrence !== undefined ? { recurrence: structuredClone(l.recurrence) as RecurrenceRule } : {}),
+      ...(l.seriesId !== undefined ? { seriesId: l.seriesId as string } : {}),
+      ...(l.nextOccurrenceId !== undefined ? { nextOccurrenceId: l.nextOccurrenceId as string } : {}),
       id: l.id as string,
       title: (l.title as string).trim(),
       description: typeof l.description === 'string' ? l.description.trim() || undefined : undefined,
@@ -343,10 +358,28 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
     };
   }
 
+  const trash: DeletedLog[] = [];
+  if (dataPayload.trash !== undefined) {
+    if (!Array.isArray(dataPayload.trash)) return { valid: false, error: 'INVALID BACKUP: Recently deleted must be an array.' };
+    for (const item of dataPayload.trash) {
+      if (!item || typeof item !== 'object' || typeof item.deletedAt !== 'string' || !Number.isFinite(Date.parse(item.deletedAt)) || !item.log) {
+        return { valid: false, error: 'INVALID BACKUP: Invalid deleted task.' };
+      }
+      // Reuse task validation without recursively accepting nested trash collections.
+      const restored = validateBackup({ app: BACKUP_APP_IDENTIFIER, backupVersion: CURRENT_BACKUP_VERSION, exportedAt: record.exportedAt,
+        data: { schemaVersion: schemaVer, logs: [{ ...item.log, projectId: projectIds.has(item.log.projectId) ? item.log.projectId : null }], projects, settings: s } });
+      if (!restored.valid) return restored;
+      trash.push({ log: restored.data.logs[0], deletedAt: item.deletedAt });
+    }
+    const ids = [...validatedLogs.map(l => l.id), ...trash.map(item => item.log.id)];
+    if (new Set(ids).size !== ids.length) return { valid: false, error: 'INVALID BACKUP: Duplicate live or deleted task IDs.' };
+  }
+
   // Construct valid AppDataSchema
   const validSchema: AppDataSchema = {
     version: schemaVer as number,
     logs: validatedLogs,
+    ...(dataPayload.trash !== undefined ? { trash } : {}),
     projects: [...dataPayload.projects as Project[]].sort((a, b) => a.order - b.order),
     settings: {
       theme: s.theme as 'light' | 'dark',
@@ -361,6 +394,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
     data: {
       schemaVersion: schemaVer as number,
       logs: validSchema.logs,
+      ...(validSchema.trash ? { trash: validSchema.trash } : {}),
       projects: validSchema.projects,
       settings: validSchema.settings,
     },

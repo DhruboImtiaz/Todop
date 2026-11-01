@@ -1,3 +1,7 @@
+import { MyDayPage } from './components/today/MyDayPage';
+import { TrashPage } from './components/trash/TrashPage';
+import { UndoToast } from './components/common/UndoToast';
+import './styles/workspace.css';
 import { useLogFormSubmit } from './hooks/useLogFormSubmit';
 import React, { useState, useEffect } from 'react';
 
@@ -19,6 +23,7 @@ import { SearchPage } from './components/search/SearchPage';
 import { SettingsPage } from './components/settings/SettingsPage';
 
 import { getRouteFromPath, getPathFromRoute } from './utils/routing';
+import { navigate } from './utils/navigation';
 
 const TodopMain: React.FC = () => {
   const getInitialRoute = () => {
@@ -41,12 +46,8 @@ const TodopMain: React.FC = () => {
     activeProjectId ? (projects.find((p) => p.id === activeProjectId) ?? null) : null;
 
   const navigateTo = (tab: NavigationTab, projectId: string | null = null) => {
-    setCurrentTab(tab);
-    setActiveProjectId(projectId);
-    const path = tab === 'upcoming' ? '/app' : getPathFromRoute({ tab, projectId });
-    if (typeof window !== 'undefined' && window.location.pathname !== path) {
-      window.history.pushState(null, '', path);
-    }
+    const base = tab === 'upcoming' ? '/app' : getPathFromRoute({ tab, projectId });
+    navigate(base);
   };
 
   const handleNavigate = (tab: NavigationTab) => {
@@ -103,6 +104,8 @@ const TodopMain: React.FC = () => {
 
   const renderContent = () => (
     <>
+      {currentTab === 'today' && <MyDayPage timestamp={currentTimestamp} onEdit={handleOpenEdit} onCreate={handleOpenCreate} />}
+      {currentTab === 'trash' && <TrashPage timestamp={currentTimestamp} />}
       {currentTab === 'upcoming' && (
         <UpcomingPage
           logs={activeLogs}
@@ -145,8 +148,9 @@ const TodopMain: React.FC = () => {
       )}
 
       {/* Add/Edit Log Bottom Sheet (Upcoming context only) */}
-      {currentTab === 'upcoming' && (
+      {(currentTab === 'upcoming' || currentTab === 'today') && (
         <LogFormSheet
+          defaultNoDeadline={currentTab === 'today'}
           isOpen={isSheetOpen}
           initialLog={editingLog}
           onClose={handleCloseSheet}
@@ -167,6 +171,7 @@ const TodopMain: React.FC = () => {
   return (
     <div className="app-viewport-wrapper">
       <ErrorBanner />
+      <UndoToast />
       {isDesktop ? (
         <div className="app-shell-desktop">
           <Sidebar currentTab={currentTab} onSelectTab={handleNavigate} />

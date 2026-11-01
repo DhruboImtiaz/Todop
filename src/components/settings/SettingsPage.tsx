@@ -1,3 +1,4 @@
+import { isDemoMode, navigate } from '../../utils/navigation';
 import { AccountPanel } from '../auth/AccountPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { runUiAction } from '../../utils/asyncAction';
@@ -70,6 +71,8 @@ export const SettingsPage: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setRestoreError(null);
+    setRestoreSuccess(null);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -159,7 +162,8 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      <AccountPanel />
+      {!isDemoMode() && <AccountPanel />}
+      <button className="workspace-secondary" onClick={() => navigate('/trash')}>Recently deleted · Recover a task</button>
 
       {/* Feedback Messages */}
       {restoreError && (
