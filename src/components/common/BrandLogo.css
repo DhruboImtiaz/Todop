@@ -1,0 +1,35 @@
+.brand-logo {
+  --brand-mark-size: 33px;
+  --brand-mark-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.8px;
+  white-space: nowrap;
+  color: inherit;
+}
+.brand-logo-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--brand-mark-size);
+  width: var(--brand-mark-size);
+  height: var(--brand-mark-size);
+  background: var(--brand-lime);
+  color: var(--brand-ink);
+  border-radius: var(--brand-mark-radius);
+  transform: rotate(-7deg);
+}
+.brand-logo-mark svg { width: 67%; height: 67%; }
+.brand-logo-period { color: var(--accent-text-readable); }
+.brand-logo--small {
+  --brand-mark-size: 26px;
+  --brand-mark-radius: 7px;
+  font-size: 22px;
+  letter-spacing: -1.3px;
+}
+/* Public pages keep the brand's original purple even when the planner uses dark mode. */
+.landing-page .brand-logo-period, .auth-page .brand-logo-period { color: var(--brand-purple); }

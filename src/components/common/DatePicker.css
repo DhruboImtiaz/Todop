@@ -1,6 +1,6 @@
 .date-picker-header {
   background-color: var(--accent-primary);
-  color: white;
+  color: var(--accent-text);
   padding: 16px;
   display: flex;
   justify-content: space-between;
@@ -10,7 +10,7 @@
 .date-picker-header .nav-btn {
   background: transparent;
   border: none;
-  color: white;
+  color: var(--accent-text);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -76,7 +76,7 @@
 
 .date-picker-day.selected {
   background-color: var(--accent-primary);
-  color: white;
+  color: var(--accent-text);
 }
 
 .date-picker-day.today {
@@ -93,5 +93,5 @@
 }
 
 .date-picker-day.selected .today-dot {
-  background-color: white;
+  background-color: var(--accent-text);
 }

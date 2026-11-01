@@ -27,7 +27,7 @@
   align-items: center;
   text-align: center;
   gap: 10px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  box-shadow: var(--shadow-dialog);
   animation: scaleIn 0.18s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 

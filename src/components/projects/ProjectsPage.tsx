@@ -1,3 +1,4 @@
+import { runUiAction } from '../../utils/asyncAction';
 import React, { useState, useRef } from 'react';
 import { MoreVertical, ChevronUp, ChevronDown, Pencil, Trash2, FolderOpen } from 'lucide-react';
 import type { Project } from '../../types';
@@ -178,7 +179,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
                   tabIndex={0}
                   aria-label={`Open project: ${project.name}`}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
                       e.preventDefault();
                       handleRowClick(project.id);
                     }
@@ -219,7 +220,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
                           type="button"
                           className="project-overflow-item"
                           role="menuitem"
-                          onClick={() => handleMoveUp(project.id)}
+                          onClick={() => runUiAction(() => handleMoveUp(project.id))}
                           disabled={isFirst}
                           aria-disabled={isFirst}
                         >
@@ -230,7 +231,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
                           type="button"
                           className="project-overflow-item"
                           role="menuitem"
-                          onClick={() => handleMoveDown(project.id)}
+                          onClick={() => runUiAction(() => handleMoveDown(project.id))}
                           disabled={isLast}
                           aria-disabled={isLast}
                         >

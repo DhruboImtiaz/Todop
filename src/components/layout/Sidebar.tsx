@@ -1,3 +1,4 @@
+import { BrandLogo } from '../common/BrandLogo';
 import React from 'react';
 import { CalendarClock, FolderGit2, Calendar, Search, Settings } from 'lucide-react';
 import type { NavigationTab } from '../../types';
@@ -78,8 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
           onClick={() => onSelectTab('upcoming')}
           aria-label="TODOP — Navigate to Upcoming"
         >
-          <span>TODOP</span>
-          <span className="sidebar-brand-dot" aria-hidden="true" />
+          <BrandLogo />
         </button>
       </div>
 

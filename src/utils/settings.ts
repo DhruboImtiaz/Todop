@@ -12,7 +12,7 @@ export function applyAppearance(settings: Settings): void {
   document.documentElement.dataset.theme = settings.theme;
   document.documentElement.dataset.fontSize = settings.fontSize;
   document.querySelector('meta[name="theme-color"]')?.setAttribute(
-    'content', settings.theme === 'dark' ? '#090A0C' : '#F4F5F7',
+    'content', settings.theme === 'dark' ? '#1F2027' : '#FAFAF6',
   );
 }
 

@@ -1,8 +1,8 @@
 import { applyAppearance } from '../utils/settings';
-import React, { useSyncExternalStore, useCallback, useMemo } from 'react';
+import React, { useSyncExternalStore, useCallback, useMemo, useState } from 'react';
 import type { AppDataSchema, Settings } from '../types';
 import type { NewLogInput, StorageRepository, UpdateLogInput } from '../services/storage/storageRepository';
-import { defaultStorageRepository, LocalStorageRepository } from '../services/storage/localStorageRepository';
+import { defaultStorageRepository } from '../services/storage/localStorageRepository';
 import { StorageContext } from './StorageContextCore';
 import type { StorageContextValue } from './StorageContextCore';
 
@@ -10,7 +10,15 @@ export const StorageProvider: React.FC<{
   repository?: StorageRepository;
   children: React.ReactNode;
 }> = ({ repository = defaultStorageRepository, children }) => {
-  const store = repository as LocalStorageRepository;
+  const store = repository;
+  const [error, setError] = useState('');
+  const attempt = useCallback(async <T,>(operation: () => Promise<T>): Promise<T> => {
+    try { const result = await operation(); setError(''); return result; }
+    catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Your change could not be saved. Please try again.');
+      throw failure;
+    }
+  }, []);
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -38,100 +46,100 @@ export const StorageProvider: React.FC<{
 
   const createLog = useCallback(
     async (input: NewLogInput) => {
-      return repository.createLog(input);
+      return attempt(() => repository.createLog(input));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const updateLog = useCallback(
     async (input: UpdateLogInput) => {
-      return repository.updateLog(input);
+      return attempt(() => repository.updateLog(input));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const toggleLogCompletion = useCallback(
     async (id: string) => {
-      return repository.toggleLogCompletion(id);
+      return attempt(() => repository.toggleLogCompletion(id));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const deleteLog = useCallback(
     async (id: string) => {
-      return repository.deleteLog(id);
+      return attempt(() => repository.deleteLog(id));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const addSubtask = useCallback(
     async (logId: string, title: string) => {
-      return repository.addSubtask(logId, title);
+      return attempt(() => repository.addSubtask(logId, title));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const updateSubtaskTitle = useCallback(
     async (logId: string, subtaskId: string, title: string) => {
-      return repository.updateSubtaskTitle(logId, subtaskId, title);
+      return attempt(() => repository.updateSubtaskTitle(logId, subtaskId, title));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const toggleSubtaskCompletion = useCallback(
     async (logId: string, subtaskId: string) => {
-      return repository.toggleSubtaskCompletion(logId, subtaskId);
+      return attempt(() => repository.toggleSubtaskCompletion(logId, subtaskId));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const deleteSubtask = useCallback(
     async (logId: string, subtaskId: string) => {
-      return repository.deleteSubtask(logId, subtaskId);
+      return attempt(() => repository.deleteSubtask(logId, subtaskId));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const createProject = useCallback(
     async (name: string) => {
-      return repository.createProject(name);
+      return attempt(() => repository.createProject(name));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const updateProject = useCallback(
     async (id: string, name: string) => {
-      return repository.updateProject(id, name);
+      return attempt(() => repository.updateProject(id, name));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const deleteProject = useCallback(
     async (id: string) => {
-      return repository.deleteProject(id);
+      return attempt(() => repository.deleteProject(id));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const reorderProjects = useCallback(
     async (projectIds: string[]) => {
-      return repository.reorderProjects(projectIds);
+      return attempt(() => repository.reorderProjects(projectIds));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const moveProject = useCallback(
     async (id: string, direction: 'up' | 'down') => {
-      return repository.moveProject(id, direction);
+      return attempt(() => repository.moveProject(id, direction));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const updateSettings = useCallback(
     async (patch: Partial<Settings>) => {
-      return repository.updateSettings(patch);
+      return attempt(() => repository.updateSettings(patch));
     },
-    [repository]
+    [repository, attempt]
   );
 
   const exportData = useCallback(async () => {
@@ -153,11 +161,13 @@ export const StorageProvider: React.FC<{
   const value = useMemo<StorageContextValue>(
     () => ({
       repository,
+      error,
       activeLogs,
       completedLogs,
       projects,
       settings,
       loading: false,
+      dismissError: () => setError(''),
       createLog,
       updateLog,
       toggleLogCompletion,
@@ -177,6 +187,7 @@ export const StorageProvider: React.FC<{
     }),
     [
       repository,
+      error,
       activeLogs,
       completedLogs,
       projects,

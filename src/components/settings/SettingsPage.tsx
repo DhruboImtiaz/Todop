@@ -1,3 +1,6 @@
+import { AccountPanel } from '../auth/AccountPanel';
+import { useAuth } from '../../hooks/useAuth';
+import { runUiAction } from '../../utils/asyncAction';
 import { FONT_SIZES, isFontSize } from '../../utils/settings';
 import React, { useRef, useState, useEffect } from 'react';
 import { Download, Moon, Sun, Type, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
@@ -7,6 +10,7 @@ import { createBackup, downloadBackupFile, validateBackup } from '../../utils/ba
 import './SettingsPage.css';
 
 export const SettingsPage: React.FC = () => {
+  const { session } = useAuth();
   const {
     settings,
     updateSettings,
@@ -155,6 +159,8 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      <AccountPanel />
+
       {/* Feedback Messages */}
       {restoreError && (
         <div className="settings-feedback-banner error" role="alert">
@@ -252,7 +258,7 @@ export const SettingsPage: React.FC = () => {
               className={`segmented-control-btn ${currentTheme === 'light' ? 'active' : ''}`}
               role="radio"
               aria-checked={currentTheme === 'light'}
-              onClick={() => handleThemeChange('light')}
+              onClick={() => runUiAction(() => handleThemeChange('light'))}
             >
               <Sun size={15} strokeWidth={2} />
               <span>LIGHT</span>
@@ -263,7 +269,7 @@ export const SettingsPage: React.FC = () => {
               className={`segmented-control-btn ${currentTheme === 'dark' ? 'active' : ''}`}
               role="radio"
               aria-checked={currentTheme === 'dark'}
-              onClick={() => handleThemeChange('dark')}
+              onClick={() => runUiAction(() => handleThemeChange('dark'))}
             >
               <Moon size={15} strokeWidth={2} />
               <span>DARK</span>
@@ -294,7 +300,7 @@ export const SettingsPage: React.FC = () => {
             {FONT_SIZES.map((size, index) => (
               <button key={size} type="button" role="radio"
                 className={`segmented-control-btn ${currentFontSize === size ? 'active' : ''}`}
-                aria-checked={currentFontSize === size} onClick={() => handleFontSizeChange(size)}>
+                aria-checked={currentFontSize === size} onClick={() => runUiAction(() => handleFontSizeChange(size))}>
                 <Type size={11 + index * 2} strokeWidth={2} />
                 <span>{size.toUpperCase()}</span>
               </button>
@@ -313,7 +319,7 @@ export const SettingsPage: React.FC = () => {
           <div className="settings-meta-list">
             <div className="settings-meta-row">
               <span className="settings-meta-label">Storage Engine</span>
-              <span className="settings-meta-value">LocalStorage (Schema v1)</span>
+              <span className="settings-meta-value">{session ? 'Private cloud workspace' : 'This browser'}</span>
             </div>
             <div className="settings-meta-row">
               <span className="settings-meta-label">Active Logs</span>

@@ -9,6 +9,8 @@ export interface StorageContextValue {
   projects: Project[];
   settings: Settings | null;
   loading: boolean;
+  error: string;
+  dismissError: () => void;
   createLog: (input: NewLogInput) => Promise<Log>;
   updateLog: (input: UpdateLogInput) => Promise<Log>;
   toggleLogCompletion: (id: string) => Promise<Log | null>;

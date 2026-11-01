@@ -1,175 +1,62 @@
-# TODOP — Personal Task Planner
+# Todop — a little direction for your everyday
 
-**🌐 Live App: [todop7.netlify.app](https://todop7.netlify.app/)**
+A React and TypeScript planner with an animated product front page, tasks and subtasks, projects, monthly calendar, archive search, appearance settings, offline device storage, and a private Supabase workspace for signed-in users.
 
-A sleek, mobile-first, local-first progressive web application (PWA) designed for focused task tracking with live countdowns, project organization, instant archive search, and complete offline capability.
+## Run locally
 
----
+Requires Node.js 24+ and npm.
 
-## Features
-
-- **Live Countdown Timers**: Automatically calculates and updates real-time countdowns (`X D YH ZM`, `X H YM`, `X M`, or `OVERDUE`) grouped into **OVERDUE**, **TODAY**, and **UPCOMING** sections.
-- **Project Management**: Group logs under dedicated projects. Supports intuitive drag-and-drop reordering, keyboard-accessible Move Up / Move Down controls, and safe unassignment of logs when a project is deleted.
-- **Instant Archive Search**: Real-time case-insensitive search across both active and completed log archives, sorted by nearest deadline (active) and latest modification (completed).
-- **Appearance & Typography**:
-  - **Theme System**: Default modern Light theme (`#F4F5F7` surface, white cards, `#AEACFF` lavender accent with WCAG AAA accessible `#0D0E15` text) and dark mode with persistent state.
-  - **Global Font Scaling**: Responsive root `rem` scaling with **Small**, **Medium**, and **Large** settings.
-  - **Typography**: 100% offline bundled [Plus Jakarta Sans](https://fontsource.org/fonts/plus-jakarta-sans) with zero external CDN dependencies.
-- **Local-First & Offline PWA**:
-  - Build-versioned service worker precaching the full application shell, bundled assets, fonts, and install icons before offline use. Updates activate after existing app tabs close.
-  - Web App Manifest configured for standalone mobile installation.
-  - Zero cloud, authentication, or network dependencies — all data is saved locally on the user's device.
-- **Atomic Backup & Restore**:
-  - Export full application state to a structured JSON file.
-  - Comprehensive pre-import validation and confirmation dialog before data replacement, with automatic rollback if persistence fails.
-- **Accessibility & Mobile Ergonomics**:
-  - Full keyboard support (`Escape` key dismisses sheets, modals, and overflow menus cleanly).
-  - Responsive picker dialogs with keyboard controls, focus restoration, and scrollable content on short mobile viewports.
-  - High-contrast visual states for overdue items, active tabs, and focus rings.
-
----
- 
-## Tech Stack
-
-- **Core Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- **Bundler & Tooling**: [Vite](https://vite.dev/)
-- **Styling**: Vanilla CSS Design Tokens & CSS Variables (no heavy utility frameworks)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Typography**: `@fontsource/plus-jakarta-sans` (locally bundled)
-- **Linting**: [Oxlint](https://oxc.rs/)
-- **Testing**: Native TypeScript test suite executed via `tsx`
-
----
-
-## Project Structure
-
-```text
-TODOP/
-├── public/
-│   ├── _redirects         # Netlify SPA rewrite rule
-│   ├── favicon.svg        # Scalable application icon
-│   ├── manifest.json      # PWA Web App Manifest
-│   └── sw.js              # Offline-first Service Worker
-├── src/
-│   ├── components/
-│   │   ├── common/        # Shared components (FAB, buttons)
-│   │   ├── layout/        # TopBar, BottomNav, Navigation shell
-│   │   ├── logs/          # UpcomingPage, LogCard, LogFormSheet, EmptyState
-│   │   ├── projects/      # ProjectsPage, ProjectDetailPage, ProjectFormSheet, DeleteProjectDialog
-│   │   ├── search/        # SearchPage
-│   │   └── settings/      # SettingsPage (Appearance, Font Scaling, Backup/Restore)
-│   ├── context/           # React storage context & reactive external store
-│   ├── hooks/             # Custom hooks (useStorage, useRealtimeTicker)
-│   ├── services/storage/  # LocalStorageRepository with atomic validation & rollback
-│   ├── styles/            # variables.css (theme tokens) & index.css (global styles)
-│   ├── types/             # Domain TypeScript definitions & schemas
-│   ├── utils/             # Time formatting, countdown calculations, routing, backup validation
-│   ├── App.tsx            # Main application layout & view router
-│   └── main.tsx           # Entry point & PWA service worker registration
-├── tests/
-│   ├── browser/             # Chrome/WebKit production regression tests
-│   └── unit-and-logic.test.ts # Storage, time, Search, Calendar and backup logic tests
-├── netlify.toml           # Netlify build and routing configuration
-└── package.json
-```
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js**: v24 or later (the version used in CI)
-- **npm**: v9.0.0 or later
-
-### Installation
-
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/DhruboImtiaz/TODOP.git
-cd TODOP
-npm install
-```
-
-### Development Server
-
-Start the local development server with Hot Module Replacement (HMR):
-
-```bash
+```sh
+npm ci
 npm run dev
 ```
 
-Visit `http://localhost:5173` in your browser.
+Open the URL Vite prints. `/` is the front page; `/app` opens the planner; `/auth` opens sign-in. Existing `/projects`, `/calendar`, `/search`, and `/settings` links still work. The installed PWA starts at `/app`.
 
-### Running Tests
+The official Supabase client is pinned in `package.json` and the lockfile. The client defaults to the requested Todop project (`awfcntpziyorwiigqmel`), using its browser-safe publishable key. Copy `.env.example` to `.env.local` to override the project. Never put a service-role or secret key in a `VITE_` variable.
 
-Execute the automated unit and logic test suite:
+## Authentication
 
-```bash
+Email/password sign-in, account creation with email confirmation, password reset, recovery completion, persisted sessions, and sign-out are implemented. Email confirmation stays enabled. The dashboard Site URL is `https://todop7.netlify.app/auth`; the permitted callbacks are:
+
+- `https://todop7.netlify.app/auth**`
+- `http://localhost:5173/auth**`
+- `http://127.0.0.1:4173/auth**`
+
+Add a narrowly scoped callback if using a different development port or deployment domain.
+
+**Email delivery remains in testing mode, at the owner's request.** The default Supabase sender sends only to organization team email addresses and has a low sending limit. Public confirmation and password-reset delivery require [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp). Configure it in Supabase, never in the browser. Leaked-password protection is currently disabled in the project; the security advisor flags this setting.
+
+## Storage and data ownership
+
+`PlannerRepository` owns task validation, completion semantics, subtasks, project ordering/deletion, settings, and imports. Its local and Supabase adapters share these rules. UI components depend on the `StorageRepository` interface, including a stable snapshot and change subscription.
+
+- Signed-out work uses the existing `todop_app_data_v1` browser storage. The service worker precaches the complete app shell for offline device editing.
+- Signed-in work uses `public.planner_workspaces`, keyed by `auth.users.id`. Each row contains the existing versioned planner JSON shape and a revision counter. This preserves atomic backup/restore and project/task relationships. It is intended for a personal planner, not large shared workspaces.
+- RLS allows authenticated users to select, insert, and update only their own row. Signed-out access is revoked. Ownership changes are checked on updates. The indexed primary key supports owner lookup.
+- Same-instance writes are serialized. Cloud writes use revision compare-and-swap so another device's in-flight edit cannot be silently overwritten. Forms also reject saving over changed task fields. Cloud data refreshes every 30 seconds while visible and on window focus/reconnection.
+- Cloud editing requires a connection. Failed writes leave the accepted snapshot intact and display an error. Guest data is never automatically uploaded, replaced, or mixed with an account.
+- Settings offers **Copy device planner to account** for an empty cloud workspace. For an existing account, export a guest backup and use the explicit restore confirmation. Device copies remain available after sign-out.
+- Malformed local data is retained under `todop_app_data_v1_recovery` before starting a fresh schema. Imports reject unsupported versions, invalid dates, duplicate IDs, and missing project references.
+
+The migrations in `supabase/migrations/` have been applied to the specified hosted project; their versions match its migration history. On a different project, apply both migrations with your authenticated Supabase migration workflow. Creating a new account lazily creates its empty workspace; no privileged signup trigger is needed.
+
+## Verification
+
+```sh
 npm test
-```
-
-### Production Browser Tests
-
-Install the browser engines once, then run the mobile regression suite:
-
-```bash
-npx playwright install chromium webkit
+npm run lint
+npm run build
+npx playwright install chromium webkit  # once
 npm run test:e2e
 ```
 
-The suite builds and serves the production app, including the same script policy as Netlify. It covers 390×844 scheduling, the 479/480px breakpoint, short viewports, countdown updates, Calendar/subtasks, project assignment/deletion, archive Search, first-visit offline reload, all text-size backup round trips, failed restores, and service-worker upgrades. Shared fixtures keep the checks consistent across Chromium and WebKit. Reports and failure traces are written to `playwright-report/` and `test-results/`.
+The production build includes TypeScript checks and generates the service worker. Browser tests run against the production build and Netlify script policy in Chromium and WebKit. They cover scheduling, calendar, project deletion, subtasks, search, offline use, restore failures, worker upgrades, responsive landing-page interactions, account entry, confirmation/reset messages, simulated cloud saves/failures, and sign-out isolation.
 
-For a locally installed Google Chrome, use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:e2e`. Physical-device keyboard and installed-PWA behavior still require a device check.
-
-### Code Quality & Linting
-
-Run Oxlint across the codebase:
-
-```bash
-npm run lint
-```
-
-### Production Build
-
-Compile TypeScript and build the production distribution bundle:
-
-```bash
-npm run build
-```
-
-The optimized static assets will be output to the `dist/` directory. The final build step generates `dist/sw.js` from every emitted asset; run the complete build command when deploying rather than calling Vite alone.
-
-### Preview Production Build
-
-Preview the production build locally:
-
-```bash
-npm run preview
-```
-
-Visit `http://localhost:4173` in your browser.
-
----
+Account-flow browser tests simulate Supabase HTTP responses; they do not create real accounts or send emails. Live checks verified the hosted schema, ownership policies, grants, auth settings, and rejection of signed-out Data API requests. Live signed-in CRUD and email delivery still need an approved test account; automatic approval review rejected creating synthetic users directly in the hosted auth schema.
 
 ## Deployment
 
-TODOP is live at **[todop7.netlify.app](https://todop7.netlify.app/)**, deployed via [Netlify](https://www.netlify.com/) with automatic continuous deployment from the `main` branch.
+The existing Netlify configuration builds with `npm run build` and publishes `dist`. SPA redirects support the new routes. No server runtime is required. Production hosting currently uses [todop7.netlify.app](https://todop7.netlify.app/).
 
-### Script Policy
-
-The production response uses `script-src 'self'`. Startup appearance settings run in the bundled entry point, so no inline scripts are required. This also prevents Netlify's injected badge from covering mobile navigation, as described in [Netlify's badge documentation](https://docs.netlify.com/manage/projects/powered-by-netlify-badge/). Validate the header on the deployment when changing hosting configuration.
-
-### Netlify Configuration
-
-- **Build command**: `npm run build`
-- **Publish directory**: `dist`
-- SPA routing is handled automatically via `netlify.toml` and `public/_redirects`, ensuring deep links (e.g., `/projects`, `/search`, `/settings`) resolve correctly on page refresh.
-- The production build is fully static — no server-side runtime required.
-
----
-
-## License
-
-This project is licensed under the MIT License.
+Repository changes are prepared for review separately from the live Supabase migrations and auth URL settings. Deploy the reviewed branch through the existing Netlify workflow. The service worker activates a new build after existing app tabs close; reopen old installed tabs to receive the update.

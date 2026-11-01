@@ -7,7 +7,7 @@ interface ProjectFormSheetProps {
   isOpen: boolean;
   editingProject?: Project | null;
   onClose: () => void;
-  onSubmit: (name: string) => void;
+  onSubmit: (name: string) => void | Promise<void>;
 }
 
 /**
@@ -28,6 +28,7 @@ export const ProjectFormSheet: React.FC<ProjectFormSheetProps> = ({
   // The parent controls remounting via a `key` prop.
   const [name, setName] = useState(editingProject?.name ?? '');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = Boolean(editingProject);
@@ -58,8 +59,9 @@ export const ProjectFormSheet: React.FC<ProjectFormSheetProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Project name cannot be empty.');
@@ -70,7 +72,10 @@ export const ProjectFormSheet: React.FC<ProjectFormSheetProps> = ({
       setError('Project name must be 80 characters or fewer.');
       return;
     }
-    onSubmit(trimmed);
+    setSaving(true);
+    try { await onSubmit(trimmed); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not save project.'); }
+    finally { setSaving(false); }
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -137,7 +142,7 @@ export const ProjectFormSheet: React.FC<ProjectFormSheetProps> = ({
             >
               Cancel
             </button>
-            <button type="submit" className="project-btn project-btn-primary">
+            <button type="submit" disabled={saving} className="project-btn project-btn-primary">
               {isEditing ? 'Save Name' : 'Create Project'}
             </button>
           </div>

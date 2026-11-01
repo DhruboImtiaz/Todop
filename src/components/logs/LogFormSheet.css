@@ -252,9 +252,9 @@
 }
 
 .subtask-checkbox.completed {
-  border-color: var(--accent-primary);
-  background-color: var(--accent-primary);
-  color: var(--accent-text);
+  border-color: var(--success-fill);
+  background-color: var(--success-fill);
+  color: var(--success-mark-ink);
 }
 
 .subtask-checkbox.draft {
@@ -526,7 +526,7 @@
 
 .form-btn-danger-confirm {
   background-color: var(--overdue-text);
-  color: #0A0A0C;
+  color: var(--on-danger);
   font-weight: 800;
 }
 

@@ -1,3 +1,7 @@
+function decodeProjectId(id: string): string {
+  try { return decodeURIComponent(id); } catch { return id; }
+}
+
 import type { AppRoute, NavigationTab } from '../types';
 
 export function getRouteFromPath(path: string): AppRoute {
@@ -7,7 +11,7 @@ export function getRouteFromPath(path: string): AppRoute {
   if (normalized.startsWith('/projects/')) {
     const rawId = cleanPath.substring('/projects/'.length).replace(/\/+$/, '');
     if (rawId) {
-      return { tab: 'projects', projectId: rawId };
+      return { tab: 'projects', projectId: decodeProjectId(rawId) };
     }
     return { tab: 'projects', projectId: null };
   }
