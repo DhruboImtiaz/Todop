@@ -1,3 +1,4 @@
+import { runUiAction } from '../../utils/asyncAction';
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Check, Pencil, Trash2 } from 'lucide-react';
 import type { Log } from '../../types';
@@ -7,9 +8,9 @@ import './LogCard.css';
 interface LogCardProps {
   log: Log;
   currentTimestamp: number;
-  onComplete: (id: string) => void;
+  onComplete: (id: string) => void | Promise<void>;
   onEdit: (log: Log) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void | Promise<void>;
 }
 
 export const LogCard: React.FC<LogCardProps> = ({
@@ -84,12 +85,12 @@ export const LogCard: React.FC<LogCardProps> = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuOpen(false);
-    onDelete(log.id);
+    runUiAction(() => onDelete(log.id));
   };
 
   const handleComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onComplete(log.id);
+    runUiAction(() => onComplete(log.id));
   };
 
   return (

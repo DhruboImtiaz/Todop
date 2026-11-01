@@ -1,0 +1,205 @@
+import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types';
+import type { NewLogInput, StorageListener, StorageRepository, UpdateLogInput } from './storageRepository';
+import { createBackup, validateBackup } from '../../utils/backup';
+import { isFontSize } from '../../utils/settings';
+
+function title(value: string): string {
+  if (!value.trim()) throw new Error('Title cannot be empty');
+  return value.trim();
+}
+function createSubtask(value: string, now: string): Subtask {
+  return { id: crypto.randomUUID(), title: title(value), completed: false, createdAt: now, updatedAt: now };
+}
+function validateAssignment(data: AppDataSchema, input: NewLogInput | UpdateLogInput) {
+  if (input.deadline !== undefined && !Number.isFinite(Date.parse(input.deadline))) throw new Error('Invalid deadline');
+  if (input.projectId && !data.projects.some(p => p.id === input.projectId)) throw new Error('Project not found');
+}
+function findLog(data: AppDataSchema, id: string): Log {
+  const log = data.logs.find(log => log.id === id);
+  if (!log) throw new Error('Log not found');
+  return log;
+}
+function applyLogUpdate(data: AppDataSchema, input: UpdateLogInput): Log {
+  validateAssignment(data, input);
+  const current = findLog(data, input.id);
+  if (input.expectedFields && (Object.keys(input.expectedFields) as (keyof typeof input.expectedFields)[])
+    .some(key => input.expectedFields![key] !== current[key])) {
+    throw new Error('This task changed since you opened it. Close and reopen it to edit the latest version.');
+  }
+  const now = new Date().toISOString();
+  const completed = input.completed ?? current.completed;
+  const subtasks = input.subtasks ?? current.subtasks;
+  const updated: Log = {
+    ...current,
+    title: input.title !== undefined ? title(input.title) : current.title,
+    description: input.description !== undefined ? input.description.trim() || undefined : current.description,
+    deadline: 'deadline' in input ? input.deadline : current.deadline,
+    projectId: input.projectId !== undefined ? input.projectId : current.projectId,
+    completed,
+    // Completing a parent completes every subtask; reopening preserves their progress.
+    subtasks: !current.completed && completed
+      ? subtasks.map(s => s.completed ? s : { ...s, completed: true, updatedAt: now }) : [...subtasks],
+    updatedAt: now,
+  };
+  data.logs[data.logs.indexOf(current)] = updated;
+  return updated;
+}
+
+/** Shared domain rules. Each mutation reads, changes and saves one isolated snapshot. */
+export abstract class PlannerRepository implements StorageRepository {
+  abstract getSnapshot(): AppDataSchema;
+  abstract subscribe(listener: StorageListener): () => void;
+  protected abstract readData(): Promise<AppDataSchema>;
+  protected abstract writeData(data: AppDataSchema): Promise<void>;
+  private pending: Promise<unknown> = Promise.resolve();
+
+  protected mutate<T>(change: (data: AppDataSchema) => T): Promise<T> {
+    // Serialize same-device writes; the cloud adapter also guards against other devices.
+    const next = this.pending.then(async () => {
+      const data = await this.readData();
+      const result = change(data);
+      await this.writeData(data);
+      return structuredClone(result);
+    });
+    this.pending = next.catch(() => {});
+    return next;
+  }
+  async getLogs(): Promise<Log[]> { return structuredClone((await this.readData()).logs); }
+  async getActiveLogs(): Promise<Log[]> { return (await this.getLogs()).filter(log => !log.completed); }
+  async getCompletedLogs(): Promise<Log[]> { return (await this.getLogs()).filter(log => log.completed); }
+  async getLogById(id: string): Promise<Log | null> { return (await this.getLogs()).find(log => log.id === id) ?? null; }
+  createLog(input: NewLogInput): Promise<Log> {
+    return this.mutate(data => {
+      validateAssignment(data, input);
+      const now = new Date().toISOString();
+      const log: Log = { id: crypto.randomUUID(), title: title(input.title), description: input.description?.trim() || undefined,
+        deadline: input.deadline, projectId: input.projectId ?? null, completed: false,
+        subtasks: [...structuredClone(input.subtasks ?? []), ...(input.draftSubtasks ?? []).map(value => createSubtask(value, now))],
+        createdAt: now, updatedAt: now };
+      data.logs.push(log);
+      return log;
+    });
+  }
+  updateLog(input: UpdateLogInput): Promise<Log> { return this.mutate(data => applyLogUpdate(data, input)); }
+  toggleLogCompletion(id: string): Promise<Log | null> {
+    return this.mutate(data => {
+      const current = data.logs.find(log => log.id === id);
+      return current ? applyLogUpdate(data, { id, completed: !current.completed }) : null;
+    });
+  }
+  deleteLog(id: string): Promise<boolean> {
+    return this.mutate(data => {
+      const count = data.logs.length;
+      data.logs = data.logs.filter(log => log.id !== id);
+      return count !== data.logs.length;
+    });
+  }
+  addSubtask(logId: string, value: string): Promise<Subtask> {
+    return this.mutate(data => {
+      const log = findLog(data, logId);
+      const now = new Date().toISOString();
+      const subtask = createSubtask(value, now);
+      log.subtasks.push(subtask); log.updatedAt = now;
+      return subtask;
+    });
+  }
+  updateSubtaskTitle(logId: string, subtaskId: string, value: string): Promise<Subtask> {
+    return this.mutate(data => {
+      const log = findLog(data, logId);
+      const subtask = log.subtasks.find(s => s.id === subtaskId);
+      if (!subtask) throw new Error('Subtask not found');
+      subtask.title = title(value); subtask.updatedAt = log.updatedAt = new Date().toISOString();
+      return subtask;
+    });
+  }
+  toggleSubtaskCompletion(logId: string, subtaskId: string): Promise<Subtask | null> {
+    return this.mutate(data => {
+      const log = data.logs.find(log => log.id === logId);
+      const subtask = log?.subtasks.find(s => s.id === subtaskId);
+      if (!log || !subtask) return null;
+      subtask.completed = !subtask.completed; subtask.updatedAt = log.updatedAt = new Date().toISOString();
+      return subtask;
+    });
+  }
+  deleteSubtask(logId: string, subtaskId: string): Promise<boolean> {
+    return this.mutate(data => {
+      const log = data.logs.find(log => log.id === logId);
+      if (!log) return false;
+      const count = log.subtasks.length;
+      log.subtasks = log.subtasks.filter(s => s.id !== subtaskId);
+      if (count === log.subtasks.length) return false;
+      log.updatedAt = new Date().toISOString();
+      return true;
+    });
+  }
+  async getProjects(): Promise<Project[]> { return structuredClone((await this.readData()).projects).sort((a,b) => a.order - b.order); }
+  async getProjectById(id: string): Promise<Project | null> { return (await this.getProjects()).find(p => p.id === id) ?? null; }
+  createProject(name: string): Promise<Project> {
+    return this.mutate(data => {
+      const now = new Date().toISOString();
+      const project: Project = { id: crypto.randomUUID(), name: title(name), order: data.projects.length, createdAt: now, updatedAt: now };
+      data.projects.push(project); return project;
+    });
+  }
+  updateProject(id: string, name: string): Promise<Project> {
+    return this.mutate(data => {
+      const project = data.projects.find(p => p.id === id);
+      if (!project) throw new Error('Project not found');
+      project.name = title(name); project.updatedAt = new Date().toISOString();
+      return project;
+    });
+  }
+  deleteProject(id: string): Promise<boolean> {
+    return this.mutate(data => {
+      if (!data.projects.some(p => p.id === id)) return false;
+      data.projects = data.projects.filter(p => p.id !== id);
+      data.projects.forEach((p,i) => { p.order = i; });
+      const now = new Date().toISOString();
+      data.logs.forEach(log => { if (log.projectId === id) { log.projectId = null; log.updatedAt = now; } });
+      return true;
+    });
+  }
+  reorderProjects(ids: string[]): Promise<Project[]> {
+    return this.mutate(data => {
+      if (ids.length !== data.projects.length || new Set(ids).size !== ids.length || ids.some(id => !data.projects.some(p => p.id === id))) {
+        throw new Error('Project order must contain every project exactly once');
+      }
+      const order = new Map(ids.map((id,i) => [id,i]));
+      const now = new Date().toISOString();
+      data.projects.forEach(p => { p.order = order.get(p.id)!; p.updatedAt = now; });
+      data.projects.sort((a,b) => a.order - b.order);
+      return data.projects;
+    });
+  }
+  moveProject(id: string, direction: 'up' | 'down'): Promise<Project[]> {
+    return this.mutate(data => {
+      data.projects.sort((a,b) => a.order - b.order);
+      const i = data.projects.findIndex(p => p.id === id);
+      const j = direction === 'up' ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= data.projects.length) return data.projects;
+      [data.projects[i], data.projects[j]] = [data.projects[j], data.projects[i]];
+      const now = new Date().toISOString();
+      data.projects.forEach((p,index) => { p.order = index; p.updatedAt = now; });
+      return data.projects;
+    });
+  }
+  async getSettings(): Promise<Settings> { return { ...(await this.readData()).settings }; }
+  updateSettings(patch: Partial<Settings>): Promise<Settings> {
+    return this.mutate(data => {
+      const settings = { ...data.settings, ...patch };
+      if (!['light','dark'].includes(settings.theme) || !isFontSize(settings.fontSize)) throw new Error('Invalid appearance settings');
+      data.settings = settings; return settings;
+    });
+  }
+  async exportData(): Promise<AppDataSchema> { return structuredClone(await this.readData()); }
+  importData(input: AppDataSchema): Promise<boolean> {
+    const validation = validateBackup(createBackup(input));
+    if (!validation.valid) return Promise.reject(new Error(validation.error));
+    return this.mutate(data => {
+      const next = structuredClone(validation.data);
+      next.projects.forEach((project,index) => { project.order = index; });
+      Object.assign(data, next);
+      return true;
+    });
+  }
+}

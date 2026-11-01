@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 test('mobile pickers commit correct local time and dismiss without losing the form draft', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-  await page.goto('/');
+  await page.goto('/app');
   await newLog(page, 'Picker regression');
   for (const kind of ['date', 'time']) {
     const trigger = page.getByRole('button', { name: `Select ${kind}`, exact: true });
@@ -59,7 +59,7 @@ test('mobile pickers commit correct local time and dismiss without losing the fo
 });
 
 test('popover stays on screen across the mobile breakpoint and short viewports', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/app');
   await newLog(page, 'Resize draft');
   for (const kind of ['date', 'time']) {
     await page.getByRole('button', { name: `Select ${kind}`, exact: true }).click();
@@ -81,7 +81,7 @@ test('popover stays on screen across the mobile breakpoint and short viewports',
 });
 
 test('month navigation, Cancel and outside dismissal discard only picker changes', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/app');
   await newLog(page, 'Unsaved draft');
   const originalDate = await page.locator('.date-picker-trigger').innerText();
   const originalTime = await page.locator('.time-picker-trigger').innerText();
@@ -132,7 +132,7 @@ test('clearing and restoring a project deadline updates every scheduling view', 
   expect(undated.subtasks).toEqual(fixture().logs[0].subtasks);
   const card = page.locator('.log-card').filter({ has: page.getByRole('heading', { name: 'QA early', exact: true }) });
   await expect(card.locator('.log-card-countdown')).toHaveCount(0);
-  await page.goto('/');
+  await page.goto('/app');
   await expect(page.getByRole('heading', { name: 'QA early', exact: true })).toBeHidden();
   await page.goto('/calendar');
   await expect(page.getByRole('heading', { name: 'QA early', exact: true })).toBeHidden();
@@ -155,7 +155,7 @@ test('first online visit fully precaches the app for offline reload and editing'
   await page.reload();
   await expect(page.getByRole('heading', { name: 'SETTINGS', exact: true })).toBeVisible();
   expect(await readData(page)).toEqual(before);
-  for (const [path, heading] of [['/', 'UPCOMING'], ['/projects', 'Projects'], ['/projects/alpha', 'Alpha'], ['/search', 'SEARCH'], ['/calendar', 'CALENDAR'], ['/settings', 'SETTINGS']]) {
+  for (const [path, heading] of [['/app', 'UPCOMING'], ['/projects', 'Projects'], ['/projects/alpha', 'Alpha'], ['/search', 'SEARCH'], ['/calendar', 'CALENDAR'], ['/settings', 'SETTINGS']]) {
     await page.goto(path);
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   }
@@ -166,14 +166,14 @@ test('first online visit fully precaches the app for offline reload and editing'
   await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
   await page.close();
   const reopened = await context.newPage();
-  await reopened.goto('/');
+  await reopened.goto('/app');
   await expect(reopened.getByRole('heading', { name: 'Edited offline', exact: true })).toBeVisible();
   expect((await readData(reopened)).logs.find(log => log.id === 'early')?.subtasks).toEqual(before.logs[0].subtasks);
 });
 
 test('countdowns recalculate on ticks, rescheduling and resume without replacing records', async ({ page }) => {
   await seed(page);
-  await page.goto('/');
+  await page.goto('/app');
   const card = page.locator('.log-card').filter({ has: page.getByRole('heading', { name: 'QA early', exact: true }) });
   await expect(card).toContainText('42 M');
   await page.clock.setFixedTime(new Date(NOW.getTime() + 60_000));
@@ -348,7 +348,7 @@ test('a worker update preserves open-app data and unrelated caches', async ({ pa
 });
 
 test('the production script policy blocks injected inline scripts while the app works', async ({ page }) => {
-  const response = await page.goto('/');
+  const response = await page.goto('/app');
   expect(response?.headers()['content-security-policy']).toContain("script-src 'self'");
   await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeVisible();
   await page.evaluate(() => {

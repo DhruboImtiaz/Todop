@@ -1,3 +1,4 @@
+import { runUiAction } from '../../utils/asyncAction';
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, Trash2, Plus } from 'lucide-react';
 import type { Log, LogFormValues } from '../../types';
@@ -20,8 +21,8 @@ interface LogFormSheetProps {
   defaultDate?: string | null;
   onClose: () => void;
   onSubmit: (data: LogFormValues) => void | Promise<void>;
-  onComplete?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onComplete?: (id: string) => void | Promise<void>;
+  onDelete?: (id: string) => void | Promise<void>;
 }
 
 export const LogFormSheet: React.FC<LogFormSheetProps> = (props) => props.isOpen ? (
@@ -39,6 +40,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
 }) => {
   const {
     projects,
+    dismissError,
     activeLogs,
     completedLogs,
     addSubtask,
@@ -105,6 +107,7 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
 
   // Subtask handlers for existing logs
   const handleAddSubtask = async () => {
+    try {
     const clean = subtaskInput.trim();
     if (!clean) return;
     if (initialLog) {
@@ -114,12 +117,15 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
     }
     setSubtaskInput('');
     setTimeout(() => subtaskInputRef.current?.focus(), 30);
+    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   const handleToggleSubtask = async (subtaskId: string) => {
+    try {
     if (initialLog) {
       await toggleSubtaskCompletion(initialLog.id, subtaskId);
     }
+    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   const handleStartEditSubtask = (id: string, currentText: string) => {
@@ -129,18 +135,22 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
   };
 
   const handleSaveSubtaskTitle = async (subtaskId: string) => {
+    try {
     const clean = editingTitle.trim();
     if (clean && initialLog) {
       await updateSubtaskTitle(initialLog.id, subtaskId, clean);
     }
     setEditingSubtaskId(null);
     setEditingTitle('');
+    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
+    try {
     if (initialLog) {
       await deleteSubtask(initialLog.id, subtaskId);
     }
+    } catch (failure) { dismissError(); setError(failure instanceof Error ? failure.message : 'Could not save the subtask.'); }
   };
 
   // Subtask handlers for new logs (draft items)
@@ -190,8 +200,9 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
         projectId: projectId || undefined,
         draftSubtasks: !initialLog && draftSubtasks.length ? draftSubtasks : undefined,
       });
-    } catch {
-      setError('Could not save this log. Please try again.');
+    } catch (failure) {
+      dismissError();
+      setError(failure instanceof Error ? failure.message : 'Could not save this log. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -199,13 +210,13 @@ const LogFormContent: React.FC<LogFormSheetProps> = ({
 
   const handleCompleteClick = () => {
     if (initialLog && onComplete) {
-      onComplete(initialLog.id);
+      runUiAction(() => onComplete!(initialLog.id));
     }
   };
 
   const handleConfirmDelete = () => {
     if (initialLog && onDelete) {
-      onDelete(initialLog.id);
+      runUiAction(() => onDelete!(initialLog.id));
     }
   };
 

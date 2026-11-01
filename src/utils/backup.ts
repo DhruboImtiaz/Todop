@@ -133,7 +133,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
 
   // Validate schema version
   const schemaVer = dataPayload.schemaVersion ?? dataPayload.version;
-  if (typeof schemaVer !== 'number' || schemaVer < 1) {
+  if (schemaVer !== 1) {
     return {
       valid: false,
       error: 'INVALID BACKUP: Missing or invalid schemaVersion.',
@@ -190,7 +190,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
         error: `MALFORMED LOG RECORD: Log "${String(l.title)}" has an invalid projectId.`,
       };
     }
-    if (typeof l.createdAt !== 'string' || typeof l.updatedAt !== 'string') {
+    if (typeof l.createdAt !== 'string' || !Number.isFinite(Date.parse(l.createdAt)) || typeof l.updatedAt !== 'string' || !Number.isFinite(Date.parse(l.updatedAt))) {
       return {
         valid: false,
         error: `MALFORMED LOG RECORD: Log "${String(l.title)}" has invalid timestamps.`,
@@ -297,18 +297,28 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
         error: `MALFORMED PROJECT RECORD: Project "${String(p.id)}" is missing a valid name.`,
       };
     }
-    if (typeof p.order !== 'number' || isNaN(p.order)) {
+    if (typeof p.order !== 'number' || !Number.isFinite(p.order)) {
       return {
         valid: false,
         error: `MALFORMED PROJECT RECORD: Project "${String(p.name)}" has an invalid order index.`,
       };
     }
-    if (typeof p.createdAt !== 'string' || typeof p.updatedAt !== 'string') {
+    if (typeof p.createdAt !== 'string' || !Number.isFinite(Date.parse(p.createdAt)) || typeof p.updatedAt !== 'string' || !Number.isFinite(Date.parse(p.updatedAt))) {
       return {
         valid: false,
         error: `MALFORMED PROJECT RECORD: Project "${String(p.name)}" has invalid timestamps.`,
       };
     }
+  }
+
+  const projects = dataPayload.projects as Project[];
+  const projectIds = new Set(projects.map(p => p.id));
+  if (projectIds.size !== projects.length || new Set(validatedLogs.map(l => l.id)).size !== validatedLogs.length ||
+      validatedLogs.some(l => new Set(l.subtasks.map(s => s.id)).size !== l.subtasks.length)) {
+    return { valid: false, error: 'INVALID BACKUP: Duplicate record IDs are not allowed.' };
+  }
+  if (validatedLogs.some(l => l.projectId !== null && !projectIds.has(l.projectId))) {
+    return { valid: false, error: 'INVALID BACKUP: A task references a project that does not exist.' };
   }
 
   // Validate settings object

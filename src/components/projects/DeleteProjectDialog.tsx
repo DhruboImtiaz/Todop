@@ -1,3 +1,4 @@
+import { runUiAction } from '../../utils/asyncAction';
 import React from 'react';
 import { Trash2, X } from 'lucide-react';
 import type { Project } from '../../types';
@@ -7,7 +8,7 @@ interface DeleteProjectDialogProps {
   project: Project | null;
   affectedLogCount: number;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
 }
 
 export const DeleteProjectDialog: React.FC<DeleteProjectDialogProps> = ({
@@ -83,7 +84,7 @@ export const DeleteProjectDialog: React.FC<DeleteProjectDialogProps> = ({
           <button
             type="button"
             className="delete-dialog-btn delete-dialog-confirm"
-            onClick={onConfirm}
+            onClick={() => runUiAction(onConfirm)}
           >
             <Trash2 size={15} strokeWidth={2} />
             Delete Project

@@ -1,27 +1,17 @@
 import { DEFAULT_SETTINGS, STORAGE_KEY, isFontSize } from '../../utils/settings';
-import type { AppDataSchema, Log, Project, Settings, Subtask } from '../../types';
-import type { NewLogInput, StorageListener, StorageRepository, UpdateLogInput } from './storageRepository';
+import type { AppDataSchema, Subtask } from '../../types';
+import type { StorageListener } from './storageRepository';
+import { createBackup, validateBackup } from '../../utils/backup';
+import { PlannerRepository } from './plannerRepository';
 
 const CURRENT_SCHEMA_VERSION = 1;
 
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `todop_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function createSubtask(title: string, now: string): Subtask {
-  const cleanTitle = title.trim();
-  if (!cleanTitle) throw new Error('Subtask title cannot be empty');
-  return { id: generateId(), title: cleanTitle, completed: false, createdAt: now, updatedAt: now };
-}
-
-export class LocalStorageRepository implements StorageRepository {
+export class LocalStorageRepository extends PlannerRepository {
   private listeners: Set<StorageListener> = new Set();
   private cachedData: AppDataSchema | null = null;
 
   constructor() {
+    super();
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('storage', (event) => {
         if (event.key === STORAGE_KEY || event.key === null) {
@@ -138,13 +128,18 @@ export class LocalStorageRepository implements StorageRepository {
         }
       }
 
+      const validation = validateBackup(createBackup(parsed));
+      if (!validation.valid) throw new Error(validation.error);
+
       if (modified) {
         this.persistRawData(parsed);
       }
 
       return parsed;
     } catch (e) {
-      console.error('Failed to parse TODOP storage data, initializing fresh schema', e);
+      console.error('Failed to parse TODOP storage data; retaining a recovery copy', e);
+      const original = localStorage.getItem(STORAGE_KEY);
+      if (original) localStorage.setItem(`${STORAGE_KEY}_recovery`, original);
       return this.initializeStorage();
     }
   }
@@ -193,452 +188,13 @@ export class LocalStorageRepository implements StorageRepository {
     };
   }
 
-  public async getLogs(): Promise<Log[]> {
-    const data = this.loadRawData();
-    return [...data.logs];
+  protected async readData(): Promise<AppDataSchema> {
+    return this.loadRawData();
   }
 
-  public async getActiveLogs(): Promise<Log[]> {
-    const data = this.loadRawData();
-    return data.logs.filter((log) => !log.completed);
-  }
-
-  public async getCompletedLogs(): Promise<Log[]> {
-    const data = this.loadRawData();
-    return data.logs.filter((log) => log.completed);
-  }
-
-  public async getLogById(id: string): Promise<Log | null> {
-    const data = this.loadRawData();
-    const found = data.logs.find((log) => log.id === id);
-    return found ? { ...found } : null;
-  }
-
-  public async createLog(input: NewLogInput): Promise<Log> {
-    const data = this.loadRawData();
-    const now = new Date().toISOString();
-
-    const newLog: Log = {
-      id: generateId(),
-      title: input.title.trim(),
-      description: input.description?.trim() || undefined,
-      deadline: input.deadline,
-      projectId: input.projectId !== undefined ? input.projectId : null,
-      completed: false,
-      subtasks: [...input.subtasks ?? [], ...(input.draftSubtasks ?? []).map(title => createSubtask(title, now))],
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    data.logs.push(newLog);
+  protected async writeData(data: AppDataSchema): Promise<void> {
     this.persistRawData(data);
-    return newLog;
-  }
-
-  public async updateLog(input: UpdateLogInput): Promise<Log> {
-    const data = this.loadRawData();
-    const index = data.logs.findIndex((log) => log.id === input.id);
-    if (index === -1) {
-      throw new Error(`Log with id "${input.id}" not found`);
-    }
-
-    const current = data.logs[index];
-    const now = new Date().toISOString();
-
-    const willBeCompleted = input.completed !== undefined ? input.completed : current.completed;
-    const isBecomingCompleted = !current.completed && willBeCompleted;
-
-    let nextSubtasks: Subtask[] = input.subtasks !== undefined
-      ? [...input.subtasks]
-      : [...(current.subtasks || [])];
-
-    // Parent completion rule:
-    // Completing parent marks ALL subtasks completed, preserving already-completed subtasks.
-    // Uncompleting parent does NOT uncomplete subtasks.
-    if (isBecomingCompleted) {
-      nextSubtasks = nextSubtasks.map((s) => {
-        if (s.completed) return s;
-        return {
-          ...s,
-          completed: true,
-          updatedAt: now,
-        };
-      });
-    }
-
-    const updated: Log = {
-      ...current,
-      title: input.title !== undefined ? input.title.trim() : current.title,
-      description: input.description !== undefined ? input.description.trim() || undefined : current.description,
-      deadline: 'deadline' in input ? input.deadline : current.deadline,
-      projectId: input.projectId !== undefined ? input.projectId : current.projectId ?? null,
-      completed: willBeCompleted,
-      subtasks: nextSubtasks,
-      updatedAt: now,
-    };
-
-    data.logs[index] = updated;
-    this.persistRawData(data);
-    return updated;
-  }
-
-  public async toggleLogCompletion(id: string): Promise<Log | null> {
-    const data = this.loadRawData();
-    const index = data.logs.findIndex((log) => log.id === id);
-    if (index === -1) return null;
-
-    const current = data.logs[index];
-    const newCompleted = !current.completed;
-    const now = new Date().toISOString();
-
-    let nextSubtasks: Subtask[] = [...(current.subtasks || [])];
-
-    // Parent completion rules:
-    // Completing the parent Log marks ALL of its subtasks as completed, preserving already-completed.
-    // Uncompleting the parent Log MUST NOT uncomplete its subtasks.
-    if (newCompleted) {
-      nextSubtasks = nextSubtasks.map((s) => {
-        if (s.completed) return s;
-        return {
-          ...s,
-          completed: true,
-          updatedAt: now,
-        };
-      });
-    }
-
-    const updated: Log = {
-      ...current,
-      completed: newCompleted,
-      subtasks: nextSubtasks,
-      updatedAt: now,
-    };
-
-    data.logs[index] = updated;
-    this.persistRawData(data);
-    return updated;
-  }
-
-  public async deleteLog(id: string): Promise<boolean> {
-    const data = this.loadRawData();
-    const initialLen = data.logs.length;
-    data.logs = data.logs.filter((log) => log.id !== id);
-    if (data.logs.length !== initialLen) {
-      this.persistRawData(data);
-      return true;
-    }
-    return false;
-  }
-
-  // --- Subtasks API ---
-
-  public async addSubtask(logId: string, title: string): Promise<Subtask> {
-    const now = new Date().toISOString();
-    const newSubtask = createSubtask(title, now);
-    const data = this.loadRawData();
-    const index = data.logs.findIndex((log) => log.id === logId);
-    if (index === -1) {
-      throw new Error(`Log with id "${logId}" not found`);
-    }
-
-    const current = data.logs[index];
-    const updatedSubtasks = [...(current.subtasks || []), newSubtask];
-    const updated: Log = {
-      ...current,
-      subtasks: updatedSubtasks,
-      updatedAt: now,
-    };
-
-    data.logs[index] = updated;
-    this.persistRawData(data);
-    return newSubtask;
-  }
-
-  public async updateSubtaskTitle(logId: string, subtaskId: string, title: string): Promise<Subtask> {
-    const cleanTitle = title.trim();
-    if (!cleanTitle) {
-      throw new Error('Subtask title cannot be empty');
-    }
-
-    const data = this.loadRawData();
-    const logIndex = data.logs.findIndex((log) => log.id === logId);
-    if (logIndex === -1) {
-      throw new Error(`Log with id "${logId}" not found`);
-    }
-
-    const parent = data.logs[logIndex];
-    const subtasks = parent.subtasks || [];
-    const subtaskIndex = subtasks.findIndex((s) => s.id === subtaskId);
-    if (subtaskIndex === -1) {
-      throw new Error(`Subtask with id "${subtaskId}" not found`);
-    }
-
-    const now = new Date().toISOString();
-    const currentSubtask = subtasks[subtaskIndex];
-    const updatedSubtask: Subtask = {
-      ...currentSubtask,
-      title: cleanTitle,
-      updatedAt: now,
-    };
-
-    const nextSubtasks = [...subtasks];
-    nextSubtasks[subtaskIndex] = updatedSubtask;
-
-    data.logs[logIndex] = {
-      ...parent,
-      subtasks: nextSubtasks,
-      updatedAt: now,
-    };
-
-    this.persistRawData(data);
-    return updatedSubtask;
-  }
-
-  public async toggleSubtaskCompletion(logId: string, subtaskId: string): Promise<Subtask | null> {
-    const data = this.loadRawData();
-    const logIndex = data.logs.findIndex((log) => log.id === logId);
-    if (logIndex === -1) return null;
-
-    const parent = data.logs[logIndex];
-    const subtasks = parent.subtasks || [];
-    const subtaskIndex = subtasks.findIndex((s) => s.id === subtaskId);
-    if (subtaskIndex === -1) return null;
-
-    const now = new Date().toISOString();
-    const currentSubtask = subtasks[subtaskIndex];
-    const updatedSubtask: Subtask = {
-      ...currentSubtask,
-      completed: !currentSubtask.completed,
-      updatedAt: now,
-    };
-
-    const nextSubtasks = [...subtasks];
-    nextSubtasks[subtaskIndex] = updatedSubtask;
-
-    // Notice: parent completed state is NOT changed even if all subtasks are complete.
-    // Parent's updatedAt IS updated.
-    data.logs[logIndex] = {
-      ...parent,
-      subtasks: nextSubtasks,
-      updatedAt: now,
-    };
-
-    this.persistRawData(data);
-    return updatedSubtask;
-  }
-
-  public async deleteSubtask(logId: string, subtaskId: string): Promise<boolean> {
-    const data = this.loadRawData();
-    const logIndex = data.logs.findIndex((log) => log.id === logId);
-    if (logIndex === -1) return false;
-
-    const parent = data.logs[logIndex];
-    const subtasks = parent.subtasks || [];
-    const subtaskIndex = subtasks.findIndex((s) => s.id === subtaskId);
-    if (subtaskIndex === -1) return false;
-
-    const now = new Date().toISOString();
-    const nextSubtasks = subtasks.filter((s) => s.id !== subtaskId);
-
-    data.logs[logIndex] = {
-      ...parent,
-      subtasks: nextSubtasks,
-      updatedAt: now,
-    };
-
-    this.persistRawData(data);
-    return true;
-  }
-
-  // --- Projects API ---
-
-  public async getProjects(): Promise<Project[]> {
-    const data = this.loadRawData();
-    return [...data.projects].sort((a, b) => a.order - b.order);
-  }
-
-  public async getProjectById(id: string): Promise<Project | null> {
-    const data = this.loadRawData();
-    const found = data.projects.find((p) => p.id === id);
-    return found ? { ...found } : null;
-  }
-
-  public async createProject(name: string): Promise<Project> {
-    const data = this.loadRawData();
-    const cleanName = name.trim();
-    if (!cleanName) {
-      throw new Error('Project name cannot be empty');
-    }
-
-    const now = new Date().toISOString();
-    const nextOrder = data.projects.length > 0
-      ? Math.max(...data.projects.map((p) => p.order)) + 1
-      : 0;
-
-    const newProject: Project = {
-      id: generateId(),
-      name: cleanName,
-      order: nextOrder,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    data.projects.push(newProject);
-    this.persistRawData(data);
-    return newProject;
-  }
-
-  public async updateProject(id: string, name: string): Promise<Project> {
-    const data = this.loadRawData();
-    const cleanName = name.trim();
-    if (!cleanName) {
-      throw new Error('Project name cannot be empty');
-    }
-
-    const index = data.projects.findIndex((p) => p.id === id);
-    if (index === -1) {
-      throw new Error(`Project with id "${id}" not found`);
-    }
-
-    const current = data.projects[index];
-    const updated: Project = {
-      ...current,
-      name: cleanName,
-      updatedAt: new Date().toISOString(),
-    };
-
-    data.projects[index] = updated;
-    this.persistRawData(data);
-    return updated;
-  }
-
-  public async deleteProject(id: string): Promise<boolean> {
-    const data = this.loadRawData();
-    const initialLen = data.projects.length;
-    data.projects = data.projects.filter((p) => p.id !== id);
-
-    if (data.projects.length === initialLen) {
-      return false;
-    }
-
-    // Set projectId to null for all associated logs, updating their updatedAt, preserving all logs!
-    const now = new Date().toISOString();
-    for (const log of data.logs) {
-      if (log.projectId === id) {
-        log.projectId = null;
-        log.updatedAt = now;
-      }
-    }
-
-    // Normalize remaining projects order
-    data.projects.sort((a, b) => a.order - b.order);
-    data.projects.forEach((p, index) => {
-      p.order = index;
-    });
-
-    this.persistRawData(data);
-    return true;
-  }
-
-  public async reorderProjects(projectIds: string[]): Promise<Project[]> {
-    const data = this.loadRawData();
-    const idMap = new Map(projectIds.map((id, index) => [id, index]));
-    const now = new Date().toISOString();
-
-    for (const project of data.projects) {
-      const newOrder = idMap.get(project.id);
-      if (newOrder !== undefined) {
-        project.order = newOrder;
-        project.updatedAt = now;
-      }
-    }
-
-    data.projects.sort((a, b) => a.order - b.order);
-    this.persistRawData(data);
-    return [...data.projects];
-  }
-
-  public async moveProject(id: string, direction: 'up' | 'down'): Promise<Project[]> {
-    const data = this.loadRawData();
-    const sorted = [...data.projects].sort((a, b) => a.order - b.order);
-    const index = sorted.findIndex((p) => p.id === id);
-
-    if (index === -1) {
-      return sorted;
-    }
-
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= sorted.length) {
-      return sorted;
-    }
-
-    // Swap positions
-    const temp = sorted[index];
-    sorted[index] = sorted[targetIndex];
-    sorted[targetIndex] = temp;
-
-    // Normalize order index
-    const now = new Date().toISOString();
-    sorted.forEach((p, i) => {
-      p.order = i;
-      p.updatedAt = now;
-    });
-
-    data.projects = sorted;
-    this.persistRawData(data);
-    return [...data.projects];
-  }
-
-  // --- Settings API ---
-
-  public async getSettings(): Promise<Settings> {
-    const data = this.loadRawData();
-    return { ...data.settings };
-  }
-
-  public async updateSettings(patch: Partial<Settings>): Promise<Settings> {
-    const data = this.loadRawData();
-    data.settings = { ...data.settings, ...patch };
-    this.persistRawData(data);
-    return { ...data.settings };
-  }
-
-  // --- Backup & Restore API ---
-
-
-  public async exportData(): Promise<AppDataSchema> {
-    const data = this.loadRawData();
-    return JSON.parse(JSON.stringify(data));
-  }
-
-  public async importData(data: AppDataSchema): Promise<boolean> {
-    const clone: AppDataSchema = JSON.parse(JSON.stringify(data));
-    if (!clone.version) {
-      clone.version = CURRENT_SCHEMA_VERSION;
-    }
-    // Normalize projects order
-    if (Array.isArray(clone.projects)) {
-      clone.projects.sort((a, b) => a.order - b.order);
-      clone.projects.forEach((p, index) => {
-        p.order = index;
-      });
-    }
-    // Normalize logs subtasks and projectId
-    if (Array.isArray(clone.logs)) {
-      for (const log of clone.logs) {
-        if (!Array.isArray(log.subtasks)) {
-          log.subtasks = [];
-        }
-        if (log.projectId === undefined) {
-          log.projectId = null;
-        }
-      }
-    }
-    this.persistRawData(clone);
-    return true;
   }
 }
 
-// Singleton instance for repository
 export const defaultStorageRepository = new LocalStorageRepository();
-

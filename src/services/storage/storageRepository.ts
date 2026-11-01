@@ -10,6 +10,7 @@ export interface NewLogInput {
 }
 
 export interface UpdateLogInput {
+  expectedFields?: Pick<Log, 'title' | 'description' | 'deadline' | 'projectId'>;
   id: string;
   title?: string;
   description?: string;
@@ -54,6 +55,8 @@ export interface StorageRepository {
   // Backup & Restore
   exportData(): Promise<AppDataSchema>;
   importData(data: AppDataSchema): Promise<boolean>;
+
+  getSnapshot(): AppDataSchema;
 
   // Event Subscription
   subscribe(listener: StorageListener): () => void;

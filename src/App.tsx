@@ -1,6 +1,7 @@
 import { useLogFormSubmit } from './hooks/useLogFormSubmit';
 import React, { useState, useEffect } from 'react';
-import { StorageProvider } from './context/StorageProvider';
+
+import { ErrorBanner } from './components/common/ErrorBanner';
 import { useStorage } from './hooks/useStorage';
 import type { NavigationTab, Log, Project } from './types';
 import { useRealtimeTicker } from './hooks/useRealtimeTicker';
@@ -42,7 +43,7 @@ const TodopMain: React.FC = () => {
   const navigateTo = (tab: NavigationTab, projectId: string | null = null) => {
     setCurrentTab(tab);
     setActiveProjectId(projectId);
-    const path = getPathFromRoute({ tab, projectId });
+    const path = tab === 'upcoming' ? '/app' : getPathFromRoute({ tab, projectId });
     if (typeof window !== 'undefined' && window.location.pathname !== path) {
       window.history.pushState(null, '', path);
     }
@@ -165,6 +166,7 @@ const TodopMain: React.FC = () => {
 
   return (
     <div className="app-viewport-wrapper">
+      <ErrorBanner />
       {isDesktop ? (
         <div className="app-shell-desktop">
           <Sidebar currentTab={currentTab} onSelectTab={handleNavigate} />
@@ -193,10 +195,5 @@ const TodopMain: React.FC = () => {
   );
 };
 
-export default function App() {
-  return (
-    <StorageProvider>
-      <TodopMain />
-    </StorageProvider>
-  );
-}
+
+export default TodopMain;

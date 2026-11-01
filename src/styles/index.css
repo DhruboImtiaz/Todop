@@ -184,3 +184,10 @@ input, select, textarea {
   white-space: nowrap;
   border-width: 0;
 }
+
+.workspace-loading { min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; gap:20px; text-align:center; }
+.workspace-loading button { border:1px solid var(--border-subtle); padding:12px 24px; border-radius:8px; }
+.workspace-error { position:fixed; z-index:10000; top:12px; left:50%; transform:translateX(-50%); width:min(90%,600px); display:flex; gap:15px; align-items:center; justify-content:space-between; background:#fff0eb; color:#852918; border:1px solid #eeb7a9; padding:16px; border-radius:12px; box-shadow:0 8px 35px #0002; font-size:13px; }
+.workspace-error button { padding:4px 10px; font-weight:700; }
+.account-panel { flex-wrap:wrap; }
+.account-panel .settings-item-desc { max-width:420px; }
