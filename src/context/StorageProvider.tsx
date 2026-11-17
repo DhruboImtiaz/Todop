@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import type { AppDataSchema, Settings, Log } from "../types";
 import type {
+  ImportOptions,
   NewLogInput,
   StorageRepository,
   UpdateLogInput,
@@ -199,8 +200,8 @@ export const StorageProvider: React.FC<{
   }, [repository]);
 
   const importData = useCallback(
-    async (data: AppDataSchema) => {
-      const imported = await repository.importData(data);
+    async (data: AppDataSchema, options?: ImportOptions) => {
+      const imported = await repository.importData(data, options);
       setUndo(null);
       return imported;
     },

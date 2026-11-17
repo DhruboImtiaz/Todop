@@ -11,7 +11,7 @@ import { createBackup, downloadBackupFile, validateBackup } from '../../utils/ba
 import './SettingsPage.css';
 
 export const SettingsPage: React.FC = () => {
-  const { session } = useAuth();
+  const { account } = useAuth();
   const {
     settings,
     updateSettings,
@@ -323,7 +323,7 @@ export const SettingsPage: React.FC = () => {
           <div className="settings-meta-list">
             <div className="settings-meta-row">
               <span className="settings-meta-label">Storage Engine</span>
-              <span className="settings-meta-value">{session ? 'Private cloud workspace' : 'This browser'}</span>
+              <span className="settings-meta-value">{account ? 'This device and your cloud workspace' : 'This browser'}</span>
             </div>
             <div className="settings-meta-row">
               <span className="settings-meta-label">Active Logs</span>

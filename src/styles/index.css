@@ -189,5 +189,17 @@ input, select, textarea {
 .workspace-loading button { border:1px solid var(--border-subtle); padding:12px 24px; border-radius:8px; }
 .workspace-error { position:fixed; z-index:10000; top:12px; left:50%; transform:translateX(-50%); width:min(90%,600px); display:flex; gap:15px; align-items:center; justify-content:space-between; background:#fff0eb; color:#852918; border:1px solid #eeb7a9; padding:16px; border-radius:12px; box-shadow:0 8px 35px #0002; font-size:13px; }
 .workspace-error button { padding:4px 10px; font-weight:700; }
+.workspace-sync {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+.workspace-sync p { margin: 0; }
+.workspace-sync-actions { display: flex; flex-wrap: wrap; column-gap: 16px; }
+.workspace-sync button { min-height: 44px; font-weight: 700; text-decoration: underline; }
 .account-panel { flex-wrap:wrap; }
 .account-panel .settings-item-desc { max-width:420px; }

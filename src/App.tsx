@@ -1,6 +1,8 @@
 import { MyDayPage } from './components/today/MyDayPage';
 import { TrashPage } from './components/trash/TrashPage';
 import { UndoToast } from './components/common/UndoToast';
+import { WorkspaceSyncStatus } from './components/auth/WorkspaceSyncStatus';
+import { SupabaseRepository } from './services/storage/supabaseRepository';
 import './styles/workspace.css';
 import { useLogFormSubmit } from './hooks/useLogFormSubmit';
 import React, { useState, useEffect } from 'react';
@@ -38,7 +40,7 @@ const TodopMain: React.FC = () => {
     () => getInitialRoute().projectId ?? null
   );
 
-  const { activeLogs, projects, toggleLogCompletion, deleteLog } =
+  const { activeLogs, projects, repository, toggleLogCompletion, deleteLog } =
     useStorage();
 
   // Resolve active project object from context (always fresh)
@@ -104,6 +106,7 @@ const TodopMain: React.FC = () => {
 
   const renderContent = () => (
     <>
+      {repository instanceof SupabaseRepository && <WorkspaceSyncStatus repository={repository} />}
       {currentTab === 'today' && <MyDayPage timestamp={currentTimestamp} onEdit={handleOpenEdit} onCreate={handleOpenCreate} />}
       {currentTab === 'trash' && <TrashPage timestamp={currentTimestamp} />}
       {currentTab === 'upcoming' && (

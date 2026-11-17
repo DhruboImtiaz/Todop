@@ -13,6 +13,7 @@ import type {
 } from "../../types";
 import type {
   NewLogInput,
+  ImportOptions,
   StorageListener,
   StorageRepository,
   UpdateLogInput,
@@ -166,10 +167,10 @@ export abstract class PlannerRepository implements StorageRepository {
   abstract getSnapshot(): AppDataSchema;
   abstract subscribe(listener: StorageListener): () => void;
   protected abstract readData(): Promise<AppDataSchema>;
-  protected abstract writeData(data: AppDataSchema): Promise<void>;
+  protected abstract writeData(data: AppDataSchema, replace: boolean): Promise<void>;
   private pending: Promise<unknown> = Promise.resolve();
 
-  protected mutate<T>(change: (data: AppDataSchema) => T): Promise<T> {
+  protected mutate<T>(change: (data: AppDataSchema) => T, replace = false): Promise<T> {
     // Serialize same-device writes; the cloud adapter also guards against other devices.
     const next = this.pending.then(async () => {
       const data = await this.readData();
@@ -180,7 +181,7 @@ export abstract class PlannerRepository implements StorageRepository {
             Date.now() - Date.parse(item.deletedAt) < TRASH_RETENTION_MS,
         );
       const result = change(data);
-      await this.writeData(data);
+      await this.writeData(data, replace);
       return structuredClone(result);
     });
     this.pending = next.catch(() => {});
@@ -480,16 +481,18 @@ export abstract class PlannerRepository implements StorageRepository {
   async exportData(): Promise<AppDataSchema> {
     return structuredClone(await this.readData());
   }
-  importData(input: AppDataSchema): Promise<boolean> {
+  importData(input: AppDataSchema, options?: ImportOptions): Promise<boolean> {
     const validation = validateBackup(createBackup(input));
     if (!validation.valid) return Promise.reject(new Error(validation.error));
     return this.mutate((data) => {
+      if (options?.onlyIfEmpty && (data.logs.length || data.projects.length || data.trash?.length))
+        throw new Error("Your account planner already has data. Use Backup & Restore to replace it.");
       const next = structuredClone(validation.data);
       next.projects.forEach((project, index) => {
         project.order = index;
       });
       Object.assign(data, next, { version: 2, trash: next.trash ?? [] });
       return true;
-    });
+    }, true);
   }
 }

@@ -42,8 +42,8 @@ Add a narrowly scoped callback if using a different development port or deployme
 - Signed-out work uses `todop_app_data_v2` browser storage. On first use, version 1 device data is copied into version 2 without modifying the original copy. The service worker precaches the complete app shell for offline device editing.
 - Signed-in work uses `public.planner_workspaces`, keyed by `auth.users.id`. Each row contains the existing versioned planner JSON shape and a revision counter. This preserves atomic backup/restore and project/task relationships. It is intended for a personal planner, not large shared workspaces.
 - RLS allows authenticated users to select, insert, and update only their own row. Signed-out access is revoked. Ownership changes are checked on updates. The indexed primary key supports owner lookup.
-- Same-instance writes are serialized. Cloud writes use revision compare-and-swap so another device's in-flight edit cannot be silently overwritten. Forms also reject saving over changed task fields. Cloud data refreshes every 30 seconds while visible and on window focus/reconnection.
-- Cloud editing requires a connection. Failed writes leave the accepted snapshot intact and display an error. Guest data is never automatically uploaded, replaced, or mixed with an account.
+- Open your signed-in planner online once on each device. Subsequent edits save to that account's browser storage, survive offline reload, and sync when Todop is open and connected. Pending changes stay on the device until they sync. Guest data is kept separate.
+- Same-browser tabs coordinate writes. Sync checks the cloud revision and combines changes to different tasks. When the same task changes on both devices, Todop keeps the local changes and offers a device backup before you choose the cloud version. Backup restore is treated as a full replacement and pauses if the cloud planner changed in the meantime.
 - Settings offers **Copy device planner to account** for an empty cloud workspace. For an existing account, export a guest backup and use the explicit restore confirmation. Device copies remain available after sign-out.
 - Malformed local data is retained under `todop_app_data_v2_recovery` before starting a fresh schema. Imports reject unsupported versions, invalid dates, duplicate IDs, and missing project references.
 
@@ -61,7 +61,7 @@ npm run test:e2e
 
 The production build includes TypeScript checks and generates the service worker. Browser tests run against the production build and Netlify script policy in Chromium and WebKit. They cover My Day limits, recurrence, guarded undo, recovery, demo isolation, legacy migration, scheduling, calendar, project deletion, subtasks, search, offline use, restore failures, worker upgrades, responsive landing-page interactions, account entry, confirmation/reset messages, simulated cloud saves/failures, and sign-out isolation.
 
-Account-flow browser tests simulate Supabase HTTP responses; they do not create real accounts or send emails. Live checks verified the hosted schema, ownership policies, grants, auth settings, and rejection of signed-out Data API requests. Live signed-in CRUD and email delivery still need an approved test account; automatic approval review rejected creating synthetic users directly in the hosted auth schema.
+Account-flow browser tests simulate Supabase HTTP responses. They cover an offline reload with an expired token, reconnection and recurring task sync across two browser contexts, a lost response after a cloud save, and conflicting edits. Live checks verified the hosted schema, ownership policies, grants, auth settings, and rejection of signed-out Data API requests. Live signed-in sync and email delivery require a test account.
 
 ## Deployment
 

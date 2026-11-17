@@ -25,6 +25,7 @@ export interface UpdateLogInput {
 }
 
 export type StorageListener = () => void;
+export type ImportOptions = { onlyIfEmpty?: boolean };
 
 export interface StorageRepository {
   // Logs
@@ -62,7 +63,7 @@ export interface StorageRepository {
 
   // Backup & Restore
   exportData(): Promise<AppDataSchema>;
-  importData(data: AppDataSchema): Promise<boolean>;
+  importData(data: AppDataSchema, options?: ImportOptions): Promise<boolean>;
 
   getSnapshot(): AppDataSchema;
 
