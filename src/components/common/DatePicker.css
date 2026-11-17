@@ -27,7 +27,7 @@
 
 .date-picker-header .month-year-label {
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--type-item);
 }
 
 .date-picker-body {
@@ -38,7 +38,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  font-size: 12px;
+  font-size: var(--type-caption);
   font-weight: 700;
   color: var(--text-dim);
   margin-bottom: 8px;
@@ -59,7 +59,7 @@
   justify-content: center;
   height: 32px;
   border-radius: 50%;
-  font-size: 14px;
+  font-size: var(--type-small);
   font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;

@@ -18,7 +18,7 @@
 
 .sidebar-brand {
   font-family: var(--font-heading);
-  font-size: 1.467rem;
+  font-size: var(--type-section);
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--text-primary);
@@ -75,7 +75,7 @@
 
 .sidebar-nav-label {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

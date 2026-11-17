@@ -8,6 +8,7 @@ import type {
   AppDataSchema,
   Log,
   Project,
+  RoadmapTaskOptions,
   Settings,
   Subtask,
 } from "../../types";
@@ -20,6 +21,7 @@ import type {
 } from "./storageRepository";
 import { createBackup, validateBackup } from "../../utils/backup";
 import { isFontSize } from "../../utils/settings";
+import { validateRoadmap } from "../../utils/roadmap";
 
 function stamp(previous?: string): string {
   return new Date(
@@ -62,6 +64,14 @@ function findLog(data: AppDataSchema, id: string): Log {
   const log = data.logs.find((log) => log.id === id);
   if (!log) throw new Error("Log not found");
   return log;
+}
+
+function unlinkPrerequisite(data: AppDataSchema, id: string) {
+  for (const task of data.logs) {
+    if (!task.dependsOn?.includes(id)) continue;
+    task.dependsOn = task.dependsOn.filter(dependency => dependency !== id);
+    task.updatedAt = stamp(task.updatedAt);
+  }
 }
 function requireFocusSpace(data: AppDataSchema, id: string, date?: string) {
   if (
@@ -117,6 +127,11 @@ function applyLogUpdate(data: AppDataSchema, input: UpdateLogInput): Log {
         : [...subtasks],
     updatedAt: now,
   };
+  if (updated.projectId !== current.projectId) {
+    updated.dependsOn = undefined;
+    unlinkPrerequisite(data, current.id);
+  }
+  if (!updated.projectId || !updated.deadline) updated.milestone = undefined;
   if (current.completed && !completed)
     requireFocusSpace(data, current.id, updated.myDay);
   if (updated.recurrence && !updated.deadline)
@@ -144,6 +159,7 @@ function applyLogUpdate(data: AppDataSchema, input: UpdateLogInput): Log {
       nextOccurrenceId: undefined,
       deadline: nextRecurringDeadline(updated.deadline!, updated.recurrence),
       myDay: undefined,
+      milestone: undefined,
       completed: false,
       subtasks: updated.subtasks.map((s) => ({
         ...s,
@@ -174,7 +190,7 @@ export abstract class PlannerRepository implements StorageRepository {
     // Serialize same-device writes; the cloud adapter also guards against other devices.
     const next = this.pending.then(async () => {
       const data = await this.readData();
-      data.version = 2;
+      data.version = Math.max(data.version, 2);
       if (data.trash)
         data.trash = data.trash.filter(
           (item) =>
@@ -237,6 +253,23 @@ export abstract class PlannerRepository implements StorageRepository {
   updateLog(input: UpdateLogInput): Promise<Log> {
     return this.mutate((data) => applyLogUpdate(data, input));
   }
+  updateRoadmapTask(id: string, options: RoadmapTaskOptions, expected?: RoadmapTaskOptions): Promise<Log> {
+    return this.mutate(data => {
+      const task = findLog(data, id);
+      if (!task.projectId) throw new Error('Add this task to a project before editing its roadmap.');
+      if (expected && (expected.milestone !== !!task.milestone ||
+        JSON.stringify(expected.dependsOn) !== JSON.stringify(task.dependsOn ?? []))) {
+        throw new Error('The roadmap changed since you opened it. Close and reopen the settings to edit the latest version.');
+      }
+      task.milestone = options.milestone || undefined;
+      task.dependsOn = options.dependsOn.length ? [...options.dependsOn] : undefined;
+      const problem = validateRoadmap(data.logs);
+      if (problem) throw new Error(problem);
+      task.updatedAt = stamp(task.updatedAt);
+      data.version = 3;
+      return task;
+    });
+  }
   changeLogCompletion(
     id: string,
   ): Promise<{ previous: Log; updated: Log } | null> {
@@ -259,10 +292,11 @@ export abstract class PlannerRepository implements StorageRepository {
       const log = data.logs.find((log) => log.id === id);
       if (log)
         (data.trash ??= []).push({
-          log: structuredClone(log),
+          log: { ...structuredClone(log), dependsOn: undefined },
           deletedAt: new Date().toISOString(),
         });
       data.logs = data.logs.filter((log) => log.id !== id);
+      if (log) unlinkPrerequisite(data, id);
       return count !== data.logs.length;
     });
   }
@@ -274,8 +308,10 @@ export abstract class PlannerRepository implements StorageRepository {
       if (data.logs.some((log) => log.id === id))
         throw new Error("This task already exists.");
       const log = { ...entry.log, updatedAt: stamp(entry.log.updatedAt) };
-      if (log.projectId && !data.projects.some((p) => p.id === log.projectId))
+      if (log.projectId && !data.projects.some((p) => p.id === log.projectId)) {
         log.projectId = null;
+        log.milestone = undefined;
+      }
       // Restoring a task does not silently displace today's chosen focus.
       if (
         !log.completed &&
@@ -321,6 +357,7 @@ export abstract class PlannerRepository implements StorageRepository {
             "The next occurrence has changed, so this completion cannot be undone.",
           );
         data.logs = data.logs.filter((l) => l.id !== next.id);
+        unlinkPrerequisite(data, next.id);
       }
       data.logs[data.logs.findIndex((l) => l.id === previous.id)] = {
         ...structuredClone(previous),
@@ -418,6 +455,8 @@ export abstract class PlannerRepository implements StorageRepository {
       data.logs.forEach((log) => {
         if (log.projectId === id) {
           log.projectId = null;
+          log.dependsOn = undefined;
+          log.milestone = undefined;
           log.updatedAt = stamp(log.updatedAt);
         }
       });
@@ -491,7 +530,7 @@ export abstract class PlannerRepository implements StorageRepository {
       next.projects.forEach((project, index) => {
         project.order = index;
       });
-      Object.assign(data, next, { version: 2, trash: next.trash ?? [] });
+      Object.assign(data, next, { version: Math.max(next.version, 2), trash: next.trash ?? [] });
       return true;
     }, true);
   }

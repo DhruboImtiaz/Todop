@@ -18,8 +18,9 @@ import type { StorageContextValue } from "./StorageContextCore";
 
 export const StorageProvider: React.FC<{
   repository?: StorageRepository;
+  applyWorkspaceAppearance?: boolean;
   children: React.ReactNode;
-}> = ({ repository = defaultStorageRepository, children }) => {
+}> = ({ repository = defaultStorageRepository, applyWorkspaceAppearance = true, children }) => {
   const store = repository;
   const [error, setError] = useState("");
   const [undo, setUndo] = useState<StorageContextValue["undo"]>(null);
@@ -221,8 +222,8 @@ export const StorageProvider: React.FC<{
 
   // Synchronize data-theme, data-font-size, and meta theme-color immediately when settings change
   React.useEffect(() => {
-    applyAppearance(settings);
-  }, [settings]);
+    if (applyWorkspaceAppearance) applyAppearance(settings);
+  }, [settings, applyWorkspaceAppearance]);
 
   const value = useMemo<StorageContextValue>(
     () => ({

@@ -1,7 +1,7 @@
 .upcoming-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--page-gap);
 }
 
 
@@ -25,7 +25,7 @@
 
 .log-section-title {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-caption);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -38,7 +38,7 @@
 
 .log-section-count {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -46,5 +46,5 @@
 .log-section-cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }

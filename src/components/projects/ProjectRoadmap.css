@@ -1,0 +1,48 @@
+.project-view-switch, .roadmap-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.project-view-switch [aria-pressed="true"] {
+  color: var(--accent-text-readable);
+  border-color: var(--accent-primary);
+  background: var(--accent-tint);
+}
+.roadmap-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.roadmap-summary div, .roadmap-item {
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: var(--card-padding);
+  background: var(--bg-card);
+  overflow-wrap: anywhere;
+}
+.roadmap-summary dt { color: var(--text-secondary); font-size: var(--type-small); }
+.roadmap-summary dd { margin: 6px 0 0; font-size: var(--type-stat); font-weight: 750; }
+.roadmap-timeline {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 20px 0 0 4px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-strong);
+}
+.roadmap-item { position: relative; }
+.roadmap-item::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: 20px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+}
+.roadmap-task { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.roadmap-task-info { flex: 1 1 12rem; display: grid; gap: 5px; min-width: 0; }
+.roadmap-task-title { font-size: var(--type-item); font-weight: 700; text-align: left; justify-self: start; overflow-wrap: anywhere; }
+.roadmap-task-title:hover { text-decoration: underline; }
+.roadmap-task time, .roadmap-task-info > span, .roadmap-task p, .roadmap-empty { font-size: var(--type-small); color: var(--text-secondary); }
+.roadmap-labels { display: flex; flex-wrap: wrap; gap: 6px; }
+.roadmap-labels span { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-tint); padding: 4px 7px; border-radius: 5px; font-size: var(--type-caption); }
+.roadmap-labels .roadmap-risk { background: var(--overdue-badge-bg); color: var(--overdue-text); }
+.roadmap-editor, .roadmap-editor fieldset { display: grid; gap: 8px; min-width: 0; }
+.roadmap-editor { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+.roadmap-editor fieldset { border: 0; padding: 0; }
+.roadmap-editor legend { font-weight: 700; margin-bottom: 6px; }
+.roadmap-field { display: flex; align-items: center; gap: 8px; min-height: 32px; }

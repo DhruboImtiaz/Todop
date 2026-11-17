@@ -43,7 +43,7 @@
   padding: 8px 12px;
   border-radius: 6px;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--type-small);
   font-weight: 600;
 }
 .picker-footer-btn:hover { background: var(--bg-card-hover); }

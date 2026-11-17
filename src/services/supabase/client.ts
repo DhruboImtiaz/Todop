@@ -25,4 +25,8 @@ export function readDeviceAccount(): DeviceAccount | null {
   }
 }
 
-export const authRedirect = (mode = 'signin') => `${window.location.origin}/auth?mode=${mode}`;
+export const authRedirect = (mode = 'signin', next?: string) => {
+  const search = new URLSearchParams({ mode });
+  if (next) search.set('next', next);
+  return `${window.location.origin}/auth?${search}`;
+};

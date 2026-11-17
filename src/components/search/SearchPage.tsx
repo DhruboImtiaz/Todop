@@ -56,7 +56,7 @@ export const SearchPage: React.FC = () => {
       {/* Header */}
       <div className="page-header">
         <div className="page-header-main">
-          <h1 className="page-title">SEARCH</h1>
+          <h1 className="page-title">Search</h1>
           <p className="page-subtitle">Find a log by name.</p>
         </div>
       </div>

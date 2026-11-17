@@ -9,9 +9,12 @@ import './ProjectsPage.css';
 
 interface ProjectsPageProps {
   onNavigateToProject: (projectId: string) => void;
+  onOpenWorkspaces?: () => void;
+  shared?: boolean;
 }
 
-export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject }) => {
+export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject, onOpenWorkspaces, shared }) => {
+  const Heading = shared ? 'h2' : 'h1';
   const {
     projects,
     activeLogs,
@@ -127,17 +130,22 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject 
     <div className="projects-page">
       <div className="page-header">
         <div className="page-header-main">
-          <h1 className="page-title">Projects</h1>
+          <Heading className={shared ? 'section-title' : 'page-title'}>Projects</Heading>
         </div>
-        <button
-          type="button"
-          id="new-project-btn-top"
-          className="projects-add-btn"
-          onClick={handleCreateOpen}
-          aria-label="Create new project"
-        >
-          + NEW PROJECT
-        </button>
+        <div className="projects-header-actions">
+          {onOpenWorkspaces && (
+            <button className="workspace-secondary" type="button" onClick={onOpenWorkspaces}>Shared workspaces</button>
+          )}
+          <button
+            type="button"
+            id="new-project-btn-top"
+            className="projects-add-btn"
+            onClick={handleCreateOpen}
+            aria-label="Create new project"
+          >
+            + New project
+          </button>
+        </div>
       </div>
 
       {sortedProjects.length === 0 ? (

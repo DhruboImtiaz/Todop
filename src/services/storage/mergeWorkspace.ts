@@ -73,8 +73,9 @@ export function mergeWorkspace(base: AppDataSchema, local: AppDataSchema, remote
     theme: mergeValue(base.settings.theme, local.settings.theme, remote.settings.theme, () => 'The theme changed on both devices.'),
     fontSize: mergeValue(base.settings.fontSize, local.settings.fontSize, remote.settings.fontSize, () => 'The text size changed on both devices.'),
   };
-  const result = validateBackup(createBackup({ version: 2, logs, trash, projects, settings }));
-  if (!result.valid) throw new WorkspaceConflict('The combined changes would leave some tasks without their assigned project.');
+  const version = Math.max(local.version, remote.version);
+  const result = validateBackup(createBackup({ version, logs, trash, projects, settings }));
+  if (!result.valid) throw new WorkspaceConflict(result.error.replace(/^INVALID BACKUP: /, ''));
   return result.data;
 }
 

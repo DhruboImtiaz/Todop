@@ -4,6 +4,7 @@ import { STORAGE_KEY, LEGACY_STORAGE_KEY } from "../src/utils/settings";
 import { createBackup, validateBackup } from "../src/utils/backup";
 import { nextRecurringDeadline, isDateKey } from "../src/utils/planning";
 import { createDemoData } from "../src/utils/demo";
+import { buildRoadmap } from "../src/utils/roadmap";
 
 const values = new Map<string, string>();
 globalThis.localStorage = {
@@ -247,3 +248,34 @@ assert.equal(
 console.log(
   "✓ Planning: legacy migration, My Day limits, monthly clamping, DST, repeats, guarded undo, soft deletion, expiry, backups and demo isolation",
 );
+
+const roadmap = new LocalStorageRepository("roadmap-test");
+const release = await roadmap.createProject("Release");
+const laterProject = await roadmap.createProject("Later");
+const makeTask = (title: string, day: number) => roadmap.createLog({
+  title, projectId: release.id, deadline: new Date(Date.UTC(2027, 0, day)).toISOString(),
+});
+const draft = await makeTask("Draft", 6);
+const review = await makeTask("Review", 3);
+const launch = await makeTask("Launch", 4);
+await roadmap.updateRoadmapTask(review.id, { milestone: false, dependsOn: [draft.id] });
+await roadmap.updateRoadmapTask(launch.id, { milestone: true, dependsOn: [review.id] });
+await assert.rejects(() => roadmap.updateRoadmapTask(draft.id, { milestone: false, dependsOn: [launch.id] }), /circular/);
+const fromBackup = validateBackup(createBackup(await roadmap.exportData()));
+assert.ok(fromBackup.valid);
+assert.equal(fromBackup.data.version, 3);
+assert.deepEqual(fromBackup.data.logs.find(log => log.id === launch.id)?.dependsOn, [review.id]);
+const launchEntry = buildRoadmap(fromBackup.data.logs, Date.UTC(2027, 0, 1)).find(entry => entry.task.id === launch.id)!;
+assert.equal(launchEntry.blocked, true);
+assert.equal(launchEntry.atRisk, true, "a later transitive prerequisite puts the milestone at risk");
+await roadmap.updateLog({ id: review.id, projectId: laterProject.id });
+assert.deepEqual((await roadmap.getLogById(launch.id))?.dependsOn, []);
+assert.equal((await roadmap.getLogById(review.id))?.dependsOn, undefined);
+await assert.rejects(() => roadmap.updateRoadmapTask(launch.id, { milestone: true, dependsOn: [review.id] }), /same project/);
+await roadmap.updateRoadmapTask(launch.id, { milestone: true, dependsOn: [draft.id] });
+await roadmap.deleteLog(draft.id);
+assert.deepEqual((await roadmap.getLogById(launch.id))?.dependsOn, []);
+await roadmap.deleteProject(release.id);
+assert.equal((await roadmap.getLogById(launch.id))?.milestone, undefined);
+assert.ok(validateBackup(createBackup(await roadmap.exportData())).valid);
+console.log("✓ Roadmap: milestone persistence, transitive risk, cycle rejection, task moves and deletion");

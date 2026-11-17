@@ -109,7 +109,7 @@ export const CalendarPage: React.FC = () => {
     <div className="calendar-page">
       <div className="page-header">
         <div className="page-header-main">
-          <h1 className="page-title">CALENDAR</h1>
+          <h1 className="page-title">Calendar</h1>
           <p className="page-subtitle">View tasks by deadline.</p>
         </div>
       </div>

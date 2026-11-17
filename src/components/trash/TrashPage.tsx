@@ -11,13 +11,13 @@ export function TrashPage({ timestamp }: { timestamp: number }) {
     .sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
   return (
     <section className="trash-page">
-      <div className="day-heading">
-        <div>
+      <div className="page-header day-heading">
+        <div className="page-header-main">
           <p className="workspace-eyebrow">
             <Trash2 size={14} />A LITTLE PEACE OF MIND
           </p>
-          <h1>Recently deleted</h1>
-          <p>A change of mind is welcome. Tasks stay here for 30 days.</p>
+          <h1 className="page-title">Recently deleted</h1>
+          <p className="page-subtitle">Tasks stay here for 30 days.</p>
         </div>
       </div>
       <div className="workspace-panel trash-panel">

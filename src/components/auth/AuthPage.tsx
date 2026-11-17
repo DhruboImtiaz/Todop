@@ -4,12 +4,15 @@ import { ArrowLeft, ArrowUpRight, Check, LockKeyhole } from 'lucide-react';
 import { supabase, authRedirect } from '../../services/supabase/client';
 import { useAuth } from '../../hooks/useAuth';
 import { navigate } from '../../utils/navigation';
+import { accountReturnPath } from '../../utils/teamRoutes';
 import './AuthPage.css';
 
 type Mode = 'signin' | 'signup' | 'reset' | 'recovery';
 export function AuthPage() {
   const { session, recovery, finishRecovery, error: sessionError } = useAuth();
-  const queryMode = new URLSearchParams(window.location.search).get('mode');
+  const query = new URLSearchParams(window.location.search);
+  const queryMode = query.get('mode');
+  const returnPath = accountReturnPath(query.get('next'));
   const [mode, setMode] = useState<Mode>(recovery || queryMode === 'recovery' ? 'recovery' : queryMode === 'signup' ? 'signup' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,14 +35,16 @@ export function AuthPage() {
         if (error) throw error;
         setMessage('If an account exists for this address, a password reset link is on its way.');
       } else if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: authRedirect() } });
+        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: {
+          emailRedirectTo: authRedirect('signin', returnPath === '/app' ? undefined : returnPath),
+        } });
         if (error) throw error;
-        if (data.session) navigate('/app');
+        if (data.session) navigate(returnPath);
         else setMessage('Check your email to confirm your account, then come back to sign in.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
-        navigate('/app');
+        navigate(returnPath);
       }
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not connect. Please try again.'); }
     finally { setBusy(false); }
@@ -51,7 +56,7 @@ export function AuthPage() {
       <div className="auth-story"><div className="auth-wordmark"><BrandLogo /></div><p className="auth-eyebrow">YOUR DAY, WITH A LITTLE DIRECTION</p><h1>{title}</h1><p>One quiet place for your tasks, projects, and everything coming up next.</p><div className="auth-note"><LockKeyhole size={18} /><span>Your planner belongs to you. Your account keeps it together across devices.</span></div></div>
       <section className="auth-card" aria-labelledby="auth-title">
         <h2 id="auth-title">{{ signin: 'Welcome back', signup: 'Create your account', reset: 'Reset your password', recovery: 'Choose a new password' }[mode]}</h2>
-        {session && mode !== 'recovery' && <button className="auth-submit" onClick={() => navigate('/app')}>Open your planner <ArrowUpRight size={18} /></button>}
+        {session && mode !== 'recovery' && <button className="auth-submit" onClick={() => navigate(returnPath)}>Open your planner <ArrowUpRight size={18} /></button>}
         {mode === 'recovery' && !session && <p className="auth-error" role="alert">This reset link is missing or expired. <button type="button" onClick={() => switchMode('reset')}>Request another reset link.</button></p>}
         <form onSubmit={submit}>
           {mode !== 'recovery' && <label>Email address<input autoFocus type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>}

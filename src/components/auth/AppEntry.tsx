@@ -20,8 +20,13 @@ const Planner = lazy(() => import("../../App"));
 const AuthPage = lazy(() =>
   import("./AuthPage").then((module) => ({ default: module.AuthPage })),
 );
+const TeamWorkspacesPage = lazy(() => import("../workspaces/TeamWorkspacesPage"));
 import { isDemoMode } from "../../utils/navigation";
+import { isTeamPath } from "../../utils/teamRoutes";
 import { useStorage } from "../../hooks/useStorage";
+import { accountWorkspaceCacheKey } from "../../services/storage/supabaseRepository";
+import { supabaseUrl } from "../../services/supabase/client";
+import { initializeAppearance } from "../../utils/settings";
 
 function DemoResetButton() {
   const { importData } = useStorage();
@@ -65,7 +70,7 @@ function DemoWorkspace({ children }: { children: ReactNode }) {
     <StorageProvider repository={repository}>
       <div className="demo-workspace">
         <div className="demo-bar">
-          <span>DEMO WORKSPACE · SAMPLE DATA</span>
+          <span>Sample workspace</span>
           <DemoResetButton />
         </div>
         {children}
@@ -75,13 +80,20 @@ function DemoWorkspace({ children }: { children: ReactNode }) {
 }
 function Entry({ children }: { children: ReactNode }) {
   const { account, loading, recovery } = useAuth();
-  const [path, setPath] = useState(window.location.pathname);
+  const [location, setLocation] = useState(() => window.location.pathname + window.location.search);
+  const path = location.split('?')[0];
+  const personalAppearance = path === '/' || path === '/auth' || isTeamPath(path);
+  const accountId = account?.id;
   useEffect(() => {
-    const onPopState = () => setPath(window.location.pathname);
+    const onPopState = () => setLocation(window.location.pathname + window.location.search);
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
-  if (isDemoMode()) return <DemoWorkspace>{children}</DemoWorkspace>;
+  useEffect(() => {
+    if (!personalAppearance) return;
+    initializeAppearance(accountId ? accountWorkspaceCacheKey(supabaseUrl, accountId) : undefined);
+  }, [personalAppearance, accountId]);
+  if (isDemoMode() && !isTeamPath(path)) return <DemoWorkspace>{children}</DemoWorkspace>;
   if (path === "/") return <LandingPage signedIn={!!account} />;
   if (loading)
     return (
@@ -101,6 +113,11 @@ function Entry({ children }: { children: ReactNode }) {
         <AuthPage key={recovery ? "recovery" : "auth"} />
       </Suspense>
     );
+  if (isTeamPath(path)) return (
+    <Suspense fallback={<main className="workspace-loading" role="status">Opening shared workspaces…</main>}>
+      <TeamWorkspacesPage location={location} />
+    </Suspense>
+  );
   if (account)
     return (
       <CloudWorkspace key={account.id} userId={account.id}>

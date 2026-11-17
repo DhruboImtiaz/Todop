@@ -22,7 +22,7 @@ export function createDemoData(): AppDataSchema {
     ...patch,
   });
   return {
-    version: 2,
+    version: 3,
     settings: { theme: "light", fontSize: "medium" },
     projects: [
       {
@@ -86,6 +86,8 @@ export function createDemoData(): AppDataSchema {
       task("website", "Polish the project presentation", {
         projectId: "studio",
         deadline: later(1),
+        milestone: true,
+        dependsOn: ["design"],
       }),
       task("weekly", "A little weekly reset", {
         projectId: "personal",

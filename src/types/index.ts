@@ -20,12 +20,16 @@ export interface Log {
   recurrence?: RecurrenceRule;
   seriesId?: string;
   nextOccurrenceId?: string;
+  milestone?: boolean;
+  dependsOn?: string[];
   projectId: string | null;
   completed: boolean;
   subtasks: Subtask[];
   createdAt: string; // ISO 8601 string
   updatedAt: string; // ISO 8601 string
 }
+
+export type RoadmapTaskOptions = { milestone: boolean; dependsOn: string[] };
 
 export interface Project {
   id: string;

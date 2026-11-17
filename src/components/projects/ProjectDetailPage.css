@@ -1,30 +1,22 @@
 .project-detail-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-}
-
-/* ── Sub-header row ── */
-.project-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: var(--page-gap);
 }
 
 .project-detail-back-btn {
   display: flex;
+  align-self: flex-start;
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
-  letter-spacing: 0.1em;
   color: var(--accent-text-readable);
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 8px 4px;
+  padding: 0;
   min-height: 44px;
   transition: color 0.15s ease;
 }
@@ -35,7 +27,7 @@
 
 .project-detail-add-btn {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--accent-text-readable);
@@ -57,18 +49,6 @@
   border-color: var(--accent-primary);
 }
 
-/* ── Project Name ── */
-.project-detail-name {
-  font-family: var(--font-heading);
-  font-size: 1.733rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.2;
-  word-break: break-word;
-}
-
 /* ── Empty State ── */
 .project-detail-empty {
   display: flex;
@@ -87,7 +67,7 @@
 
 .project-detail-empty-heading {
   font-family: var(--font-heading);
-  font-size: 0.867rem;
+  font-size: var(--type-section);
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -95,14 +75,14 @@
 }
 
 .project-detail-empty-sub {
-  font-size: 0.867rem;
+  font-size: var(--type-body);
   color: var(--text-dim);
   margin: 0 0 10px;
 }
 
 .project-detail-add-btn-empty {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--accent-text-readable);
@@ -134,7 +114,7 @@
 
 .project-detail-section-heading {
   font-family: var(--font-heading);
-  font-size: 0.733rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.13em;
   color: var(--text-dim);

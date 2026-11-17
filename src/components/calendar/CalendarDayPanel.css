@@ -2,17 +2,11 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-top: 24px;
-}
-
-@media (min-width: 1024px) {
-  .calendar-day-panel {
-    margin-top: 0;
-  }
 }
 
 .calendar-day-panel-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -27,27 +21,29 @@
 
 .calendar-day-panel-title {
   font-family: var(--font-heading);
-  font-size: 1.15rem;
+  font-size: var(--type-section);
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-primary);
+  text-transform: none;
+  line-height: var(--leading-tight);
   margin: 0;
 }
 
 .calendar-day-panel-subtitle {
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   color: var(--text-secondary);
   margin: 0;
 }
 
 .calendar-day-panel-add-btn {
   font-family: var(--font-heading);
-  font-size: 0.733rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-primary);
-  background-color: var(--surface-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 8px 14px;
@@ -58,7 +54,7 @@
 
 .calendar-day-panel-add-btn:hover {
   background-color: var(--surface-hover);
-  border-color: var(--border-medium);
+  border-color: var(--border-strong);
 }
 
 .calendar-day-empty {
@@ -68,7 +64,7 @@
   justify-content: center;
   padding: 40px 20px;
   text-align: center;
-  background-color: var(--surface-base);
+  background-color: var(--bg-card);
   border: 1px dashed var(--border-subtle);
   border-radius: var(--radius-md);
   margin-bottom: 24px;
@@ -81,7 +77,7 @@
 
 .calendar-day-empty-heading {
   font-family: var(--font-heading);
-  font-size: 0.867rem;
+  font-size: var(--type-item);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -90,14 +86,14 @@
 }
 
 .calendar-day-empty-sub {
-  font-size: 0.867rem;
+  font-size: var(--type-body);
   color: var(--text-dim);
   margin: 0 0 16px 0;
 }
 
 .calendar-day-empty-btn {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   color: var(--accent-primary);
   background: transparent;
@@ -118,7 +114,7 @@
 
 .calendar-day-section-heading {
   font-family: var(--font-heading);
-  font-size: 0.733rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

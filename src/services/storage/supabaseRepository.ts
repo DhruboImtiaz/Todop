@@ -1,16 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AppDataSchema } from '../../types';
 import type { StorageListener } from './storageRepository';
-import { DEFAULT_SETTINGS } from '../../utils/settings';
-import { BACKUP_APP_IDENTIFIER, CURRENT_BACKUP_VERSION, validateBackup } from '../../utils/backup';
+import { emptyWorkspace, parseData, parseRevision, type Revision } from './workspaceSnapshot';
 import { PlannerRepository } from './plannerRepository';
 import { includesWorkspaceChanges, mergeWorkspace, sameValue, WorkspaceConflict } from './mergeWorkspace';
 
-export const emptyWorkspace = (): AppDataSchema => ({
-  version: 2, logs: [], trash: [], projects: [], settings: { ...DEFAULT_SETTINGS },
-});
+export { emptyWorkspace } from './workspaceSnapshot';
 
-type Revision = { revision: number; data: AppDataSchema };
+export function accountWorkspaceCacheKey(namespace: string, userId: string) {
+  return `todop_account_v1:${namespace}:${userId}`;
+}
+
 type Upload = Revision & { replacement?: string };
 type DeviceWorkspace = {
   base: Revision;
@@ -20,23 +20,6 @@ type DeviceWorkspace = {
 };
 type SyncPhase = 'idle' | 'offline' | 'syncing' | 'conflict' | 'error';
 type SyncStatus = { ready: boolean; pending: boolean; phase: SyncPhase; message: string };
-
-function parseData(data: AppDataSchema): AppDataSchema {
-  const validation = validateBackup({
-    app: BACKUP_APP_IDENTIFIER,
-    backupVersion: CURRENT_BACKUP_VERSION,
-    exportedAt: new Date().toISOString(),
-    data: { ...data, schemaVersion: data?.version },
-  });
-  if (!validation.valid) throw new Error('Your planner has invalid data.');
-  return { ...validation.data, trash: validation.data.trash ?? [] };
-}
-
-function parseRevision(value: Revision): Revision {
-  if (!Number.isSafeInteger(value?.revision) || value.revision < 0)
-    throw new Error('Your planner has an invalid revision.');
-  return { revision: value.revision, data: parseData(value.data) };
-}
 
 /** Saves each edit locally before syncing the account's revision. */
 export class SupabaseRepository extends PlannerRepository {
@@ -55,7 +38,7 @@ export class SupabaseRepository extends PlannerRepository {
     super();
     this.client = client;
     this.userId = userId;
-    this.cacheKey = `todop_account_v1:${namespace}:${userId}`;
+    this.cacheKey = accountWorkspaceCacheKey(namespace, userId);
   }
 
   getSnapshot = () => this.device?.draft ?? this.device?.base.data ?? this.empty;

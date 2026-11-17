@@ -15,7 +15,7 @@
 }
 
 html {
-  font-size: var(--font-size-base, 15px);
+  font-size: var(--font-size-base);
   width: 100%;
   min-height: 100%;
   background-color: var(--bg-base);
@@ -27,8 +27,8 @@ body {
   background-color: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1rem;
-  line-height: 1.45;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -47,6 +47,7 @@ h1, h2, h3, h4, .font-heading {
 
 button {
   font-family: inherit;
+  font-size: var(--type-small);
   border: none;
   background: none;
   cursor: pointer;
@@ -56,7 +57,8 @@ button {
 /* Shared Page Header System */
 .page-header {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
@@ -66,22 +68,26 @@ button {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
-.page-title {
+.page-title,
+.section-title {
   font-family: var(--font-heading);
-  font-size: 1.467rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.035em;
+  text-transform: none;
   color: var(--text-primary);
-  margin: 0;
-  line-height: 1.2;
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
 }
+
+.page-title { font-size: var(--type-page); }
+.section-title { font-size: var(--type-section); }
 
 .page-subtitle {
-  font-size: 0.867rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
-  margin: 0;
 }
 
 button:focus-visible,
@@ -94,7 +100,7 @@ textarea:focus-visible {
 
 input, select, textarea {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
@@ -112,7 +118,7 @@ input, select, textarea {
 
 .app-container {
   width: 100%;
-  max-width: var(--max-content-width);
+  max-width: var(--mobile-content-max-width);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -120,11 +126,17 @@ input, select, textarea {
   background-color: var(--bg-base);
 }
 
-/* Main Content Area (mobile) */
+.content-frame {
+  max-width: var(--desktop-content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--page-padding-x);
+  width: 100%;
+}
+
 .app-content {
   flex: 1;
-  padding: calc(var(--header-height) + var(--safe-top) + 16px) var(--page-padding-x) calc(var(--bottom-nav-height) + var(--safe-bottom) + 80px);
-  width: 100%;
+  padding-top: calc(var(--header-height) + var(--safe-top) + var(--page-gap) + var(--demo-offset, 0px));
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 64px);
   position: relative;
 }
 
@@ -152,10 +164,7 @@ input, select, textarea {
 /* Desktop content area — overrides mobile padding, applies max-width */
 @media (min-width: 1024px) {
   .app-content {
-    padding: 40px var(--desktop-page-padding-x) 40px;
-    max-width: var(--desktop-content-max-width);
-    margin: 0 auto;
-    width: 100%;
+    padding-block: calc(var(--page-gap) + var(--demo-offset, 0px)) 60px;
   }
 }
 
@@ -187,7 +196,7 @@ input, select, textarea {
 
 .workspace-loading { min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; gap:20px; text-align:center; }
 .workspace-loading button { border:1px solid var(--border-subtle); padding:12px 24px; border-radius:8px; }
-.workspace-error { position:fixed; z-index:10000; top:12px; left:50%; transform:translateX(-50%); width:min(90%,600px); display:flex; gap:15px; align-items:center; justify-content:space-between; background:#fff0eb; color:#852918; border:1px solid #eeb7a9; padding:16px; border-radius:12px; box-shadow:0 8px 35px #0002; font-size:13px; }
+.workspace-error { position:fixed; z-index:10000; top:12px; left:50%; transform:translateX(-50%); width:min(90%,600px); display:flex; gap:15px; align-items:center; justify-content:space-between; background:#fff0eb; color:#852918; border:1px solid #eeb7a9; padding:16px; border-radius:12px; box-shadow:0 8px 35px #0002; font-size:var(--type-small); }
 .workspace-error button { padding:4px 10px; font-weight:700; }
 .workspace-sync {
   margin-bottom: 16px;
@@ -196,7 +205,7 @@ input, select, textarea {
   border-radius: 12px;
   background: var(--bg-card);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--type-small);
 }
 .workspace-sync p { margin: 0; }
 .workspace-sync-actions { display: flex; flex-wrap: wrap; column-gap: 16px; }

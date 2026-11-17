@@ -17,6 +17,7 @@ import { getCountdown } from "../../utils/time";
 import "./LogCard.css";
 
 interface LogCardProps {
+  allowMyDay?: boolean;
   log: Log;
   currentTimestamp: number;
   onComplete: (id: string) => void | Promise<void>;
@@ -25,6 +26,7 @@ interface LogCardProps {
 }
 
 export const LogCard: React.FC<LogCardProps> = ({
+  allowMyDay = true,
   log,
   currentTimestamp,
   onComplete,
@@ -203,7 +205,7 @@ export const LogCard: React.FC<LogCardProps> = ({
             <Pencil size={14} strokeWidth={1.8} />
             <span>Edit</span>
           </button>
-          {!log.completed && (
+          {allowMyDay && !log.completed && (
             <button
               type="button"
               className="log-overflow-item"

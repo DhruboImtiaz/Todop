@@ -8,8 +8,9 @@ test.use({ serviceWorkers: 'block' });
 type CloudRequest = { url: string; method: string; body?: string };
 type CloudReply = { json?: unknown; status?: number; disconnected?: boolean };
 
-async function mockCloud(context: BrowserContext, mockFetch = false) {
-  const user = { id: 'mock-user', email: 'qa@example.invalid', aud: 'authenticated', role: 'authenticated',
+async function mockCloud(context: BrowserContext, mockFetch = false, identity = 'mock-user',
+  teamApi?: (request: CloudRequest, id: string) => CloudReply | undefined) {
+  const user = { id: identity, email: 'qa@example.invalid', aud: 'authenticated', role: 'authenticated',
     app_metadata: { provider: 'email' }, user_metadata: {}, created_at: new Date().toISOString() };
   const payload = Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now()/1000)+3600, aud: 'authenticated' })).toString('base64url');
   const access_token = `eyJhbGciOiJIUzI1NiJ9.${payload}.mock-signature`;
@@ -19,6 +20,8 @@ async function mockCloud(context: BrowserContext, mockFetch = false) {
   const disconnected = new Set<BrowserContext>();
   function respond(browserContext: BrowserContext, request: CloudRequest): CloudReply {
     if (disconnected.has(browserContext)) return { disconnected: true };
+    const teamReply = teamApi?.(request, identity);
+    if (teamReply) return teamReply;
     const url = new URL(request.url);
     if (url.pathname === '/auth/v1/token') return { json: { access_token, refresh_token: 'mock-refresh', token_type: 'bearer', expires_in: 3600, user } };
     if (url.pathname === '/auth/v1/user') return { json: user };
@@ -83,11 +86,15 @@ async function mockCloud(context: BrowserContext, mockFetch = false) {
   };
 }
 
-async function signIn(page: Page) {
-  await page.goto('/auth');
+async function submitSignIn(page: Page) {
   await page.getByLabel('Email address').fill('qa@example.invalid');
   await page.getByLabel('Password', { exact: true }).fill('Only-a-local-mock-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+}
+
+async function signIn(page: Page) {
+  await page.goto('/auth');
+  await submitSignIn(page);
   await expect(page.getByRole('button', { name: 'Create new task log', exact: true })).toBeVisible();
 }
 
@@ -109,12 +116,22 @@ test('landing demo, mobile navigation, motion control and account entry', async 
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Less in your head.More in your day.');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
-  await page.getByRole('button', { name: /Put the finishing touches/ }).click();
+  await page.getByRole('button', { name: /Review the first design direction/ }).click();
   await expect(page.getByText('2 of 3 done')).toBeVisible();
   await page.getByRole('tab', { name: 'Projects', exact: true }).click();
-  await expect(page.getByRole('tabpanel')).toContainText('The next big thing');
+  const panel = page.getByRole('tabpanel');
+  await expect(panel.getByRole('link', { name: /Studio refresh.*1 of 2 done/ })).toHaveAttribute('href', '/projects/studio?demo=1');
+  await expect(panel.getByRole('link', { name: /The next big thing/ })).toBeVisible();
   await page.getByRole('tab', { name: 'Calendar', exact: true }).click();
-  await expect(page.getByRole('tabpanel')).toContainText('A little perspective');
+  const deadlines = panel.getByRole('group', { name: 'Dates with deadlines' }).getByRole('button');
+  await expect(deadlines.first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(panel.getByText('Step outside for a little while', { exact: true })).toBeVisible();
+  await deadlines.nth(1).click();
+  await expect(panel.getByText('Polish the project presentation', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Step outside for a little while', { exact: true })).toBeHidden();
+  await expect(panel.getByRole('link', { name: 'Open Calendar' })).toHaveAttribute('href', '/calendar?demo=1');
+  await page.getByRole('tab', { name: 'Roadmap', exact: true }).click();
+  await expect(panel.getByText('Ready', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('link', { name: 'Your space', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false');
@@ -124,6 +141,80 @@ test('landing demo, mobile navigation, motion control and account entry', async 
   await expect(page.getByRole('heading', { name: 'Create your account', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Continue without an account' }).click();
   await expect(page.getByRole('button', { name: 'Create new task log', exact: true })).toBeVisible();
+});
+
+test('homepage previews roadmaps and sharing and respects motion controls', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Project Roadmaps' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Shared Workspaces' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Offline editing and sync' })).toBeVisible();
+
+  const calendar = page.getByRole('tab', { name: 'Calendar', exact: true });
+  await calendar.click();
+  await calendar.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Roadmap', exact: true })).toBeFocused();
+  const panel = page.getByRole('tabpanel');
+  await expect(panel.getByText('Blocked', { exact: true })).toBeVisible();
+  await expect(panel).toHaveCSS('animation-name', 'lp-preview-in');
+  await panel.getByRole('button', { name: 'Mark complete' }).click();
+  await expect(panel.getByText('Ready', { exact: true })).toBeVisible();
+
+  const motion = page.getByRole('button', { name: 'Pause motion', exact: true });
+  await motion.click();
+  await expect(panel).toHaveCSS('animation-name', 'none');
+  await page.getByRole('button', { name: 'Play motion', exact: true }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('tab', { name: 'Workspaces', exact: true }).click();
+  await expect(panel.getByRole('list', { name: 'Workspace members' })).toContainText('Jamie Chen');
+  await expect(panel).not.toContainText('Sign in to share projects and roadmaps.');
+  await expect(panel).not.toContainText('Shared edits need a connection.');
+  await expect(panel).toHaveCSS('animation-name', 'none');
+  await panel.getByRole('link', { name: 'Sign in to shared workspaces' }).click();
+  await expect(page).toHaveURL(/auth\?next=%2Fworkspaces/);
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Roadmap', exact: true }).click();
+  await page.getByRole('link', { name: 'Open the sample project' }).click();
+  await page.getByRole('button', { name: 'Roadmap', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Project roadmap' })).toContainText('Depends on Review the first design direction');
+});
+
+test('switching homepage previews keeps the surrounding content in place', async ({ page }) => {
+  for (const width of [320, 390, 1000, 1365]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    await page.evaluate(() => document.fonts.ready.then(() => true));
+    await page.getByRole('tablist', { name: 'Explore the planner preview' }).scrollIntoViewIfNeeded();
+    const layout = () => page.evaluate(() => ['.lp-hero-copy', '.lp-demo-tabs', '.lp-preview-stage', '.lp-usecases'].map(selector => {
+      const { x, y, width, height } = document.querySelector(selector)!.getBoundingClientRect();
+      return [x + scrollX, y + scrollY, width, height].map(Math.round);
+    }));
+    const original = await layout();
+    const tablist = page.getByRole('tablist', { name: 'Explore the planner preview' });
+    const originalScroll = await page.evaluate(() => scrollY);
+    for (const name of ['Projects', 'Workspaces', 'Calendar', 'Workspaces', 'Roadmap', 'Today']) {
+      await tablist.getByRole('tab', { name, exact: true }).click();
+      const panel = page.getByRole('tabpanel', { name, exact: true });
+      await expect(panel).toBeVisible();
+      expect(await layout(), `${name} changed the preview layout at ${width}px`).toEqual(original);
+      expect(await page.evaluate(() => scrollY)).toBe(originalScroll);
+      const [bodyBottom, footerTop, panelBottom, footerBottom] = await panel.evaluate(element => {
+        const [body, footer] = element.children;
+        return [body.getBoundingClientRect().bottom, footer.getBoundingClientRect().top,
+          element.getBoundingClientRect().bottom, footer.getBoundingClientRect().bottom];
+      });
+      expect(footerTop - bodyBottom, `${name} left an extra gap at ${width}px`).toBeCloseTo(12, 0);
+      expect(panelBottom).toBeCloseTo(footerBottom, 0);
+    }
+    await tablist.getByRole('tab', { name: 'Calendar', exact: true }).click();
+    await page.getByRole('group', { name: 'Dates with deadlines' }).getByRole('button').last().click();
+    expect(await layout()).toEqual(original);
+    await tablist.getByRole('tab', { name: 'Roadmap', exact: true }).click();
+    await page.getByRole('button', { name: 'Mark complete', exact: true }).click();
+    await expect(page.getByRole('tabpanel').getByText('Ready', { exact: true })).toBeVisible();
+    expect(await layout()).toEqual(original);
+  }
 });
 
 test('signup confirmation, password reset and expired recovery are clear', async ({ page }) => {
@@ -297,5 +388,100 @@ test('same-task changes stay local until the conflict is resolved explicitly', a
     await expect(page.getByRole('alert').filter({ hasText: 'Sync conflict' })).toHaveCount(0);
   } finally {
     await secondDevice.close();
+  }
+});
+
+test('a workspace invitation resumes after sign-in and shares a project across accounts', async ({ page, context, browser, baseURL }) => {
+  const teamId = '32c9fec8-77aa-4a97-9223-5f3c9b53566d';
+  const inviteId = '2a9efed7-c9e3-4c7a-a332-0058e177d635';
+  let name = '';
+  let invited = false;
+  let member = false;
+  let snapshot = { data: emptyWorkspace(), revision: 0 };
+  function teamApi(request: CloudRequest, identity: string): CloudReply | undefined {
+    const path = new URL(request.url).pathname;
+    const owner = identity === 'owner';
+    if (path === '/rest/v1/team_workspaces') {
+      if (request.method === 'POST') name = JSON.parse(request.body!).name;
+      if (!name || (!owner && !member)) return { json: [] };
+      if (request.method === 'PATCH') {
+        snapshot = { data: JSON.parse(request.body!).data, revision: snapshot.revision + 1 };
+        return { json: [{ revision: snapshot.revision }] };
+      }
+      const row = { id: teamId, name, owner_id: 'owner', ...snapshot };
+      return { json: request.method === 'POST' ? row : [row] };
+    }
+    if (path === '/rest/v1/team_workspace_members') {
+      if (request.method === 'DELETE') member = false;
+      return { json: member ? [{ user_id: 'collaborator', display_name: 'Jamie' }] : [] };
+    }
+    if (path === '/rest/v1/team_workspace_invites') {
+      if (request.method === 'POST') invited = true;
+      return { json: invited ? [{ token: inviteId, expires_at: '2099-01-01T00:00:00Z' }] : [] };
+    }
+    if (path === '/rest/v1/rpc/join_team_workspace') {
+      expect(JSON.parse(request.body!)).toEqual({ invite_token: inviteId, member_name: 'Jamie' });
+      member = true;
+      invited = false;
+      return { json: teamId };
+    }
+  }
+  const personal = await mockCloud(context, false, 'owner', teamApi);
+  await signIn(page);
+  await page.goto('/settings');
+  await page.getByRole('radio', { name: 'LARGE', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-font-size', 'large');
+  const guestStorage = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
+  await page.goto('/projects');
+  await page.getByRole('button', { name: 'Shared workspaces', exact: true }).click();
+  await page.getByLabel('Workspace name').fill('Release team');
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page.getByRole('heading', { name: 'Release team' })).toBeVisible();
+  await page.getByRole('button', { name: 'Create new project' }).click();
+  await page.getByLabel('Project Name').fill('Launch');
+  await page.getByRole('button', { name: 'Create Project', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Open project: Launch' })).toBeVisible();
+  await page.getByText('Members and invitations', { exact: true }).click();
+  await page.getByRole('button', { name: 'Create invite link' }).click();
+  const linkField = page.getByLabel('Invite link 1', { exact: true });
+  await expect(linkField).toHaveValue(new RegExp(inviteId));
+  const link = await linkField.inputValue();
+
+  const collaborator = await browser.newContext({ baseURL, serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
+  try {
+    await mockCloud(collaborator, false, 'collaborator', teamApi);
+    const secondPage = await collaborator.newPage();
+    await secondPage.goto(link);
+    await expect(secondPage.getByText('Sign in to open a shared workspace or accept an invitation.')).toBeVisible();
+    await expect(secondPage.getByRole('button', { name: 'Accept invitation' })).toHaveCount(0);
+    await secondPage.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await submitSignIn(secondPage);
+    await secondPage.getByLabel('Display name').fill('Jamie');
+    await secondPage.getByRole('button', { name: 'Accept invitation' }).click();
+    await secondPage.getByRole('button', { name: 'Open project: Launch' }).click();
+    await secondPage.getByRole('button', { name: 'Add log to Launch' }).click();
+    await secondPage.getByLabel('Log Name', { exact: true }).fill('Review release');
+    await secondPage.getByRole('button', { name: 'Create Log', exact: true }).click();
+    await expect(secondPage.getByRole('button', { name: /Log: Review release,/ })).toBeVisible();
+    await secondPage.getByRole('button', { name: 'Roadmap', exact: true }).click();
+    await expect(secondPage.getByRole('region', { name: 'Project roadmap' })).toContainText('Review release');
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Release team' })).toHaveCSS('font-size', '31.5px');
+    await page.getByText('Members and invitations', { exact: true }).click();
+    await expect(page.getByText('Jamie', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Open project: Launch' }).click();
+    await expect(page.getByRole('button', { name: /Log: Review release,/ })).toBeVisible();
+    expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBe(guestStorage);
+    expect(personal.row().data.projects).toEqual([]);
+    await page.getByRole('button', { name: 'Back to Projects' }).click();
+    await page.getByText('Members and invitations', { exact: true }).click();
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Remove Jamie' }).click();
+    await expect(page.getByText('Jamie', { exact: true })).toHaveCount(0);
+    await secondPage.reload();
+    await expect(secondPage.getByRole('alert')).toContainText('This workspace is unavailable to your account.');
+  } finally {
+    await collaborator.close();
   }
 });

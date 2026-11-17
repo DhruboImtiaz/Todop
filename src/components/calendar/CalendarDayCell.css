@@ -45,7 +45,7 @@
 }
 
 .calendar-day-number {
-  font-size: 0.867rem;
+  font-size: var(--type-small);
   font-weight: 500;
   line-height: 1;
   color: var(--text-primary);

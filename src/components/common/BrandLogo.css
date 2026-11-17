@@ -5,7 +5,7 @@
   align-items: center;
   gap: 9px;
   font-family: var(--font-heading);
-  font-size: 30px;
+  font-size: var(--type-page);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -1.8px;
@@ -18,7 +18,7 @@
   flex: 0 0 var(--brand-mark-size);
   width: var(--brand-mark-size);
   height: var(--brand-mark-size);
-  background: var(--brand-lime);
+  background: var(--brand-mark-fill);
   color: var(--brand-ink);
   border-radius: var(--brand-mark-radius);
   transform: rotate(-7deg);
@@ -28,7 +28,7 @@
 .brand-logo--small {
   --brand-mark-size: 26px;
   --brand-mark-radius: 7px;
-  font-size: 22px;
+  font-size: var(--type-section);
   letter-spacing: -1.3px;
 }
 /* Public pages keep the brand's original purple even when the planner uses dark mode. */

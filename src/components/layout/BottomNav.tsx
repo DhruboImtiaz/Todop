@@ -12,7 +12,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
   return (
     <nav className="bottom-nav-bar" aria-label="Main Navigation">
       <div className="bottom-nav-container">
-        <button type="button" className={`bottom-nav-item ${currentTab === 'today' ? 'active' : ''}`} onClick={() => onSelectTab('today')} aria-label="My Day" aria-current={currentTab === 'today' ? 'page' : undefined}><div className="bottom-nav-icon-wrap"><Sunrise size={20} strokeWidth={currentTab === 'today' ? 2.2 : 1.8} /></div><span className="bottom-nav-label">MY DAY</span></button>
+        <button type="button" className={`bottom-nav-item ${currentTab === 'today' ? 'active' : ''}`} onClick={() => onSelectTab('today')} aria-label="My Day" aria-current={currentTab === 'today' ? 'page' : undefined}><div className="bottom-nav-icon-wrap"><Sunrise size={20} strokeWidth={currentTab === 'today' ? 2.2 : 1.8} /></div><span className="bottom-nav-label">My Day</span></button>
         <button
           type="button"
           className={`bottom-nav-item ${currentTab === 'upcoming' ? 'active' : ''}`}
@@ -23,7 +23,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
           <div className="bottom-nav-icon-wrap">
             <CalendarClock size={20} strokeWidth={currentTab === 'upcoming' ? 2.2 : 1.8} />
           </div>
-          <span className="bottom-nav-label">UPCOMING</span>
+          <span className="bottom-nav-label">Upcoming</span>
         </button>
 
         <button
@@ -36,7 +36,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
           <div className="bottom-nav-icon-wrap">
             <FolderGit2 size={20} strokeWidth={currentTab === 'projects' ? 2.2 : 1.8} />
           </div>
-          <span className="bottom-nav-label">PROJECTS</span>
+          <span className="bottom-nav-label">Projects</span>
         </button>
 
         <button
@@ -49,7 +49,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
           <div className="bottom-nav-icon-wrap">
             <Calendar size={20} strokeWidth={currentTab === 'calendar' ? 2.2 : 1.8} />
           </div>
-          <span className="bottom-nav-label">CALENDAR</span>
+          <span className="bottom-nav-label">Calendar</span>
         </button>
 
         <button
@@ -62,7 +62,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
           <div className="bottom-nav-icon-wrap">
             <Search size={20} strokeWidth={currentTab === 'search' ? 2.2 : 1.8} />
           </div>
-          <span className="bottom-nav-label">SEARCH</span>
+          <span className="bottom-nav-label">Search</span>
         </button>
       </div>
     </nav>

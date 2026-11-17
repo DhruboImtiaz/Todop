@@ -157,7 +157,7 @@ export const SettingsPage: React.FC = () => {
       {/* Header */}
       <div className="page-header">
         <div className="page-header-main">
-          <h1 className="page-title">SETTINGS</h1>
+          <h1 className="page-title">Settings</h1>
           <p className="page-subtitle">Customize your TODOP experience.</p>
         </div>
       </div>
@@ -297,7 +297,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div
-            className="segmented-control"
+            className="segmented-control text-size-control"
             role="radiogroup"
             aria-label="Text Size"
           >
