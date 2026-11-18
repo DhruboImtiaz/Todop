@@ -92,6 +92,6 @@ psql "$LOCAL_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/team_workspace_a
 
 ## Deployment
 
-Apply the [project roadmaps and team workspaces migration](supabase/migrations/20261117155332_project_roadmaps_and_team_workspaces.sql) to the deployment database before releasing the frontend. It adds the team access policies and lets the personal planner store version 3 snapshots.
+Apply the [project roadmaps and team workspaces migration](supabase/migrations/20261118061236_project_roadmaps_and_team_workspaces.sql) to the deployment database before releasing the frontend. It adds the team access policies and lets the personal planner store version 3 snapshots.
 
 Netlify builds with `npm run build` and publishes `dist`. The SPA redirect serves deep links such as `/workspaces`. The service worker activates an update once existing app tabs close.
