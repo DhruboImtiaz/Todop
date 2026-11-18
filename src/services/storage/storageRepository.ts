@@ -1,4 +1,4 @@
-import type { AppDataSchema, Log, Project, Settings, Subtask, TaskPriority, RecurrenceRule } from '../../types';
+import type { AppDataSchema, Log, Project, Settings, Subtask, TaskPriority, RecurrenceRule, RoadmapTaskOptions } from '../../types';
 
 export interface NewLogInput {
   priority?: TaskPriority;
@@ -25,6 +25,7 @@ export interface UpdateLogInput {
 }
 
 export type StorageListener = () => void;
+export type ImportOptions = { onlyIfEmpty?: boolean };
 
 export interface StorageRepository {
   // Logs
@@ -34,6 +35,7 @@ export interface StorageRepository {
   getLogById(id: string): Promise<Log | null>;
   createLog(input: NewLogInput): Promise<Log>;
   updateLog(input: UpdateLogInput): Promise<Log>;
+  updateRoadmapTask(id: string, options: RoadmapTaskOptions, expected?: RoadmapTaskOptions): Promise<Log>;
   changeLogCompletion(id: string): Promise<{ previous: Log; updated: Log } | null>;
   toggleLogCompletion(id: string): Promise<Log | null>;
   deleteLog(id: string): Promise<boolean>;
@@ -62,7 +64,7 @@ export interface StorageRepository {
 
   // Backup & Restore
   exportData(): Promise<AppDataSchema>;
-  importData(data: AppDataSchema): Promise<boolean>;
+  importData(data: AppDataSchema, options?: ImportOptions): Promise<boolean>;
 
   getSnapshot(): AppDataSchema;
 

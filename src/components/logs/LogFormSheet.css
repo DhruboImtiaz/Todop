@@ -67,7 +67,7 @@
 
 .form-sheet-title {
   font-family: var(--font-heading);
-  font-size: 1.333rem;
+  font-size: var(--type-section);
   font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--text-primary);
@@ -103,7 +103,7 @@
 
 .form-label {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -111,7 +111,7 @@
 }
 
 .form-label-optional {
-  font-size: 0.733rem;
+  font-size: var(--type-caption);
   font-weight: 400;
   text-transform: none;
   color: var(--text-dim);
@@ -127,7 +127,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--text-primary);
@@ -153,7 +153,7 @@
 .form-select {
   width: 100%;
   padding: 12px 14px;
-  font-size: 1rem;
+  font-size: var(--type-body);
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -187,7 +187,7 @@
 }
 
 .subtasks-count-pill {
-  font-size: 0.733rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 2px 7px;
@@ -264,7 +264,7 @@
 
 .subtask-text {
   font-family: var(--font-body);
-  font-size: 0.933rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   line-height: 1.35;
   word-break: break-word;
@@ -290,7 +290,7 @@
 .subtask-inline-edit-input {
   flex: 1;
   font-family: var(--font-body);
-  font-size: 0.933rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   background-color: var(--bg-input);
   border: 1px solid var(--accent-primary);
@@ -334,7 +334,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--accent-primary);
@@ -365,7 +365,7 @@
 .subtask-add-input {
   width: 100%;
   padding: 10px 12px;
-  font-size: 0.933rem;
+  font-size: var(--type-body);
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -387,7 +387,7 @@
 .subtask-inline-btn {
   padding: 8px 14px;
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -451,7 +451,7 @@
   padding: 14px 18px;
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
-  font-size: 0.933rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -512,7 +512,7 @@
 }
 
 .delete-confirm-text {
-  font-size: 0.867rem;
+  font-size: var(--type-small);
   color: var(--overdue-text);
   line-height: 1.4;
   font-weight: 500;
@@ -535,5 +535,5 @@
 }
 
 .deadline-mode-toggle { display: flex; flex-wrap: wrap; gap: 16px; margin: 8px 0; }
-.deadline-mode-toggle label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+.deadline-mode-toggle label { display: flex; align-items: center; gap: 6px; font-size: var(--type-small); cursor: pointer; }
 .deadline-mode-toggle input { margin: 0; cursor: pointer; }

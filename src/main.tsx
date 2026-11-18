@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { AppEntry } from './components/auth/AppEntry';
 import { createRoot } from 'react-dom/client';
 import './styles/index.css';
+import './styles/workspace.css';
 import { initializeAppearance } from './utils/settings';
 
 initializeAppearance();

@@ -14,90 +14,20 @@ import {
   defaultStorageRepository,
   LocalStorageRepository,
 } from "../../services/storage/localStorageRepository";
-import { SupabaseRepository } from "../../services/storage/supabaseRepository";
-import { supabase } from "../../services/supabase/client";
+import { CloudWorkspace } from "./CloudWorkspace";
 import { LandingPage } from "../landing/LandingPage";
 const Planner = lazy(() => import("../../App"));
 const AuthPage = lazy(() =>
   import("./AuthPage").then((module) => ({ default: module.AuthPage })),
 );
-import { isDemoMode, navigate } from "../../utils/navigation";
+const TeamWorkspacesPage = lazy(() => import("../workspaces/TeamWorkspacesPage"));
+import { isDemoMode } from "../../utils/navigation";
+import { isTeamPath } from "../../utils/teamRoutes";
 import { useStorage } from "../../hooks/useStorage";
+import { accountWorkspaceCacheKey } from "../../services/storage/supabaseRepository";
+import { supabaseUrl } from "../../services/supabase/client";
+import { initializeAppearance } from "../../utils/settings";
 
-function CloudWorkspace({
-  userId,
-  children,
-}: {
-  userId: string;
-  children: ReactNode;
-}) {
-  const repository = useMemo(
-    () => new SupabaseRepository(supabase, userId),
-    [userId],
-  );
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    let active = true;
-    const refresh = () =>
-      repository
-        .refresh()
-        .then(() => {
-          if (active) {
-            setReady(true);
-            setError("");
-          }
-        })
-        .catch((failure) => {
-          if (active)
-            setError(
-              failure instanceof Error
-                ? failure.message
-                : "Could not connect to your planner.",
-            );
-        });
-    void refresh();
-    const onFocus = () => {
-      void refresh();
-    };
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refresh();
-    }, 30_000);
-    window.addEventListener("focus", onFocus);
-    window.addEventListener("online", onFocus);
-    return () => {
-      active = false;
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("online", onFocus);
-    };
-  }, [repository, attempt]);
-  if (!ready)
-    return (
-      <main className="workspace-loading" aria-live="polite">
-        <h1>Your planner</h1>
-        <p>{error || "Opening your workspace…"}</p>
-        {error && (
-          <>
-            <button onClick={() => setAttempt((v) => v + 1)}>Try again</button>
-            <button onClick={() => navigate("/")}>Back to home</button>
-          </>
-        )}
-      </main>
-    );
-  return (
-    <StorageProvider repository={repository}>
-      {error && (
-        <div className="workspace-error" role="alert">
-          Cloud connection unavailable. Reconnect before making changes.
-          <button onClick={() => setAttempt((v) => v + 1)}>Retry</button>
-        </div>
-      )}
-      {children}
-    </StorageProvider>
-  );
-}
 function DemoResetButton() {
   const { importData } = useStorage();
   const [error, setError] = useState("");
@@ -140,7 +70,7 @@ function DemoWorkspace({ children }: { children: ReactNode }) {
     <StorageProvider repository={repository}>
       <div className="demo-workspace">
         <div className="demo-bar">
-          <span>DEMO WORKSPACE · SAMPLE DATA</span>
+          <span>Sample workspace</span>
           <DemoResetButton />
         </div>
         {children}
@@ -149,15 +79,22 @@ function DemoWorkspace({ children }: { children: ReactNode }) {
   );
 }
 function Entry({ children }: { children: ReactNode }) {
-  const { session, loading, recovery } = useAuth();
-  const [path, setPath] = useState(window.location.pathname);
+  const { account, loading, recovery } = useAuth();
+  const [location, setLocation] = useState(() => window.location.pathname + window.location.search);
+  const path = location.split('?')[0];
+  const personalAppearance = path === '/' || path === '/auth' || isTeamPath(path);
+  const accountId = account?.id;
   useEffect(() => {
-    const onPopState = () => setPath(window.location.pathname);
+    const onPopState = () => setLocation(window.location.pathname + window.location.search);
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
-  if (isDemoMode()) return <DemoWorkspace>{children}</DemoWorkspace>;
-  if (path === "/") return <LandingPage signedIn={!!session} />;
+  useEffect(() => {
+    if (!personalAppearance) return;
+    initializeAppearance(accountId ? accountWorkspaceCacheKey(supabaseUrl, accountId) : undefined);
+  }, [personalAppearance, accountId]);
+  if (isDemoMode() && !isTeamPath(path)) return <DemoWorkspace>{children}</DemoWorkspace>;
+  if (path === "/") return <LandingPage signedIn={!!account} />;
   if (loading)
     return (
       <main className="workspace-loading" role="status">
@@ -176,9 +113,14 @@ function Entry({ children }: { children: ReactNode }) {
         <AuthPage key={recovery ? "recovery" : "auth"} />
       </Suspense>
     );
-  if (session)
+  if (isTeamPath(path)) return (
+    <Suspense fallback={<main className="workspace-loading" role="status">Opening shared workspaces…</main>}>
+      <TeamWorkspacesPage location={location} />
+    </Suspense>
+  );
+  if (account)
     return (
-      <CloudWorkspace key={session.user.id} userId={session.user.id}>
+      <CloudWorkspace key={account.id} userId={account.id}>
         {children}
       </CloudWorkspace>
     );

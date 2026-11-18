@@ -1,7 +1,7 @@
 .settings-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--page-gap);
 }
 
 
@@ -42,14 +42,14 @@
 
 .feedback-title {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .feedback-desc {
-  font-size: 0.867rem;
+  font-size: var(--type-small);
   line-height: 1.4;
   opacity: 0.92;
 }
@@ -78,7 +78,7 @@
 
 .settings-section-title {
   font-family: var(--font-heading);
-  font-size: 0.733rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.13em;
   color: var(--text-dim);
@@ -91,7 +91,7 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: var(--card-padding);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -102,26 +102,26 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  overflow-wrap: anywhere;
 }
 
 .settings-item-name {
   font-family: var(--font-heading);
-  font-size: 0.933rem;
+  font-size: var(--type-item);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
-  text-transform: uppercase;
 }
 
 .settings-item-desc {
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   color: var(--text-secondary);
 }
 
 /* ── Data Section Action Buttons ── */
 .settings-data-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 135px), 1fr));
   gap: 10px;
 }
 
@@ -130,7 +130,7 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.08em;
   display: flex;
@@ -181,15 +181,16 @@
 
 .segmented-control-btn {
   flex: 1;
+  min-width: 0;
   min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.015em;
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
@@ -197,6 +198,25 @@
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+}
+
+.text-size-control {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 550px) {
+  .text-size-control .segmented-control-btn {
+    flex-direction: column;
+    gap: 3px;
+    padding-block: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .text-size-control {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .segmented-control-btn:hover:not(.active) {
@@ -225,11 +245,13 @@
 
 .settings-meta-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 0.867rem;
+  font-size: var(--type-small);
+  column-gap: 12px;
 }
 
 .settings-meta-row:last-child {
@@ -304,7 +326,7 @@
 
 .restore-modal-title {
   font-family: var(--font-heading);
-  font-size: 1.2rem;
+  font-size: var(--type-section);
   font-weight: 800;
   letter-spacing: 0.05em;
   color: var(--text-primary);
@@ -312,7 +334,7 @@
 }
 
 .restore-modal-desc {
-  font-size: 0.933rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
   line-height: 1.45;
   margin: 0;
@@ -323,7 +345,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 10px 14px;
-  font-size: 0.867rem;
+  font-size: var(--type-small);
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -342,7 +364,7 @@
   padding: 10px 16px;
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
-  font-size: 0.867rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.06em;
   display: flex;

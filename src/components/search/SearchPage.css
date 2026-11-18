@@ -1,7 +1,7 @@
 .search-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--page-gap);
 }
 
 
@@ -29,7 +29,7 @@
   height: 46px;
   padding: 0 42px 0 42px;
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -92,7 +92,7 @@
 
 .search-empty-heading {
   font-family: var(--font-heading);
-  font-size: 0.933rem;
+  font-size: var(--type-section);
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -100,7 +100,7 @@
 }
 
 .search-empty-sub {
-  font-size: 0.867rem;
+  font-size: var(--type-body);
   color: var(--text-dim);
   margin: 0;
 }
@@ -120,7 +120,7 @@
 
 .search-section-heading {
   font-family: var(--font-heading);
-  font-size: 0.733rem;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.13em;
   color: var(--text-dim);

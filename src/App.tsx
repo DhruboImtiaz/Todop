@@ -1,7 +1,8 @@
 import { MyDayPage } from './components/today/MyDayPage';
 import { TrashPage } from './components/trash/TrashPage';
 import { UndoToast } from './components/common/UndoToast';
-import './styles/workspace.css';
+import { WorkspaceSyncStatus } from './components/auth/WorkspaceSyncStatus';
+import { SupabaseRepository } from './services/storage/supabaseRepository';
 import { useLogFormSubmit } from './hooks/useLogFormSubmit';
 import React, { useState, useEffect } from 'react';
 
@@ -23,9 +24,11 @@ import { SearchPage } from './components/search/SearchPage';
 import { SettingsPage } from './components/settings/SettingsPage';
 
 import { getRouteFromPath, getPathFromRoute } from './utils/routing';
-import { navigate } from './utils/navigation';
+import { isDemoMode, navigate } from './utils/navigation';
+import { useAuth } from './hooks/useAuth';
 
 const TodopMain: React.FC = () => {
+  const { session } = useAuth();
   const getInitialRoute = () => {
     if (typeof window !== 'undefined') {
       return getRouteFromPath(window.location.pathname);
@@ -38,7 +41,7 @@ const TodopMain: React.FC = () => {
     () => getInitialRoute().projectId ?? null
   );
 
-  const { activeLogs, projects, toggleLogCompletion, deleteLog } =
+  const { activeLogs, projects, repository, toggleLogCompletion, deleteLog } =
     useStorage();
 
   // Resolve active project object from context (always fresh)
@@ -104,6 +107,7 @@ const TodopMain: React.FC = () => {
 
   const renderContent = () => (
     <>
+      {repository instanceof SupabaseRepository && <WorkspaceSyncStatus repository={repository} />}
       {currentTab === 'today' && <MyDayPage timestamp={currentTimestamp} onEdit={handleOpenEdit} onCreate={handleOpenCreate} />}
       {currentTab === 'trash' && <TrashPage timestamp={currentTimestamp} />}
       {currentTab === 'upcoming' && (
@@ -120,6 +124,7 @@ const TodopMain: React.FC = () => {
       {showProjectList && (
         <ProjectsPage
           onNavigateToProject={(projectId) => navigateTo('projects', projectId)}
+          onOpenWorkspaces={session && !session.user.is_anonymous && !isDemoMode() ? () => navigate('/workspaces') : undefined}
         />
       )}
 
@@ -176,7 +181,7 @@ const TodopMain: React.FC = () => {
         <div className="app-shell-desktop">
           <Sidebar currentTab={currentTab} onSelectTab={handleNavigate} />
           <main className="app-main-area" id="main-content">
-            <div className="app-content">
+            <div className="content-frame app-content">
               {renderContent()}
             </div>
           </main>
@@ -187,7 +192,7 @@ const TodopMain: React.FC = () => {
             currentTab={currentTab}
             onNavigate={handleNavigate}
           />
-          <main className="app-content" id="main-content">
+          <main className="content-frame app-content" id="main-content">
             {renderContent()}
           </main>
           <BottomNav

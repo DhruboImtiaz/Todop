@@ -11,7 +11,7 @@ import { createBackup, downloadBackupFile, validateBackup } from '../../utils/ba
 import './SettingsPage.css';
 
 export const SettingsPage: React.FC = () => {
-  const { session } = useAuth();
+  const { account } = useAuth();
   const {
     settings,
     updateSettings,
@@ -157,7 +157,7 @@ export const SettingsPage: React.FC = () => {
       {/* Header */}
       <div className="page-header">
         <div className="page-header-main">
-          <h1 className="page-title">SETTINGS</h1>
+          <h1 className="page-title">Settings</h1>
           <p className="page-subtitle">Customize your TODOP experience.</p>
         </div>
       </div>
@@ -297,7 +297,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div
-            className="segmented-control"
+            className="segmented-control text-size-control"
             role="radiogroup"
             aria-label="Text Size"
           >
@@ -323,7 +323,7 @@ export const SettingsPage: React.FC = () => {
           <div className="settings-meta-list">
             <div className="settings-meta-row">
               <span className="settings-meta-label">Storage Engine</span>
-              <span className="settings-meta-value">{session ? 'Private cloud workspace' : 'This browser'}</span>
+              <span className="settings-meta-value">{account ? 'This device and your cloud workspace' : 'This browser'}</span>
             </div>
             <div className="settings-meta-row">
               <span className="settings-meta-label">Active Logs</span>

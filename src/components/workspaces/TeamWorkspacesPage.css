@@ -1,0 +1,28 @@
+.team-workspaces {
+  padding-block: calc(var(--page-gap) + var(--safe-top)) 80px;
+  display: grid;
+  gap: var(--page-gap);
+  color: var(--text-primary);
+}
+.team-workspaces h1, .team-workspaces p { overflow-wrap: anywhere; }
+.team-breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.team-breadcrumbs button { max-width: 100%; overflow-wrap: anywhere; }
+.team-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.team-heading svg { color: var(--accent-primary); flex: none; }
+.team-list, .team-panel-content, .team-form, .team-invite { display: grid; gap: 10px; min-width: 0; }
+.team-panel, .team-workspace-link { padding: var(--card-padding); background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
+.team-workspace-link, .team-member { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; overflow-wrap: anywhere; }
+.team-workspace-link:hover { background: var(--bg-card-hover); }
+.team-workspace-link span, .team-invite small { color: var(--text-secondary); font-size: var(--type-small); }
+.team-panel summary { cursor: pointer; font-weight: 750; min-height: 30px; }
+.team-panel-content { margin-top: 12px; }
+.team-panel h2 { font-size: var(--type-section); }
+.team-panel p { margin: 4px 0; }
+.team-panel label { display: grid; gap: 6px; font-weight: 700; }
+.team-panel input { width: 100%; min-width: 0; color: var(--text-primary); background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px; font: inherit; }
+.team-panel .workspace-primary, .team-workspaces > .workspace-primary { justify-self: start; }
+.team-invite { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
+.team-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 1023px) {
+  .team-workspaces { max-width: var(--mobile-content-max-width); }
+}

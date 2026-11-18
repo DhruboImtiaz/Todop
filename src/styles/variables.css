@@ -2,6 +2,7 @@
 [data-theme="light"] {
   color-scheme: light;
   --brand-lime: #D8EF8B;
+  --brand-mark-fill: #DDE7D5;
   --brand-ink: #24252E;
   --brand-purple: #5B4CC4;
   --surface-hover: var(--bg-card-hover);
@@ -55,12 +56,26 @@
   /* Typography - Plus Jakarta Sans */
   --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --type-caption: max(0.75rem, 11px);
+  --type-small: 0.875rem;
+  --type-body: 1rem;
+  --type-item: 1.0625rem;
+  --type-section: 1.25rem;
+  --type-page: 1.75rem;
+  --type-stat: 1.5rem;
+  --type-display: clamp(2.25rem, 1.6rem + 3vw, 4rem);
+  --type-display-section: clamp(1.75rem, 1.25rem + 2vw, 3rem);
+  --leading-tight: 1.2;
+  --leading-body: 1.55;
 
   /* Sizing & Layout */
   --header-height: 56px;
   --bottom-nav-height: 64px;
-  --page-padding-x: 20px;
+  --page-padding-x: clamp(16px, 3vw, 40px);
+  --page-gap: clamp(20px, 3vw, 32px);
+  --card-padding: clamp(14px, 2.5vw, 24px);
   --max-content-width: 600px;
+  --mobile-content-max-width: 780px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -74,8 +89,7 @@
 
   /* Desktop Layout Tokens */
   --sidebar-width: 240px;
-  --desktop-content-max-width: 860px;
-  --desktop-page-padding-x: 32px;
+  --desktop-content-max-width: 1120px;
 }
 
 /* Colors - Dark Theme Override */
@@ -122,22 +136,18 @@
 /* Font Size Scaling */
 :root,
 [data-font-size="medium"] {
-  --font-size-base: 15px;
-  font-size: 15px;
+  --font-size-base: 100%;
 }
 
 [data-font-size="xs"] {
-  --font-size-base: 11px;
-  font-size: 11px;
+  --font-size-base: 81.25%;
 }
 
 [data-font-size="small"] {
-  --font-size-base: 12.5px;
-  font-size: 12.5px;
+  --font-size-base: 87.5%;
 }
 
 [data-font-size="large"] {
-  --font-size-base: 17.5px;
-  font-size: 17.5px;
+  --font-size-base: 112.5%;
 }
 

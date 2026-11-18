@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import type { AppDataSchema, Settings, Log } from "../types";
 import type {
+  ImportOptions,
   NewLogInput,
   StorageRepository,
   UpdateLogInput,
@@ -17,8 +18,9 @@ import type { StorageContextValue } from "./StorageContextCore";
 
 export const StorageProvider: React.FC<{
   repository?: StorageRepository;
+  applyWorkspaceAppearance?: boolean;
   children: React.ReactNode;
-}> = ({ repository = defaultStorageRepository, children }) => {
+}> = ({ repository = defaultStorageRepository, applyWorkspaceAppearance = true, children }) => {
   const store = repository;
   const [error, setError] = useState("");
   const [undo, setUndo] = useState<StorageContextValue["undo"]>(null);
@@ -199,8 +201,8 @@ export const StorageProvider: React.FC<{
   }, [repository]);
 
   const importData = useCallback(
-    async (data: AppDataSchema) => {
-      const imported = await repository.importData(data);
+    async (data: AppDataSchema, options?: ImportOptions) => {
+      const imported = await repository.importData(data, options);
       setUndo(null);
       return imported;
     },
@@ -220,8 +222,8 @@ export const StorageProvider: React.FC<{
 
   // Synchronize data-theme, data-font-size, and meta theme-color immediately when settings change
   React.useEffect(() => {
-    applyAppearance(settings);
-  }, [settings]);
+    if (applyWorkspaceAppearance) applyAppearance(settings);
+  }, [settings, applyWorkspaceAppearance]);
 
   const value = useMemo<StorageContextValue>(
     () => ({

@@ -58,8 +58,8 @@ export function MyDayPage({
   const percent = chosen.length ? Math.round((done / chosen.length) * 100) : 0;
   return (
     <section className="my-day-page">
-      <div className="day-heading">
-        <div>
+      <div className="page-header day-heading">
+        <div className="page-header-main">
           <p className="workspace-eyebrow">
             <Sunrise size={15} />
             {new Date(timestamp).toLocaleDateString(undefined, {
@@ -68,10 +68,10 @@ export function MyDayPage({
               day: "numeric",
             })}
           </p>
-          <h1>
+          <h1 className="page-title">
             Make room for <em>today.</em>
           </h1>
-          <p>
+          <p className="page-subtitle">
             A little intention. A few small steps. A day that feels like yours.
           </p>
         </div>

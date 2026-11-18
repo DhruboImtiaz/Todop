@@ -153,9 +153,9 @@ test('first online visit fully precaches the app for offline reload and editing'
   const before = await readData(page);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'SETTINGS', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
   expect(await readData(page)).toEqual(before);
-  for (const [path, heading] of [['/app', 'Upcoming'], ['/projects', 'Projects'], ['/projects/alpha', 'Alpha'], ['/search', 'SEARCH'], ['/calendar', 'CALENDAR'], ['/settings', 'SETTINGS']]) {
+  for (const [path, heading] of [['/app', 'Upcoming'], ['/projects', 'Projects'], ['/projects/alpha', 'Alpha'], ['/search', 'Search'], ['/calendar', 'Calendar'], ['/settings', 'Settings']]) {
     await page.goto(path);
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   }
@@ -317,7 +317,7 @@ test('a worker update preserves open-app data and unrelated caches', async ({ pa
     const reopened = await context.newPage();
     await context.setOffline(true);
     await reopened.goto('/settings');
-    await expect(reopened.getByRole('heading', { name: 'SETTINGS', exact: true })).toBeVisible();
+    await expect(reopened.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
     // Rendering can finish while the replacement worker is still activating.
     await reopened.waitForFunction(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
@@ -358,5 +358,71 @@ test('the production script policy blocks injected inline scripts while the app 
   });
   expect(await page.evaluate(() => '__injected' in window)).toBe(false);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'SEARCH', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Search', exact: true })).toBeVisible();
+});
+
+test('the project roadmap shows milestone risk, rejects dependency cycles and survives offline reload', async ({ page, context }) => {
+  const data = fixture();
+  const launch = data.logs.find(log => log.id === 'early')!;
+  const review = data.logs.find(log => log.id === 'later')!;
+  launch.title = 'Launch milestone';
+  review.title = 'Review build';
+  review.projectId = launch.projectId;
+  data.logs = [launch, review];
+  await seed(page, data);
+  await page.goto('/projects/alpha');
+  const roadmap = page.getByRole('region', { name: 'Project roadmap' });
+  const openRoadmap = () => page.getByRole('button', { name: 'Roadmap', exact: true }).click();
+  await openRoadmap();
+  await page.getByRole('button', { name: 'Edit roadmap for Launch milestone' }).click();
+  await page.getByLabel('Mark as milestone').check();
+  await page.getByLabel('Review build', { exact: true }).check();
+  await page.getByRole('button', { name: 'Save roadmap' }).click();
+  await expect(roadmap.getByText('At risk · A prerequisite is due later')).toBeVisible();
+  await expect(roadmap.getByText('Depends on Review build')).toBeVisible();
+  await page.getByRole('button', { name: 'Edit roadmap for Review build' }).click();
+  await page.getByLabel('Launch milestone', { exact: true }).check();
+  await page.getByRole('button', { name: 'Save roadmap' }).click();
+  await expect(roadmap.getByRole('alert')).toContainText('circular dependency');
+  await readyOffline(page);
+  await context.setOffline(true);
+  await page.reload();
+  await openRoadmap();
+  await expect(roadmap.getByText('Depends on Review build')).toBeVisible();
+  await page.getByRole('button', { name: 'Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Mark "Review build" as completed', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
+  await openRoadmap();
+  await expect(roadmap.getByText('At risk · A prerequisite is due later')).toHaveCount(0);
+});
+
+test('planner pages share a type scale and fit narrow and desktop layouts', async ({ page }) => {
+  await seed(page);
+  const paths = ['/today', '/app', '/projects', '/projects/alpha', '/calendar', '/search', '/settings', '/trash'];
+  for (const [width, size] of [[320, 'large'], [390, 'medium'], [1440, 'medium']] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/settings');
+    await page.getByRole('radio', { name: size.toUpperCase(), exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-font-size', size);
+    const headingSize = size === 'large' ? '31.5px' : '28px';
+    for (const path of paths) {
+      await page.goto(path);
+      const heading = page.getByRole('heading', { level: 1 });
+      await expect(heading, path).toHaveCSS('font-size', headingSize);
+      const layout = await page.evaluate(() => {
+        const title = document.querySelector('h1')!.getBoundingClientRect();
+        return { left: title.left, right: title.right, scrollWidth: document.documentElement.scrollWidth };
+      });
+      expect(layout.left, path).toBeGreaterThanOrEqual(0);
+      expect(layout.right, path).toBeLessThanOrEqual(width);
+      expect(layout.scrollWidth, path).toBeLessThanOrEqual(width);
+    }
+  }
+  await page.goto('/projects/alpha');
+  await page.getByRole('button', { name: 'Roadmap', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'QA early', exact: true })).toHaveCSS('font-size', '17px');
+  await page.getByRole('button', { name: 'Tasks', exact: true }).click();
+  const task = page.getByRole('button', { name: /Log: QA early,/ });
+  await expect(task.getByRole('heading', { name: 'QA early' })).toHaveCSS('font-size', '17px');
+  await expect(task.locator('.log-card-countdown')).toHaveCSS('font-size', '17px');
 });

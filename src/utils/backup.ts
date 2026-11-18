@@ -1,4 +1,5 @@
 import { isDateKey, validRecurrence } from './planning';
+import { validateRoadmap } from './roadmap';
 import { DEFAULT_SETTINGS, FONT_SIZES, isFontSize } from './settings';
 import type { AppDataSchema, Log, Project, Settings, Subtask, DeletedLog, TaskPriority, RecurrenceRule } from '../types';
 
@@ -136,7 +137,7 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
 
   // Validate schema version
   const schemaVer = dataPayload.schemaVersion ?? dataPayload.version;
-  if (schemaVer !== 1 && schemaVer !== 2) {
+  if (schemaVer !== 1 && schemaVer !== 2 && schemaVer !== 3) {
     return {
       valid: false,
       error: 'INVALID BACKUP: Missing or invalid schemaVersion.',
@@ -265,7 +266,14 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
         (l.nextOccurrenceId !== undefined && typeof l.nextOccurrenceId !== 'string')) {
       return { valid: false, error: 'INVALID BACKUP: A task has invalid planning or recurrence fields.' };
     }
+    if ((l.milestone !== undefined && (schemaVer !== 3 || typeof l.milestone !== 'boolean')) ||
+        (l.dependsOn !== undefined && (schemaVer !== 3 || !Array.isArray(l.dependsOn) ||
+          l.dependsOn.some(id => typeof id !== 'string' || !id)))) {
+      return { valid: false, error: 'INVALID BACKUP: A task has invalid roadmap fields.' };
+    }
     validatedLogs.push({
+      ...(l.milestone ? { milestone: true } : {}),
+      ...(Array.isArray(l.dependsOn) && l.dependsOn.length ? { dependsOn: [...l.dependsOn] as string[] } : {}),
       ...(l.priority !== undefined ? { priority: l.priority as TaskPriority } : {}),
       ...(l.myDay !== undefined ? { myDay: l.myDay as string } : {}),
       ...(l.recurrence !== undefined ? { recurrence: structuredClone(l.recurrence) as RecurrenceRule } : {}),
@@ -335,6 +343,8 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
   if (validatedLogs.some(l => l.projectId !== null && !projectIds.has(l.projectId))) {
     return { valid: false, error: 'INVALID BACKUP: A task references a project that does not exist.' };
   }
+  const roadmapProblem = validateRoadmap(validatedLogs);
+  if (roadmapProblem) return { valid: false, error: `INVALID BACKUP: ${roadmapProblem}` };
 
   // Validate settings object
   if (!dataPayload.settings || typeof dataPayload.settings !== 'object' || Array.isArray(dataPayload.settings)) {
@@ -366,8 +376,10 @@ export function validateBackup(rawInput: unknown): BackupValidationResult {
         return { valid: false, error: 'INVALID BACKUP: Invalid deleted task.' };
       }
       // Reuse task validation without recursively accepting nested trash collections.
+      const projectId = projectIds.has(item.log.projectId) ? item.log.projectId : null;
       const restored = validateBackup({ app: BACKUP_APP_IDENTIFIER, backupVersion: CURRENT_BACKUP_VERSION, exportedAt: record.exportedAt,
-        data: { schemaVersion: schemaVer, logs: [{ ...item.log, projectId: projectIds.has(item.log.projectId) ? item.log.projectId : null }], projects, settings: s } });
+        data: { schemaVersion: schemaVer, logs: [{ ...item.log, projectId, dependsOn: undefined,
+          milestone: projectId ? item.log.milestone : undefined }], projects, settings: s } });
       if (!restored.valid) return restored;
       trash.push({ log: restored.data.logs[0], deletedAt: item.deletedAt });
     }

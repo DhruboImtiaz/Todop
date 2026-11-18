@@ -6,16 +6,19 @@ import { useStorage } from '../../hooks/useStorage';
 import { LogCard } from '../logs/LogCard';
 import { LogFormSheet } from '../logs/LogFormSheet';
 import { useRealtimeTicker } from '../../hooks/useRealtimeTicker';
+import { ProjectRoadmap } from './ProjectRoadmap';
 import './ProjectDetailPage.css';
 
 interface ProjectDetailPageProps {
   project: Project;
   onBack: () => void;
+  shared?: boolean;
 }
 
 export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
   project,
   onBack,
+  shared = false,
 }) => {
   const { activeLogs, completedLogs, toggleLogCompletion, deleteLog } =
     useStorage();
@@ -24,6 +27,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<Log | null>(null);
+  const [showRoadmap, setShowRoadmap] = useState(false);
 
   // Filter logs belonging to this project
   const projectActiveLogs = activeLogs.filter((l) => l.projectId === project.id);
@@ -58,8 +62,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
 
   return (
     <div className="project-detail-page">
-      {/* Sub-header */}
-      <div className="project-detail-header">
+      {!shared && (
         <button
           type="button"
           className="project-detail-back-btn"
@@ -67,9 +70,11 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
           aria-label="Back to Projects"
         >
           <ArrowLeft size={16} strokeWidth={2} />
-          <span>PROJECTS</span>
+          <span>Projects</span>
         </button>
-
+      )}
+      <div className="page-header">
+        <h1 className="page-title">{project.name}</h1>
         <button
           type="button"
           id="project-detail-new-log-btn"
@@ -77,13 +82,18 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
           onClick={handleOpenCreate}
           aria-label={`Add log to ${project.name}`}
         >
-          + NEW LOG
+          + New task
         </button>
       </div>
 
-      <h1 className="project-detail-name">{project.name}</h1>
+      <div className="project-view-switch" role="group" aria-label="Project view">
+        <button className="workspace-secondary" aria-pressed={!showRoadmap} onClick={() => setShowRoadmap(false)}>Tasks</button>
+        <button className="workspace-secondary" aria-pressed={showRoadmap} onClick={() => setShowRoadmap(true)}>Roadmap</button>
+      </div>
 
-      {isEmpty ? (
+      {showRoadmap ? (
+        <ProjectRoadmap tasks={[...projectActiveLogs, ...projectCompletedLogs]} now={currentTimestamp} onEdit={handleOpenEdit} />
+      ) : isEmpty ? (
         <div className="project-detail-empty">
           <div className="project-detail-empty-icon">
             <FolderOpen size={32} strokeWidth={1.2} />
@@ -108,6 +118,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
               <div className="project-detail-log-list">
                 {projectActiveLogs.map((log) => (
                   <LogCard
+                    allowMyDay={!shared}
                     key={log.id}
                     log={log}
                     currentTimestamp={currentTimestamp}
@@ -126,6 +137,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
               <div className="project-detail-log-list">
                 {projectCompletedLogs.map((log) => (
                   <LogCard
+                    allowMyDay={!shared}
                     key={log.id}
                     log={log}
                     currentTimestamp={currentTimestamp}

@@ -17,10 +17,14 @@ export function applyAppearance(settings: Settings): void {
   );
 }
 
-export function initializeAppearance(): void {
+export function initializeAppearance(accountCacheKey?: string): void {
   let settings = DEFAULT_SETTINGS;
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY) ?? 'null')?.settings;
+    const raw = accountCacheKey
+      ? localStorage.getItem(accountCacheKey)
+      : localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    const data = JSON.parse(raw ?? 'null');
+    const saved = accountCacheKey ? (data?.draft ?? data?.base?.data)?.settings : data?.settings;
     if (saved) {
       settings = {
         theme: saved.theme === 'dark' ? 'dark' : 'light',
