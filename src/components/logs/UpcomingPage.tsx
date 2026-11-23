@@ -69,7 +69,7 @@ export function UpcomingPage({
     ];
   }, [logs, currentTimestamp]);
   return (
-    <section className="upcoming-page" aria-labelledby="upcoming-page-heading">
+    <section className="planner-page" aria-labelledby="upcoming-page-heading">
       <div className="page-header">
         <div className="page-header-main">
           <h1 id="upcoming-page-heading" className="page-title">

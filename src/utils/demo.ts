@@ -1,8 +1,6 @@
 import type { AppDataSchema, Log } from "../types";
-import { getLocalDateKey } from "./calendar";
 export function createDemoData(): AppDataSchema {
   const now = new Date();
-  const today = getLocalDateKey(now);
   const stamp = now.toISOString();
   const later = (days: number, hours = 20) => {
     const date = new Date(now);
@@ -53,7 +51,6 @@ export function createDemoData(): AppDataSchema {
           "A fresh look, a clear story, and a little room to breathe.",
         projectId: "studio",
         priority: "high",
-        myDay: today,
         deadline: later(0, 23),
         subtasks: [false, true].map((completed, i) => ({
           id: `design-sub-${i}`,
@@ -65,14 +62,12 @@ export function createDemoData(): AppDataSchema {
       }),
       task("read", "Make time for a chapter", {
         projectId: "personal",
-        myDay: today,
         deadline: later(0, 23),
         recurrence: { frequency: "daily", interval: 1 },
       }),
       task("direction", "Set a clear direction", {
         projectId: "ideas",
         completed: true,
-        myDay: today,
       }),
       task("notes", "Turn those notes into a plan", {
         projectId: "ideas",

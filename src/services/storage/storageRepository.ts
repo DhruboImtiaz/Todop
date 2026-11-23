@@ -40,7 +40,6 @@ export interface StorageRepository {
   toggleLogCompletion(id: string): Promise<Log | null>;
   deleteLog(id: string): Promise<boolean>;
   restoreLog(id: string): Promise<boolean>;
-  planMyDay(id: string, date: string | null): Promise<Log>;
   undoCompletion(previous: Log, expectedUpdatedAt: string): Promise<boolean>;
 
   // Subtasks

@@ -1,6 +1,6 @@
 import { runUiAction } from '../../utils/asyncAction';
 import React, { useState, useRef } from 'react';
-import { MoreVertical, ChevronUp, ChevronDown, Pencil, Trash2, FolderOpen } from 'lucide-react';
+import { MoreVertical, ChevronUp, ChevronDown, Pencil, Trash2, FolderOpen, Plus } from 'lucide-react';
 import type { Project } from '../../types';
 import { useStorage } from '../../hooks/useStorage';
 import { ProjectFormSheet } from './ProjectFormSheet';
@@ -127,23 +127,23 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject,
   }, [openMenuId]);
 
   return (
-    <div className="projects-page">
+    <div className="planner-page">
       <div className="page-header">
         <div className="page-header-main">
           <Heading className={shared ? 'section-title' : 'page-title'}>Projects</Heading>
         </div>
-        <div className="projects-header-actions">
+        <div className="page-header-actions">
           {onOpenWorkspaces && (
             <button className="workspace-secondary" type="button" onClick={onOpenWorkspaces}>Shared workspaces</button>
           )}
           <button
             type="button"
             id="new-project-btn-top"
-            className="projects-add-btn"
+            className="workspace-secondary"
             onClick={handleCreateOpen}
             aria-label="Create new project"
           >
-            + New project
+            <Plus size={16} aria-hidden="true" /> New project
           </button>
         </div>
       </div>
@@ -160,10 +160,10 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject,
           <button
             type="button"
             id="new-project-btn-empty"
-            className="projects-add-btn"
+            className="workspace-secondary"
             onClick={handleCreateOpen}
           >
-            + New Project
+            <Plus size={16} aria-hidden="true" /> New project
           </button>
         </div>
       ) : (

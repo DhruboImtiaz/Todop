@@ -16,7 +16,7 @@ export interface Log {
   description?: string;
   deadline?: string; // ISO 8601 string, machine-readable, optional for project logs
   priority?: TaskPriority;
-  myDay?: string;
+  myDay?: string; // Legacy planner metadata retained in saved tasks and backups.
   recurrence?: RecurrenceRule;
   seriesId?: string;
   nextOccurrenceId?: string;
@@ -66,7 +66,7 @@ export interface AppDataSchema {
   settings: Settings;
 }
 
-export type NavigationTab = 'today' | 'trash' | 'upcoming' | 'projects' | 'calendar' | 'search' | 'settings';
+export type NavigationTab = 'trash' | 'upcoming' | 'projects' | 'calendar' | 'search' | 'settings';
 
 export interface AppRoute {
   tab: NavigationTab;

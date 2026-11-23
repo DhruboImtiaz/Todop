@@ -1,6 +1,6 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { emptyWorkspace } from '../../src/services/storage/supabaseRepository';
-import { fixture, newLog, readData, readyOffline } from './helpers';
+import { fixture, newLog, readData, readyOffline, expectFontSize } from './helpers';
 import { STORAGE_KEY } from '../../src/utils/settings';
 
 test.use({ serviceWorkers: 'block' });
@@ -193,7 +193,7 @@ test('switching homepage previews keeps the surrounding content in place', async
     const original = await layout();
     const tablist = page.getByRole('tablist', { name: 'Explore the planner preview' });
     const originalScroll = await page.evaluate(() => scrollY);
-    for (const name of ['Projects', 'Workspaces', 'Calendar', 'Workspaces', 'Roadmap', 'Today']) {
+    for (const name of ['Projects', 'Workspaces', 'Calendar', 'Workspaces', 'Roadmap', 'Upcoming']) {
       await tablist.getByRole('tab', { name, exact: true }).click();
       const panel = page.getByRole('tabpanel', { name, exact: true });
       await expect(panel).toBeVisible();
@@ -429,7 +429,7 @@ test('a workspace invitation resumes after sign-in and shares a project across a
   const personal = await mockCloud(context, false, 'owner', teamApi);
   await signIn(page);
   await page.goto('/settings');
-  await page.getByRole('radio', { name: 'LARGE', exact: true }).click();
+  await page.getByRole('radio', { name: 'Large', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-font-size', 'large');
   const guestStorage = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
   await page.goto('/projects');
@@ -467,7 +467,7 @@ test('a workspace invitation resumes after sign-in and shares a project across a
     await expect(secondPage.getByRole('region', { name: 'Project roadmap' })).toContainText('Review release');
 
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Release team' })).toHaveCSS('font-size', '31.5px');
+    await expectFontSize(page.getByRole('heading', { name: 'Release team' }), 25.2);
     await page.getByText('Members and invitations', { exact: true }).click();
     await expect(page.getByText('Jamie', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Open project: Launch' }).click();

@@ -22,5 +22,5 @@
 .auth-divider span { position:relative; top:-10px; background:white; padding:0 10px; font-size:var(--type-caption); color:#777; }
 .auth-guest { width:100%; border:1px solid #deded8; border-radius:8px; padding:13px; font-size:var(--type-small); color:#22232d; }
 .auth-error { background:#fff0eb; color:#983622; padding:12px; border-radius:8px; font-size:var(--type-small); }
-.auth-message { background:#eff8df; color:#3c551f; padding:12px; border-radius:8px; display:flex; gap:8px; font-size:var(--type-small); }
+.auth-message { background:var(--sage-tint); color:var(--sage-ink); padding:12px; border-radius:8px; display:flex; gap:8px; font-size:var(--type-small); }
 @media(max-width:760px) { .auth-layout { margin:45px auto; grid-template-columns:1fr; gap:32px; max-width:440px; }.auth-eyebrow{margin-top:30px;}.auth-note{display:none;} }

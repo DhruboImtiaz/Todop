@@ -1,5 +1,4 @@
 import { useStorage } from "../../hooks/useStorage";
-import { getLocalDateKey } from "../../utils/calendar";
 import { recurrenceLabel } from "../../utils/planning";
 import { runUiAction } from "../../utils/asyncAction";
 import React, { useState, useRef, useEffect } from "react";
@@ -10,14 +9,12 @@ import {
   Pencil,
   Trash2,
   Repeat2,
-  Sunrise,
 } from "lucide-react";
 import type { Log } from "../../types";
 import { getCountdown } from "../../utils/time";
 import "./LogCard.css";
 
 interface LogCardProps {
-  allowMyDay?: boolean;
   log: Log;
   currentTimestamp: number;
   onComplete: (id: string) => void | Promise<void>;
@@ -26,16 +23,14 @@ interface LogCardProps {
 }
 
 export const LogCard: React.FC<LogCardProps> = ({
-  allowMyDay = true,
   log,
   currentTimestamp,
   onComplete,
   onEdit,
   onDelete,
 }) => {
-  const { planMyDay, projects } = useStorage();
+  const { projects } = useStorage();
   const project = projects.find((project) => project.id === log.projectId);
-  const today = getLocalDateKey(new Date(currentTimestamp));
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -145,9 +140,7 @@ export const LogCard: React.FC<LogCardProps> = ({
             </span>
           )}
         </div>
-        {((log.priority && log.priority !== "normal") ||
-          log.recurrence ||
-          log.myDay === today) && (
+        {((log.priority && log.priority !== "normal") || log.recurrence) && (
           <div className="task-meta-line">
             {log.priority && log.priority !== "normal" && (
               <span className={`meta-${log.priority}`}>
@@ -158,12 +151,6 @@ export const LogCard: React.FC<LogCardProps> = ({
               <span>
                 <Repeat2 size={11} />
                 {recurrenceLabel(log.recurrence)}
-              </span>
-            )}
-            {log.myDay === today && (
-              <span className="meta-day">
-                <Sunrise size={11} />
-                My Day
               </span>
             )}
           </div>
@@ -205,25 +192,6 @@ export const LogCard: React.FC<LogCardProps> = ({
             <Pencil size={14} strokeWidth={1.8} />
             <span>Edit</span>
           </button>
-          {allowMyDay && !log.completed && (
-            <button
-              type="button"
-              className="log-overflow-item"
-              role="menuitem"
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen(false);
-                runUiAction(() =>
-                  planMyDay(log.id, log.myDay === today ? null : today),
-                );
-              }}
-            >
-              <Sunrise size={14} />
-              <span>
-                {log.myDay === today ? "Remove from My Day" : "Add to My Day"}
-              </span>
-            </button>
-          )}
           <button
             type="button"
             className="log-overflow-item delete-item"

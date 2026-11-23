@@ -1,5 +1,4 @@
 import {
-  isDateKey,
   validRecurrence,
   nextRecurringDeadline,
   TRASH_RETENTION_MS,
@@ -73,18 +72,6 @@ function unlinkPrerequisite(data: AppDataSchema, id: string) {
     task.updatedAt = stamp(task.updatedAt);
   }
 }
-function requireFocusSpace(data: AppDataSchema, id: string, date?: string) {
-  if (
-    date &&
-    data.logs.filter(
-      (log) => !log.completed && log.myDay === date && log.id !== id,
-    ).length >= 3
-  ) {
-    throw new Error(
-      "Your focus has three tasks. Remove or finish one to make room.",
-    );
-  }
-}
 function applyLogUpdate(data: AppDataSchema, input: UpdateLogInput): Log {
   validateAssignment(data, input);
   const current = findLog(data, input.id);
@@ -132,8 +119,6 @@ function applyLogUpdate(data: AppDataSchema, input: UpdateLogInput): Log {
     unlinkPrerequisite(data, current.id);
   }
   if (!updated.projectId || !updated.deadline) updated.milestone = undefined;
-  if (current.completed && !completed)
-    requireFocusSpace(data, current.id, updated.myDay);
   if (updated.recurrence && !updated.deadline)
     throw new Error("Recurring tasks need a deadline.");
   if (
@@ -312,30 +297,9 @@ export abstract class PlannerRepository implements StorageRepository {
         log.projectId = null;
         log.milestone = undefined;
       }
-      // Restoring a task does not silently displace today's chosen focus.
-      if (
-        !log.completed &&
-        log.myDay &&
-        data.logs.filter((l) => !l.completed && l.myDay === log.myDay).length >=
-          3
-      )
-        log.myDay = undefined;
       data.logs.push(log);
       data.trash = data.trash!.filter((item) => item.log.id !== id);
       return true;
-    });
-  }
-  planMyDay(id: string, date: string | null): Promise<Log> {
-    return this.mutate((data) => {
-      if (date !== null && !isDateKey(date))
-        throw new Error("Invalid planning date");
-      const log = findLog(data, id);
-      if (date && log.completed)
-        throw new Error("Choose an active task for My Day.");
-      if (date) requireFocusSpace(data, id, date);
-      log.myDay = date ?? undefined;
-      log.updatedAt = stamp(log.updatedAt);
-      return log;
     });
   }
   undoCompletion(previous: Log, expectedUpdatedAt: string): Promise<boolean> {
@@ -345,8 +309,6 @@ export abstract class PlannerRepository implements StorageRepository {
         throw new Error(
           "This task has changed. Reopen it to update its completion.",
         );
-      if (!previous.completed)
-        requireFocusSpace(data, previous.id, previous.myDay);
       if (
         current.nextOccurrenceId &&
         current.nextOccurrenceId !== previous.nextOccurrenceId

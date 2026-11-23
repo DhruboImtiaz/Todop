@@ -1,10 +1,3 @@
-.search-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--page-gap);
-}
-
-
 /* ── Search Input Box ── */
 .search-input-container {
   position: relative;
@@ -28,8 +21,6 @@
   width: 100%;
   height: 46px;
   padding: 0 42px 0 42px;
-  font-family: var(--font-body);
-  font-size: var(--type-body);
   color: var(--text-primary);
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);

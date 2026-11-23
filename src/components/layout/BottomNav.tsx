@@ -1,6 +1,5 @@
-import React from 'react';
-import { CalendarClock, FolderGit2, Calendar, Search, Sunrise } from 'lucide-react';
 import type { NavigationTab } from '../../types';
+import { plannerNavigation } from './plannerNavigation';
 import './BottomNav.css';
 
 interface BottomNavProps {
@@ -8,63 +7,27 @@ interface BottomNavProps {
   onSelectTab: (tab: NavigationTab) => void;
 }
 
-export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab }) => {
+export function BottomNav({ currentTab, onSelectTab }: BottomNavProps) {
   return (
     <nav className="bottom-nav-bar" aria-label="Main Navigation">
       <div className="bottom-nav-container">
-        <button type="button" className={`bottom-nav-item ${currentTab === 'today' ? 'active' : ''}`} onClick={() => onSelectTab('today')} aria-label="My Day" aria-current={currentTab === 'today' ? 'page' : undefined}><div className="bottom-nav-icon-wrap"><Sunrise size={20} strokeWidth={currentTab === 'today' ? 2.2 : 1.8} /></div><span className="bottom-nav-label">My Day</span></button>
-        <button
-          type="button"
-          className={`bottom-nav-item ${currentTab === 'upcoming' ? 'active' : ''}`}
-          onClick={() => onSelectTab('upcoming')}
-          aria-label="Upcoming tasks"
-          aria-current={currentTab === 'upcoming' ? 'page' : undefined}
-        >
-          <div className="bottom-nav-icon-wrap">
-            <CalendarClock size={20} strokeWidth={currentTab === 'upcoming' ? 2.2 : 1.8} />
-          </div>
-          <span className="bottom-nav-label">Upcoming</span>
-        </button>
-
-        <button
-          type="button"
-          className={`bottom-nav-item ${currentTab === 'projects' ? 'active' : ''}`}
-          onClick={() => onSelectTab('projects')}
-          aria-label="Projects"
-          aria-current={currentTab === 'projects' ? 'page' : undefined}
-        >
-          <div className="bottom-nav-icon-wrap">
-            <FolderGit2 size={20} strokeWidth={currentTab === 'projects' ? 2.2 : 1.8} />
-          </div>
-          <span className="bottom-nav-label">Projects</span>
-        </button>
-
-        <button
-          type="button"
-          className={`bottom-nav-item ${currentTab === 'calendar' ? 'active' : ''}`}
-          onClick={() => onSelectTab('calendar')}
-          aria-label="Calendar"
-          aria-current={currentTab === 'calendar' ? 'page' : undefined}
-        >
-          <div className="bottom-nav-icon-wrap">
-            <Calendar size={20} strokeWidth={currentTab === 'calendar' ? 2.2 : 1.8} />
-          </div>
-          <span className="bottom-nav-label">Calendar</span>
-        </button>
-
-        <button
-          type="button"
-          className={`bottom-nav-item ${currentTab === 'search' ? 'active' : ''}`}
-          onClick={() => onSelectTab('search')}
-          aria-label="Search"
-          aria-current={currentTab === 'search' ? 'page' : undefined}
-        >
-          <div className="bottom-nav-icon-wrap">
-            <Search size={20} strokeWidth={currentTab === 'search' ? 2.2 : 1.8} />
-          </div>
-          <span className="bottom-nav-label">Search</span>
-        </button>
+        {plannerNavigation.map(({ tab, icon: Icon, label, ariaLabel }) => {
+          const active = currentTab === tab;
+          return (
+            <button
+              key={tab}
+              type="button"
+              className="bottom-nav-item"
+              onClick={() => onSelectTab(tab)}
+              aria-label={ariaLabel}
+              aria-current={active ? 'page' : undefined}
+            >
+              <Icon size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden="true" />
+              <span className="bottom-nav-label">{label}</span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );
-};
+}

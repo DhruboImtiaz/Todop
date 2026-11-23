@@ -39,31 +39,19 @@
   color: var(--text-primary);
 }
 
-.bottom-nav-item.active {
+.bottom-nav-item[aria-current="page"] {
   color: var(--accent-nav-active);
 }
 
 
 .bottom-nav-label {
   font-family: var(--font-heading);
-  font-size: var(--type-caption);
+  font-size: var(--type-small);
   font-weight: 700;
+  line-height: var(--leading-tight);
   text-align: center;
 }
 
-
-.bottom-nav-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-@media (max-width: 360px) {
-  .bottom-nav-label {
-    font-size: min(var(--type-caption), 12px);
-  }
-}
 
 @media (min-width: 1024px) {
   .bottom-nav-bar {

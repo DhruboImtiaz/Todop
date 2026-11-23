@@ -1,6 +1,6 @@
 # Todop — a little direction for your everyday
 
-Todop is a personal planner for daily tasks and longer projects. Organize work with My Day, recurring tasks, a monthly calendar, and project roadmaps. Use a device-only planner or sign in to sync a personal planner across devices and collaborate in shared workspaces.
+Todop is a personal planner for daily tasks and longer projects. Organize work with recurring tasks, a monthly calendar, and project roadmaps. Use a device-only planner or sign in to sync a personal planner across devices and collaborate in shared workspaces.
 
 [Open Todop](https://todop7.netlify.app/)
 
@@ -18,7 +18,7 @@ Open the URL Vite prints. The installed app starts at `/app`.
 | Route | Opens |
 | --- | --- |
 | `/` | Homepage with the interactive sample planner |
-| `/app`, `/today` | Upcoming and undated tasks, or My Day |
+| `/app` | Upcoming and undated tasks |
 | `/projects`, `/calendar`, `/search`, `/settings` | Planner views and preferences |
 | `/demo` | Full sample planner with its own browser storage |
 | `/auth`, `/workspaces` | Account sign-in or shared workspaces |
@@ -27,7 +27,7 @@ Copy [`.env.example`](.env.example) to `.env.local` to connect your own Supabase
 
 ## Try the demo
 
-The homepage preview uses the same sample tasks across Today, Projects, Calendar, and Roadmap. Mark the design review done in **Today** to update the Studio refresh progress in **Projects** and unblock its milestone in **Roadmap**. Select a date in **Calendar** to see its deadlines. **Workspaces** shows a sample team and links to sign-in.
+The homepage preview uses the same sample tasks across Upcoming, Projects, Calendar, and Roadmap. Mark the design review done in **Upcoming** to update the Studio refresh progress in **Projects** and unblock its milestone in **Roadmap**. Select a date in **Calendar** to see its deadlines. **Workspaces** shows a sample team and links to sign-in.
 
 The full demo at `/demo` has its own `todop_demo_v2` browser store. Use **Reset demo** to refresh the sample tasks, projects, repeat rules, and recently deleted entry.
 
@@ -39,7 +39,6 @@ The full demo at `/demo` has its own `todop_demo_v2` browser store. Use **Reset 
 
 ## Planning and recovery
 
-- **My Day:** choose up to three active tasks for the current local date, with or without deadlines. Completed choices remain visible for that day, and completing one makes room for another. Unfinished tasks stay in the planner when the next day begins.
 - **Recurring tasks:** daily, weekly, monthly, or a custom interval from 1 to 365. Completing a recurring task archives that occurrence and creates one future occurrence with fresh subtasks. Missed dates are skipped rather than creating a backlog. Local wall-clock time is preserved; short months clamp to their last day and later months return to the original day.
 - **Undo:** completion, reopening, and deletion offer a 12-second undo action. Undo checks for newer edits before changing an occurrence.
 - **Recently deleted:** tasks and their subtasks can be restored for 30 days. A deleted project is not recreated on restore. Expired entries disappear immediately and are pruned on the next successful write.

@@ -10,28 +10,18 @@ export function TrashPage({ timestamp }: { timestamp: number }) {
     )
     .sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
   return (
-    <section className="trash-page">
-      <div className="page-header day-heading">
+    <section className="planner-page">
+      <div className="page-header">
         <div className="page-header-main">
-          <p className="workspace-eyebrow">
-            <Trash2 size={14} />A LITTLE PEACE OF MIND
-          </p>
           <h1 className="page-title">Recently deleted</h1>
           <p className="page-subtitle">Tasks stay here for 30 days.</p>
         </div>
       </div>
-      <div className="workspace-panel trash-panel">
+      <div className="trash-panel">
         {visible.length === 0 ? (
-          <div className="focus-empty">
-            <span>
-              <Trash2 size={29} />
-            </span>
-            <h3>Nothing to recover.</h3>
-            <p>
-              Deleted tasks will appear here,
-              <br />
-              ready for a second chance.
-            </p>
+          <div className="trash-empty">
+            <Trash2 size={29} aria-hidden="true" />
+            <h2 className="section-title">Nothing to recover.</h2>
           </div>
         ) : (
           visible.map((item) => (

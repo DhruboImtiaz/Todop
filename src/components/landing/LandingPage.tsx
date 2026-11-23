@@ -1,6 +1,6 @@
 import { BrandLogo } from '../common/BrandLogo';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, CalendarDays, Check, Cloud, Flag, FolderOpen, ListChecks, Menu, Plus, Search, Target, Repeat2, RotateCcw, UsersRound, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, CalendarDays, Check, Cloud, Flag, FolderOpen, ListChecks, Menu, Plus, Search, Repeat2, RotateCcw, UsersRound, X } from 'lucide-react';
 import { navigate } from '../../utils/navigation';
 import { PlannerPreview } from './PlannerPreview';
 import './LandingPage.css';
@@ -46,8 +46,8 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
             <p>Sign in, invite collaborators, and edit the same projects and roadmaps together. Shared edits need a connection, and your personal planner stays separate.</p></article>
           <article><Cloud size={25} aria-hidden="true" /><h3>Offline editing and sync</h3>
             <p>Open your personal planner online once on each device. Keep editing offline, then sync when Todop is open and back online.</p></article>
-          <article><Target size={25} aria-hidden="true" /><h3>Focus with My Day</h3>
-            <p>Choose up to three active tasks and give today’s work a place of its own.</p></article>
+          <article><Search size={25} aria-hidden="true" /><h3>Search your archive</h3>
+            <p>Find active or completed tasks by name or description.</p></article>
           <article><Repeat2 size={25} aria-hidden="true" /><h3>Recurring tasks</h3>
             <p>Repeat a task daily, weekly, monthly, or at your own interval. The next occurrence appears when you finish.</p></article>
           <article><RotateCcw size={25} aria-hidden="true" /><h3>Undo and recovery</h3>

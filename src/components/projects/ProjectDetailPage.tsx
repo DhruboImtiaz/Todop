@@ -1,6 +1,6 @@
 import { useLogFormSubmit } from '../../hooks/useLogFormSubmit';
 import React, { useState } from 'react';
-import { ArrowLeft, FolderOpen } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Plus } from 'lucide-react';
 import type { Log, Project } from '../../types';
 import { useStorage } from '../../hooks/useStorage';
 import { LogCard } from '../logs/LogCard';
@@ -61,30 +61,29 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
   const isEmpty = projectActiveLogs.length === 0 && projectCompletedLogs.length === 0;
 
   return (
-    <div className="project-detail-page">
-      {!shared && (
-        <button
-          type="button"
-          className="project-detail-back-btn"
-          onClick={onBack}
-          aria-label="Back to Projects"
-        >
-          <ArrowLeft size={16} strokeWidth={2} />
-          <span>Projects</span>
-        </button>
-      )}
-      <div className="page-header">
-        <h1 className="page-title">{project.name}</h1>
-        <button
-          type="button"
-          id="project-detail-new-log-btn"
-          className="project-detail-add-btn"
-          onClick={handleOpenCreate}
-          aria-label={`Add log to ${project.name}`}
-        >
-          + New task
-        </button>
-      </div>
+    <div className="planner-page">
+      <header className="project-detail-heading">
+        {!shared && (
+          <button type="button" className="project-detail-back-btn" onClick={onBack} aria-label="Back to Projects">
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />
+            <span>Projects</span>
+          </button>
+        )}
+        <div className="page-header">
+          <div className="page-header-main">
+            <h1 className="page-title">{project.name}</h1>
+          </div>
+          <button
+            type="button"
+            id="project-detail-new-log-btn"
+            className="workspace-secondary"
+            onClick={handleOpenCreate}
+            aria-label={`Add log to ${project.name}`}
+          >
+            <Plus size={16} aria-hidden="true" /> New task
+          </button>
+        </div>
+      </header>
 
       <div className="project-view-switch" role="group" aria-label="Project view">
         <button className="workspace-secondary" aria-pressed={!showRoadmap} onClick={() => setShowRoadmap(false)}>Tasks</button>
@@ -104,10 +103,10 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
           </p>
           <button
             type="button"
-            className="project-detail-add-btn-empty"
+            className="workspace-secondary"
             onClick={handleOpenCreate}
           >
-            + New Log
+            <Plus size={16} aria-hidden="true" /> New task
           </button>
         </div>
       ) : (
@@ -118,7 +117,6 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
               <div className="project-detail-log-list">
                 {projectActiveLogs.map((log) => (
                   <LogCard
-                    allowMyDay={!shared}
                     key={log.id}
                     log={log}
                     currentTimestamp={currentTimestamp}
@@ -137,7 +135,6 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({
               <div className="project-detail-log-list">
                 {projectCompletedLogs.map((log) => (
                   <LogCard
-                    allowMyDay={!shared}
                     key={log.id}
                     log={log}
                     currentTimestamp={currentTimestamp}

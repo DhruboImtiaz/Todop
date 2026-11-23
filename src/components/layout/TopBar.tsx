@@ -16,8 +16,8 @@ export const TopBar: React.FC<TopBarProps> = ({ currentTab, onNavigate }) => {
         <button
           type="button"
           className="top-bar-brand"
-          onClick={() => onNavigate('today')}
-          aria-label="TODOP Home - Open My Day"
+          onClick={() => onNavigate('upcoming')}
+          aria-label="TODOP — Open Upcoming"
         >
           <BrandLogo />
         </button>

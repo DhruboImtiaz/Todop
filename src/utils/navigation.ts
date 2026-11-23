@@ -5,6 +5,16 @@ export function isDemoMode(): boolean {
   );
 }
 
+/** Route old bookmarks to the task list, including when the app loads offline. */
+export function getPlannerLocation(): string {
+  const url = new URL(window.location.href);
+  if (/^\/today\/?$/i.test(url.pathname)) {
+    url.pathname = '/app';
+    window.history.replaceState(window.history.state, '', url);
+  }
+  return url.pathname + url.search;
+}
+
 /** Notify both the app shell and page router after an in-app navigation. */
 export function navigate(path: string): void {
   const target =

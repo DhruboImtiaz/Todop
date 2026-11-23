@@ -7,7 +7,7 @@ import { buildRoadmap } from '../../utils/roadmap';
 import { teamSignInPath } from '../../utils/teamRoutes';
 import './PlannerPreview.css';
 
-const tabs = ['Today', 'Projects', 'Calendar', 'Roadmap', 'Workspaces'] as const;
+const tabs = ['Upcoming', 'Projects', 'Calendar', 'Roadmap', 'Workspaces'] as const;
 type Tab = typeof tabs[number];
 
 const workspaceMembers = [
@@ -43,7 +43,7 @@ function ProgressBar({ completed, total }: { completed: number; total: number })
   );
 }
 
-function TodayPreview({ tasks, projects, toggle }: { tasks: Log[]; projects: Project[]; toggle: (id: string) => void }) {
+function UpcomingPreview({ tasks, projects, toggle }: { tasks: Log[]; projects: Project[]; toggle: (id: string) => void }) {
   const completed = tasks.filter(task => task.completed).length;
   return (
     <>
@@ -60,7 +60,7 @@ function TodayPreview({ tasks, projects, toggle }: { tasks: Log[]; projects: Pro
           </li>
         ))}
       </ul>
-      <div className="lp-preview-foot lp-preview-today-progress">
+      <div className="lp-preview-foot lp-preview-task-progress">
         <span role="status">{completed} of {tasks.length} done</span>
         <ProgressBar completed={completed} total={tasks.length} />
       </div>
@@ -197,7 +197,7 @@ function WorkspacePreview({ signedIn }: { signedIn: boolean }) {
 }
 
 export function PlannerPreview({ signedIn }: { signedIn: boolean }) {
-  const [tab, setTab] = useState<Tab>('Today');
+  const [tab, setTab] = useState<Tab>('Upcoming');
   const [{ projects, logs, today, now }] = useState(() => ({ ...createDemoData(), today: todayLocalKey(), now: Date.now() }));
   const [completed, setCompleted] = useState(() => new Set(logs.filter(task => task.completed).map(task => task.id)));
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
@@ -227,7 +227,7 @@ export function PlannerPreview({ signedIn }: { signedIn: boolean }) {
   }
 
   const panels: Record<Tab, ReactNode> = {
-    Today: <TodayPreview tasks={tasks.filter(task => task.myDay === today)} projects={projects} toggle={toggle} />,
+    Upcoming: <UpcomingPreview tasks={tasks.slice(0, 3)} projects={projects} toggle={toggle} />,
     Projects: <ProjectsPreview projects={projects} tasks={tasks} />,
     Calendar: <CalendarPreview tasks={tasks} projects={projects} today={today} />,
     Roadmap: <RoadmapPreview tasks={tasks} project={studio} now={now} toggle={toggle} />,

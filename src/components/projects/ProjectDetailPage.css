@@ -1,7 +1,7 @@
-.project-detail-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--page-gap);
+.project-detail-heading {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
 }
 
 .project-detail-back-btn {
@@ -23,30 +23,6 @@
 
 .project-detail-back-btn:hover {
   color: var(--accent-hover);
-}
-
-.project-detail-add-btn {
-  font-family: var(--font-heading);
-  font-size: var(--type-small);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--accent-text-readable);
-  background: transparent;
-  border: 1px solid var(--accent-border-tint);
-  border-radius: var(--radius-sm);
-  padding: 8px 14px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-  white-space: nowrap;
-}
-
-.project-detail-add-btn:hover {
-  background-color: var(--accent-tint);
-  border-color: var(--accent-primary);
 }
 
 /* ── Empty State ── */
@@ -78,25 +54,6 @@
   font-size: var(--type-body);
   color: var(--text-dim);
   margin: 0 0 10px;
-}
-
-.project-detail-add-btn-empty {
-  font-family: var(--font-heading);
-  font-size: var(--type-small);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--accent-text-readable);
-  background: transparent;
-  border: 1px solid var(--accent-border-tint);
-  border-radius: var(--radius-sm);
-  padding: 9px 18px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.project-detail-add-btn-empty:hover {
-  background-color: var(--accent-tint);
-  border-color: var(--accent-primary);
 }
 
 /* ── Log Sections ── */

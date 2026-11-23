@@ -9,7 +9,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse, #e7e5fa 10%, #eaf0dd 60%, transparent 72%);
+  background: radial-gradient(ellipse, #e7e5fa 10%, var(--sage-tint) 60%, transparent 72%);
   opacity: .65;
   filter: blur(24px);
   pointer-events: none;
@@ -50,7 +50,7 @@
 .lp-preview-heading svg {
   box-sizing: content-box;
   padding: 6px;
-  background: var(--brand-mark-fill);
+  background: var(--sage-fill);
   border-radius: 7px;
   color: var(--brand-ink);
 }
@@ -147,8 +147,8 @@
 }
 
 .lp-preview-task[aria-pressed="true"] {
-  background: #f5f7ed;
-  border-color: #e8ecdb;
+  background: var(--sage-tint);
+  border-color: var(--sage-border);
 }
 
 .lp-preview-task[aria-pressed="true"] strong {
@@ -177,8 +177,8 @@
 
 .lp-preview-task[aria-pressed="true"] .lp-preview-checkbox {
   color: var(--brand-ink);
-  background: var(--brand-mark-fill);
-  border-color: var(--brand-mark-fill);
+  background: var(--sage-fill);
+  border-color: var(--sage-fill);
 }
 
 .lp-preview-detail {
@@ -196,8 +196,8 @@
 }
 
 .lp-preview-projects li:nth-child(2) .lp-preview-icon {
-  color: #4e652f;
-  background: #eef4e3;
+  color: var(--sage-ink);
+  background: var(--sage-fill);
 }
 
 .lp-preview-projects li:nth-child(3) .lp-preview-icon {
@@ -241,8 +241,8 @@
   border-top: 1px solid #eeedf1;
 }
 
-.lp-preview-today-progress { font-variant-numeric: tabular-nums; }
-.lp-preview-today-progress .lp-preview-progress { width: 42%; }
+.lp-preview-task-progress { font-variant-numeric: tabular-nums; }
+.lp-preview-task-progress .lp-preview-progress { width: 42%; }
 
 .landing-page .lp-preview-link {
   display: inline-flex;
@@ -337,8 +337,8 @@
 
 .lp-preview-action:hover { background: #eeedf7; }
 .lp-preview-status {
-  color: #495f30;
-  background: #edf1df;
+  color: var(--sage-ink);
+  background: var(--sage-fill);
   transition: background-color 160ms ease, color 160ms ease;
 }
 

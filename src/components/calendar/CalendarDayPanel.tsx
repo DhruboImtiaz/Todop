@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import type { Log } from '../../types';
 import { LogCard } from '../logs/LogCard';
 import { todayLocalKey } from '../../utils/calendar';
@@ -42,12 +42,12 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
 
   return (
     <div className="calendar-day-panel">
-      <div className="calendar-day-panel-header">
-        <div className="calendar-day-panel-title-wrap">
-          <h2 className="calendar-day-panel-title">
+      <div className="page-header calendar-day-panel-header">
+        <div className="page-header-main">
+          <h2 className="section-title">
             {isToday ? `Today — ${formattedDate}` : formattedDate}
           </h2>
-          <p className="calendar-day-panel-subtitle">
+          <p className="page-subtitle">
             {totalLogs === 0
               ? 'No tasks scheduled'
               : `${activeLogs.length} active, ${completedLogs.length} completed`}
@@ -55,11 +55,11 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
         </div>
         <button
           type="button"
-          className="calendar-day-panel-add-btn"
+          className="workspace-secondary"
           onClick={onCreateLog}
           aria-label={`Add log for ${formattedDate}`}
         >
-          + ADD LOG
+          <Plus size={16} aria-hidden="true" /> New task
         </button>
       </div>
 
@@ -74,10 +74,10 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
           </p>
           <button
             type="button"
-            className="calendar-day-empty-btn"
+            className="workspace-secondary"
             onClick={onCreateLog}
           >
-            + Add Log
+            <Plus size={16} aria-hidden="true" /> New task
           </button>
         </div>
       ) : (

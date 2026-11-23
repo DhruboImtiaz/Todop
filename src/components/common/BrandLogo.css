@@ -18,7 +18,7 @@
   flex: 0 0 var(--brand-mark-size);
   width: var(--brand-mark-size);
   height: var(--brand-mark-size);
-  background: var(--brand-mark-fill);
+  background: var(--sage-fill);
   color: var(--brand-ink);
   border-radius: var(--brand-mark-radius);
   transform: rotate(-7deg);

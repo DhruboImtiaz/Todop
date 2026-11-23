@@ -52,7 +52,7 @@ export const SearchPage: React.FC = () => {
   };
 
   return (
-    <div className="search-page">
+    <div className="planner-page">
       {/* Header */}
       <div className="page-header">
         <div className="page-header-main">

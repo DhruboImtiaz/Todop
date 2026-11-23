@@ -2,9 +2,9 @@ import { isDemoMode, navigate } from '../../utils/navigation';
 import { AccountPanel } from '../auth/AccountPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { runUiAction } from '../../utils/asyncAction';
-import { FONT_SIZES, isFontSize } from '../../utils/settings';
+import { FONT_SIZE_OPTIONS, FONT_SIZES, isFontSize } from '../../utils/settings';
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Moon, Sun, Type, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
+import { Download, Moon, Sun, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useStorage } from '../../hooks/useStorage';
 import type { AppDataSchema, AppFontSize, AppTheme } from '../../types';
 import { createBackup, downloadBackupFile, validateBackup } from '../../utils/backup';
@@ -143,7 +143,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="settings-page">
+    <div className="planner-page">
       {/* Hidden Native File Picker */}
       <input
         type="file"
@@ -259,7 +259,7 @@ export const SettingsPage: React.FC = () => {
           >
             <button
               type="button"
-              className={`segmented-control-btn ${currentTheme === 'light' ? 'active' : ''}`}
+              className="segmented-control-btn"
               role="radio"
               aria-checked={currentTheme === 'light'}
               onClick={() => runUiAction(() => handleThemeChange('light'))}
@@ -270,7 +270,7 @@ export const SettingsPage: React.FC = () => {
 
             <button
               type="button"
-              className={`segmented-control-btn ${currentTheme === 'dark' ? 'active' : ''}`}
+              className="segmented-control-btn"
               role="radio"
               aria-checked={currentTheme === 'dark'}
               onClick={() => runUiAction(() => handleThemeChange('dark'))}
@@ -290,9 +290,9 @@ export const SettingsPage: React.FC = () => {
 
         <div className="settings-card">
           <div className="settings-item-info">
-            <span className="settings-item-name">Font Scale</span>
+            <span className="settings-item-name">Text scale</span>
             <span className="settings-item-desc">
-              Adjust readability of logs, labels, and text across all views
+              Adjust text across TODOP. Medium is the default.
             </span>
           </div>
 
@@ -301,14 +301,18 @@ export const SettingsPage: React.FC = () => {
             role="radiogroup"
             aria-label="Text Size"
           >
-            {FONT_SIZES.map((size, index) => (
-              <button key={size} type="button" role="radio"
-                className={`segmented-control-btn ${currentFontSize === size ? 'active' : ''}`}
-                aria-checked={currentFontSize === size} onClick={() => runUiAction(() => handleFontSizeChange(size))}>
-                <Type size={11 + index * 2} strokeWidth={2} />
-                <span>{size.toUpperCase()}</span>
-              </button>
-            ))}
+            {FONT_SIZES.map(size => {
+              const { label, scale } = FONT_SIZE_OPTIONS[size];
+              return (
+                <button key={size} type="button" role="radio"
+                  className="segmented-control-btn"
+                  aria-checked={currentFontSize === size} aria-label={label} aria-describedby={`text-size-${size}`}
+                  onClick={() => runUiAction(() => handleFontSizeChange(size))}>
+                  <span>{label}</span>
+                  <span className="text-size-percent" id={`text-size-${size}`}>{scale}%</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
