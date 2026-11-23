@@ -161,6 +161,20 @@
   transform: scale(0.98);
 }
 
+@media (max-width: 480px) {
+  .account-panel .settings-data-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .account-panel .settings-data-actions:has(> :nth-child(3)) .primary {
+    grid-column: 1 / -1;
+  }
+  .settings-action-btn {
+    letter-spacing: 0.03em;
+    line-height: 1.35;
+  }
+  .settings-action-btn svg { flex-shrink: 0; }
+}
+
 /* ── Segmented Controls ── */
 .segmented-control {
   display: flex;

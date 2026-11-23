@@ -258,6 +258,64 @@ test('failed sync leaves tasks saved locally and sign-out isolates guest data', 
   await expect(page.getByRole('button', { name: /Log: A cloud task/ })).toHaveCount(0);
 });
 
+test('the sync confirmation expires without moving the phone layout', async ({ page, context }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  const cloud = await mockCloud(context);
+  await signIn(page);
+  await expect(page.getByRole('heading', { name: 'No logs yet' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create First Log', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('banner').getByRole('button', { name: 'Create new task log' })).toHaveCount(0);
+
+  const status = page.getByRole('status').filter({ hasText: 'All changes synced.' });
+  const heading = page.getByRole('heading', { name: 'Upcoming', exact: true });
+  const initial = await heading.boundingBox();
+  expect(initial).not.toBeNull();
+  await expect(status).toHaveCount(0);
+
+  await createTask(page, 'Confirmed sync');
+  await expect.poll(() => cloud.row().data.logs[0]?.title).toBe('Confirmed sync');
+  await expect(status).toBeVisible();
+  const [badge, brand, settings] = await Promise.all([
+    status.boundingBox(),
+    page.getByRole('button', { name: 'TODOP — Open Upcoming' }).boundingBox(),
+    page.getByRole('button', { name: 'Settings', exact: true }).boundingBox(),
+  ]);
+  expect(badge!.x).toBeGreaterThan(brand!.x + brand!.width);
+  expect(badge!.x + badge!.width).toBeLessThan(settings!.x);
+  expect(await heading.boundingBox()).toEqual(initial);
+  await expect(status).toHaveCount(0, { timeout: 6_000 });
+  expect(await heading.boundingBox()).toEqual(initial);
+  await page.reload();
+  await expect(page.getByRole('button', { name: /Log: Confirmed sync,/ })).toBeVisible();
+  await expect(status).toHaveCount(0);
+});
+
+test('the phone Projects actions fill an even row below the heading', async ({ page, context }) => {
+  await mockCloud(context);
+  await signIn(page);
+  await page.goto('/projects');
+  const heading = page.getByRole('heading', { name: 'Projects', exact: true });
+  const workspaces = page.getByRole('button', { name: 'Shared workspaces', exact: true });
+  const newProject = page.getByRole('button', { name: 'Create new project', exact: true });
+  await expect(page.getByText('NO PROJECTS YET', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /new project/i })).toHaveCount(1);
+
+  for (const width of [320, 390, 520]) {
+    await page.setViewportSize({ width, height: 844 });
+    const [title, first, second] = await Promise.all([
+      heading.boundingBox(), workspaces.boundingBox(), newProject.boundingBox(),
+    ]);
+    expect(first!.y).toBeGreaterThan(title!.y + title!.height);
+    expect(first!.y).toEqual(second!.y);
+    expect(first!.width).toBeCloseTo(second!.width);
+    expect(first!.height).toBeCloseTo(second!.height);
+    expect(first!.x).toBeCloseTo(title!.x);
+    expect(second!.x + second!.width).toBeCloseTo(title!.x + title!.width);
+  }
+  await newProject.click();
+  await expect(page.getByLabel('Project Name')).toBeVisible();
+});
+
 
 test('a recovery link opens password update and returns to the signed-in workspace', async ({ page }) => {
   const cloud = await mockCloud(page.context());

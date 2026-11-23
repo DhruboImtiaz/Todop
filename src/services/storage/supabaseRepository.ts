@@ -19,7 +19,13 @@ type DeviceWorkspace = {
   replacement?: string;
 };
 type SyncPhase = 'idle' | 'offline' | 'syncing' | 'conflict' | 'error';
-type SyncStatus = { ready: boolean; pending: boolean; phase: SyncPhase; message: string };
+type SyncStatus = {
+  ready: boolean;
+  pending: boolean;
+  phase: SyncPhase;
+  message: string;
+  confirmedAt: number | null;
+};
 
 /** Saves each edit locally before syncing the account's revision. */
 export class SupabaseRepository extends PlannerRepository {
@@ -30,7 +36,7 @@ export class SupabaseRepository extends PlannerRepository {
   private listeners = new Set<StorageListener>();
   private device: DeviceWorkspace | null = null;
   private cachedJson: string | null = null;
-  private status: SyncStatus = { ready: false, pending: false, phase: 'idle', message: '' };
+  private status: SyncStatus = { ready: false, pending: false, phase: 'idle', message: '', confirmedAt: null };
   private syncing: Promise<void> | null = null;
   private syncRequested = false;
 
@@ -48,12 +54,12 @@ export class SupabaseRepository extends PlannerRepository {
     return () => { this.listeners.delete(listener); };
   };
 
-  private publish(phase = this.status.phase, message = this.status.message) {
+  private publish(phase = this.status.phase, message = this.status.message, confirmedAt = this.status.confirmedAt) {
     const ready = this.device !== null;
     const pending = this.device?.draft !== undefined;
     if (ready !== this.status.ready || pending !== this.status.pending ||
-        phase !== this.status.phase || message !== this.status.message) {
-      this.status = { ready, pending, phase, message };
+        phase !== this.status.phase || message !== this.status.message || confirmedAt !== this.status.confirmedAt) {
+      this.status = { ready, pending, phase, message, confirmedAt };
     }
     for (const listener of this.listeners) listener();
   }
@@ -195,8 +201,13 @@ export class SupabaseRepository extends PlannerRepository {
   private async sync() {
     for (let attempt = 0; attempt < 4 && navigator.onLine; attempt++) {
       const remote = await this.readCloud();
-      const upload = await this.withDevice(() => this.prepareUpload(remote));
-      if (!upload) return;
+      const { upload, hadDraft } = await this.withDevice(() => {
+        const hadDraft = this.device?.draft !== undefined;
+        return { hadDraft, upload: this.prepareUpload(remote) };
+      });
+      // A pending draft can already be reflected in the cloud, such as
+      // when an upload succeeded but its response never reached this device.
+      if (!upload) return hadDraft;
       const result = await this.client.from('planner_workspaces')
         .update({ data: upload.data, revision: upload.revision, updated_at: new Date().toISOString() })
         .eq('user_id', this.userId).eq('revision', upload.revision - 1).select('revision')
@@ -222,15 +233,16 @@ export class SupabaseRepository extends PlannerRepository {
         });
         return draft !== undefined;
       });
-      if (!pending) return;
+      if (!pending) return true;
     }
     if (navigator.onLine) throw new Error('Your planner is receiving other changes. Try syncing again in a moment.');
+    return false;
   }
 
   refresh = (): Promise<void> => {
     this.reloadDevice();
     if (!navigator.onLine) {
-      this.publish('offline', '');
+      this.publish('offline', '', null);
       return Promise.resolve();
     }
     if (this.syncing) {
@@ -238,17 +250,18 @@ export class SupabaseRepository extends PlannerRepository {
       return this.syncing;
     }
     if (!navigator.locks) {
-      this.publish('error', 'Open Todop in a browser that supports account sync.');
+      this.publish('error', 'Open Todop in a browser that supports account sync.', null);
       return Promise.resolve();
     }
     this.syncing = navigator.locks.request(`${this.cacheKey}:sync`, async () => {
       if (this.status.phase !== 'conflict') this.publish('syncing', '');
-      await this.sync();
-      this.publish(navigator.onLine ? 'idle' : 'offline', '');
+      const confirmed = await this.sync();
+      if (navigator.onLine) this.publish('idle', '', confirmed ? Date.now() : this.status.confirmedAt);
+      else this.publish('offline', '', null);
     }).catch((error: unknown) => {
-      if (error instanceof WorkspaceConflict) this.publish('conflict', error.message);
-      else if (!navigator.onLine) this.publish('offline', '');
-      else this.publish('error', error instanceof Error ? error.message : 'Could not sync your account planner.');
+      if (error instanceof WorkspaceConflict) this.publish('conflict', error.message, null);
+      else if (!navigator.onLine) this.publish('offline', '', null);
+      else this.publish('error', error instanceof Error ? error.message : 'Could not sync your account planner.', null);
     }).finally(() => {
       this.syncing = null;
       if (this.syncRequested) {

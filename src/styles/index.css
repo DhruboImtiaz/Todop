@@ -21,6 +21,13 @@ html {
   background-color: var(--bg-base);
 }
 
+@media (max-width: 1023px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
 body {
   width: 100%;
   min-height: 100%;
@@ -130,6 +137,8 @@ input, select, textarea {
 }
 
 .app-container {
+  --top-bar-action-size: 44px;
+  --mobile-action-inset: calc(max(0px, (100vw - var(--mobile-content-max-width)) / 2) + var(--mobile-gutter-right));
   width: 100%;
   max-width: var(--mobile-content-max-width);
   min-height: 100vh;
@@ -149,12 +158,37 @@ input, select, textarea {
 .app-content {
   flex: 1;
   padding-top: calc(var(--header-height) + var(--safe-top) + var(--page-gap) + var(--demo-offset, 0px));
-  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 64px);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--page-gap));
   position: relative;
+}
+
+@media (max-width: 1023px) {
+  .app-content:has(.floating-add-btn) {
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px + var(--floating-add-size) + var(--page-gap));
+  }
+  .content-frame {
+    padding-left: var(--mobile-gutter-left);
+    padding-right: var(--mobile-gutter-right);
+  }
+  .form-sheet-dialog,
+  .project-sheet-dialog {
+    max-height: min(90dvh, calc(100dvh - var(--safe-top)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .form-sheet-dialog {
+    padding-left: var(--mobile-gutter-left);
+    padding-right: var(--mobile-gutter-right);
+  }
+  .project-sheet-backdrop {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
 }
 
 /* Desktop shell — sidebar + main area */
 .app-shell-desktop {
+  --desktop-action-inset: max(var(--page-padding-x), (100vw - var(--sidebar-width) - var(--desktop-content-max-width)) / 2 + var(--page-padding-x));
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -223,5 +257,41 @@ input, select, textarea {
 .workspace-sync p { margin: 0; }
 .workspace-sync-actions { display: flex; flex-wrap: wrap; column-gap: 16px; }
 .workspace-sync button { min-height: 44px; font-weight: 700; text-decoration: underline; }
+.workspace-sync-notice {
+  position: fixed;
+  z-index: 41;
+  pointer-events: none;
+  inset-block-end: 40px;
+  inset-inline-end: calc(var(--desktop-action-inset) + var(--floating-add-size) + 14px);
+  font-size: var(--type-small);
+  font-weight: 650;
+}
+.workspace-sync-notice:not(:empty) {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.workspace-sync-notice:has(.workspace-sync-confirmation) {
+  background: var(--success-tint);
+  border-color: var(--success-border);
+  color: var(--success-text);
+  animation-name: sync-confirmation-fade;
+  animation-fill-mode: both;
+}
+@keyframes sync-confirmation-fade {
+  0%, 94% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (max-width: 1023px) {
+  .workspace-sync-notice {
+    inset-block: calc(var(--safe-top) + (var(--header-height) - 26px) / 2) auto;
+    inset-inline-end: calc(var(--mobile-action-inset) + var(--top-bar-action-size) + 8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-sync-notice:has(.workspace-sync-confirmation) { animation: none; }
+}
 .account-panel { flex-wrap:wrap; }
 .account-panel .settings-item-desc { max-width:420px; }

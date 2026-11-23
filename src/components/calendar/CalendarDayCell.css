@@ -74,3 +74,10 @@
   border-radius: 50%;
   background-color: var(--accent-primary);
 }
+
+@media (max-width: 650px) {
+  .calendar-day-cell {
+    height: 44px;
+    padding-inline: 0;
+  }
+}

@@ -8,6 +8,62 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(NOW);
 });
 
+test('phone task cards, calendar controls and roadmap columns stay aligned', async ({ page }) => {
+  test.setTimeout(60_000);
+  const data = fixture('large');
+  const title = 'Prepare the production readiness review and confirm all sign-offs';
+  data.logs[0].title = title;
+  data.projects.find(project => project.id === 'alpha')!.name = 'ProductionReadinessAndInfrastructureApproval';
+  await seed(page, data);
+
+  for (const width of [320, 390, 430]) {
+    await page.setViewportSize({ width, height: width === 320 ? 568 : 844 });
+    for (const route of ['/app', '/calendar', '/search']) {
+      await page.goto(route);
+      if (route === '/search') await page.getByLabel('Search logs by name').fill('production readiness');
+      const card = page.getByRole('button', { name: new RegExp(`^Log: ${title},`) });
+      await expect(card).toBeVisible();
+      const [task, countdown, menu] = await Promise.all([
+        card.getByRole('heading').boundingBox(),
+        card.locator('.log-card-countdown').boundingBox(),
+        card.getByRole('button', { name: /^Options for/ }).boundingBox(),
+      ]);
+      expect(countdown!.y).toBeGreaterThan(task!.y + task!.height);
+      expect(countdown!.x).toBeCloseTo(task!.x, 0);
+      expect(task!.x + task!.width).toBeLessThan(menu!.x);
+      expect(menu!.x + menu!.width).toBeLessThan(width);
+      if (route === '/app') {
+        const addButton = page.getByRole('button', { name: 'Create new task log', exact: true });
+        await expect(addButton).toBeVisible();
+        await expect(addButton).toHaveCSS('position', 'fixed');
+        const [add, nav] = await Promise.all([
+          addButton.boundingBox(),
+          page.getByRole('navigation', { name: 'Main Navigation' }).boundingBox(),
+        ]);
+        const gap = nav!.y - add!.y - add!.height;
+        expect(gap).toBeGreaterThanOrEqual(15);
+        expect(gap).toBeLessThanOrEqual(16);
+        expect(width - add!.x - add!.width).toBeCloseTo(16);
+      }
+      if (route === '/calendar' && width === 320) {
+        const calendar = page.getByRole('grid');
+        const layout = await calendar.boundingBox();
+        for (let month = 0; month < 3; month++) {
+          await page.getByRole('button', { name: 'Next month' }).click();
+          expect((await calendar.boundingBox())!.y).toBe(layout!.y);
+        }
+      }
+    }
+
+    await page.goto('/projects/alpha');
+    await page.getByRole('button', { name: 'Roadmap', exact: true }).click();
+    const stats = await page.locator('.roadmap-summary dd').evaluateAll(items =>
+      items.map(item => item.getBoundingClientRect().bottom));
+    expect(stats).toHaveLength(3);
+    expect(stats).toEqual(stats.map(() => stats[0]));
+  }
+});
+
 test('mobile pickers commit correct local time and dismiss without losing the form draft', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -399,13 +455,19 @@ test('the project roadmap shows milestone risk, rejects dependency cycles and su
 test('planner pages share a type scale and fit narrow and desktop layouts', async ({ page }) => {
   await seed(page);
   await page.goto('/settings');
-  for (const [size, percent, px] of [['xs', '65%', 10.4], ['small', '70%', 11.2], ['large', '90%', 14.4], ['medium', '80%', 12.8]] as const) {
+  for (const [size, percent, px, cardPadding] of [
+    ['xs', '75%', 9.6, '10.5px'],
+    ['small', '87.5%', 11.2, '12.25px'],
+    ['large', '112.5%', 14.4, '15.75px'],
+    ['medium', '100%', 12.8, '14px'],
+  ] as const) {
     const option = page.getByRole('radio', { name: FONT_SIZE_OPTIONS[size].label, exact: true });
     await expect(option).toHaveAccessibleDescription(percent);
     await option.click();
     await expect(option).toBeChecked();
     await expect(page.locator('html')).toHaveAttribute('data-font-size', size);
     await expectFontSize(page.locator('html'), px);
+    await expect(page.locator('.settings-card').first()).toHaveCSS('padding-top', cardPadding);
   }
   const paths = ['/app', '/projects', '/projects/alpha', '/calendar', '/search', '/settings', '/trash'];
   for (const [width, size] of [[320, 'large'], [390, 'medium'], [1440, 'medium']] as const) {

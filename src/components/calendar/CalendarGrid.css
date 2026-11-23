@@ -99,3 +99,19 @@
   gap: 4px;
 }
 
+@media (max-width: 650px) {
+  .calendar-nav-btn,
+  .calendar-today-btn {
+    height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .calendar-header-actions {
+    width: 100%;
+  }
+  .calendar-today-btn {
+    margin-inline-end: auto;
+  }
+}
+

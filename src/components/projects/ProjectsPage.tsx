@@ -128,7 +128,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject,
 
   return (
     <div className="planner-page">
-      <div className="page-header">
+      <div className="page-header projects-page-header">
         <div className="page-header-main">
           <Heading className={shared ? 'section-title' : 'page-title'}>Projects</Heading>
         </div>
@@ -157,14 +157,6 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onNavigateToProject,
           <p className="projects-empty-sub">
             Create a project to organize your logs.
           </p>
-          <button
-            type="button"
-            id="new-project-btn-empty"
-            className="workspace-secondary"
-            onClick={handleCreateOpen}
-          >
-            <Plus size={16} aria-hidden="true" /> New project
-          </button>
         </div>
       ) : (
         <ul className="projects-list" role="list">

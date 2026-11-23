@@ -1,4 +1,3 @@
-import React from 'react';
 import { Plus } from 'lucide-react';
 import './FloatingAddButton.css';
 
@@ -6,7 +5,7 @@ interface FloatingAddButtonProps {
   onClick: () => void;
 }
 
-export const FloatingAddButton: React.FC<FloatingAddButtonProps> = ({ onClick }) => {
+export function FloatingAddButton({ onClick }: FloatingAddButtonProps) {
   return (
     <button
       type="button"
@@ -15,7 +14,7 @@ export const FloatingAddButton: React.FC<FloatingAddButtonProps> = ({ onClick })
       aria-label="Create new task log"
       title="Create new log"
     >
-      <Plus size={26} strokeWidth={2.5} />
+      <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
     </button>
   );
-};
+}

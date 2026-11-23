@@ -74,9 +74,11 @@
   /* Sizing & Layout */
   --header-height: 56px;
   --bottom-nav-height: 64px;
+  --floating-add-size: 54px;
+  --ui-scale: 1;
   --page-padding-x: clamp(16px, 3vw, 40px);
-  --page-gap: clamp(20px, 3vw, 32px);
-  --card-padding: clamp(14px, 2.5vw, 24px);
+  --page-gap: calc(clamp(20px, 3vw, 32px) * var(--ui-scale));
+  --card-padding: calc(clamp(14px, 2.5vw, 24px) * var(--ui-scale));
   --max-content-width: 600px;
   --mobile-content-max-width: 780px;
   --radius-sm: 6px;
@@ -89,6 +91,8 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+  --mobile-gutter-left: max(var(--page-padding-x), var(--safe-left));
+  --mobile-gutter-right: max(var(--page-padding-x), var(--safe-right));
 
   /* Desktop Layout Tokens */
   --sidebar-width: 240px;
