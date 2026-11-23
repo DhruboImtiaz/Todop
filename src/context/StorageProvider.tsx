@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import type { AppDataSchema, Settings, Log } from "../types";
+import type { AppDataSchema, Settings } from "../types";
 import type {
   ImportOptions,
   NewLogInput,
@@ -213,11 +213,6 @@ export const StorageProvider: React.FC<{
     (id: string) => attempt(() => repository.restoreLog(id)),
     [repository, attempt],
   );
-  const planMyDay = useCallback(
-    (id: string, date: string | null): Promise<Log> =>
-      attempt(() => repository.planMyDay(id, date)),
-    [repository, attempt],
-  );
   const deletedLogs = useMemo(() => rawData.trash ?? [], [rawData.trash]);
 
   // Synchronize data-theme, data-font-size, and meta theme-color immediately when settings change
@@ -231,7 +226,6 @@ export const StorageProvider: React.FC<{
       undo,
       deletedLogs,
       restoreLog,
-      planMyDay,
       error,
       activeLogs,
       completedLogs,
@@ -262,7 +256,6 @@ export const StorageProvider: React.FC<{
       undo,
       deletedLogs,
       restoreLog,
-      planMyDay,
       error,
       activeLogs,
       completedLogs,

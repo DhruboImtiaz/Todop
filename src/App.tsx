@@ -1,4 +1,3 @@
-import { MyDayPage } from './components/today/MyDayPage';
 import { TrashPage } from './components/trash/TrashPage';
 import { UndoToast } from './components/common/UndoToast';
 import { WorkspaceSyncStatus } from './components/auth/WorkspaceSyncStatus';
@@ -49,8 +48,7 @@ const TodopMain: React.FC = () => {
     activeProjectId ? (projects.find((p) => p.id === activeProjectId) ?? null) : null;
 
   const navigateTo = (tab: NavigationTab, projectId: string | null = null) => {
-    const base = tab === 'upcoming' ? '/app' : getPathFromRoute({ tab, projectId });
-    navigate(base);
+    navigate(getPathFromRoute({ tab, projectId }));
   };
 
   const handleNavigate = (tab: NavigationTab) => {
@@ -108,7 +106,6 @@ const TodopMain: React.FC = () => {
   const renderContent = () => (
     <>
       {repository instanceof SupabaseRepository && <WorkspaceSyncStatus repository={repository} />}
-      {currentTab === 'today' && <MyDayPage timestamp={currentTimestamp} onEdit={handleOpenEdit} onCreate={handleOpenCreate} />}
       {currentTab === 'trash' && <TrashPage timestamp={currentTimestamp} />}
       {currentTab === 'upcoming' && (
         <UpcomingPage
@@ -153,9 +150,8 @@ const TodopMain: React.FC = () => {
       )}
 
       {/* Add/Edit Log Bottom Sheet (Upcoming context only) */}
-      {(currentTab === 'upcoming' || currentTab === 'today') && (
+      {currentTab === 'upcoming' && (
         <LogFormSheet
-          defaultNoDeadline={currentTab === 'today'}
           isOpen={isSheetOpen}
           initialLog={editingLog}
           onClose={handleCloseSheet}

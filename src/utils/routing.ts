@@ -16,7 +16,6 @@ export function getRouteFromPath(path: string): AppRoute {
     return { tab: 'projects', projectId: null };
   }
 
-  if (normalized === '/today' || normalized === '/demo') return { tab: 'today' };
   if (normalized === '/trash') return { tab: 'trash' };
   if (normalized === '/projects') return { tab: 'projects', projectId: null };
   if (normalized === '/calendar') return { tab: 'calendar' };
@@ -26,7 +25,6 @@ export function getRouteFromPath(path: string): AppRoute {
 }
 
 export function getPathFromRoute(route: AppRoute): string {
-  if (route.tab === 'today') return '/today';
   if (route.tab === 'trash') return '/trash';
   if (route.tab === 'projects') {
     return route.projectId ? `/projects/${encodeURIComponent(route.projectId)}` : '/projects';
@@ -34,7 +32,7 @@ export function getPathFromRoute(route: AppRoute): string {
   if (route.tab === 'calendar') return '/calendar';
   if (route.tab === 'search') return '/search';
   if (route.tab === 'settings') return '/settings';
-  return '/';
+  return '/app';
 }
 
 export function getTabFromPath(path: string): NavigationTab {

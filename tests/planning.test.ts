@@ -36,48 +36,19 @@ assert.equal(
 );
 assert.equal(JSON.parse(localStorage.getItem(STORAGE_KEY)!).version, 2);
 assert.equal(isDateKey("2026-02-30"), false);
-const today = "2026-11-01";
+const legacyDay = "2026-11-01";
 const tasks = await Promise.all(
   ["One", "Two", "Three", "Four"].map((title) => repo.createLog({ title })),
 );
-await repo.planMyDay(tasks[0].id, today);
-await repo.planMyDay(tasks[1].id, today);
-const parallel = await Promise.allSettled([
-  repo.planMyDay(tasks[2].id, today),
-  repo.planMyDay(tasks[3].id, today),
-]);
-assert.equal(parallel.filter((r) => r.status === "fulfilled").length, 1);
-assert.equal((await repo.getLogs()).filter((l) => l.myDay === today).length, 3);
-await repo.planMyDay(tasks[0].id, null);
-assert.equal(
-  (await repo.getLogById(tasks[0].id))?.deadline,
-  undefined,
-  "My Day works without a deadline",
-);
-await assert.rejects(
-  () => repo.planMyDay(tasks[0].id, "2026-02-30"),
-  /Invalid/,
-);
+const savedWithFocus = await repo.exportData();
+savedWithFocus.logs.forEach((log) => { log.myDay = legacyDay; });
+await repo.importData(savedWithFocus);
 
-const focusChange = (await repo.changeLogCompletion(tasks[1].id))!;
-await repo.planMyDay(tasks[0].id, today);
-await repo.planMyDay(tasks[3].id, today);
-await assert.rejects(
-  () =>
-    repo.undoCompletion(focusChange.previous, focusChange.updated.updatedAt),
-  /three tasks/,
-);
-await assert.rejects(
-  () => repo.toggleLogCompletion(tasks[1].id),
-  /three tasks/,
-);
-await repo.planMyDay(tasks[0].id, null);
-await repo.undoCompletion(focusChange.previous, focusChange.updated.updatedAt);
-assert.equal(
-  (await repo.getLogs()).filter((l) => !l.completed && l.myDay === today)
-    .length,
-  3,
-);
+const completion = (await repo.changeLogCompletion(tasks[0].id))!;
+await repo.undoCompletion(completion.previous, completion.updated.updatedAt);
+await repo.deleteLog(tasks[1].id);
+await repo.restoreLog(tasks[1].id);
+assert.equal((await repo.getLogs()).filter((log) => !log.completed && log.myDay === legacyDay).length, 4);
 assert.throws(
   () =>
     nextRecurringDeadline("+275760-09-12T10:00:00.000Z", {
@@ -246,7 +217,7 @@ assert.equal(
   false,
 );
 console.log(
-  "✓ Planning: legacy migration, My Day limits, monthly clamping, DST, repeats, guarded undo, soft deletion, expiry, backups and demo isolation",
+  "✓ Planning: legacy planner metadata, monthly clamping, DST, repeats, guarded undo, soft deletion, expiry, backups and demo isolation",
 );
 
 const roadmap = new LocalStorageRepository("roadmap-test");

@@ -116,8 +116,6 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: var(--type-body);
   padding: 11px 14px;
   outline: none;
   transition: border-color 0.15s ease;

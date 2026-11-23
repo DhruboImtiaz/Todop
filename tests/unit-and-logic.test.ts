@@ -131,7 +131,7 @@ async function testRepository() {
   assert.equal(getTabFromPath('/projects/'), 'projects');
   assert.equal(getTabFromPath('/search'), 'search');
   assert.equal(getTabFromPath('/settings'), 'settings');
-  assert.equal(getPathFromTab('upcoming'), '/');
+  assert.equal(getPathFromTab('upcoming'), '/app');
   assert.equal(getPathFromTab('projects'), '/projects');
   assert.equal(getPathFromTab('search'), '/search');
   assert.equal(getPathFromTab('settings'), '/settings');

@@ -9,7 +9,6 @@ export interface StorageContextValue {
   projects: Project[];
   deletedLogs: DeletedLog[];
   restoreLog: (id: string) => Promise<boolean>;
-  planMyDay: (id: string, date: string | null) => Promise<Log>;
   undo: { message: string; expiresAt: number; action: () => Promise<void> } | null;
   dismissUndo: () => void;
   settings: Settings | null;

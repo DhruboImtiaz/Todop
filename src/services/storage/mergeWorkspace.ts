@@ -53,18 +53,12 @@ export function mergeWorkspace(base: AppDataSchema, local: AppDataSchema, remote
     item => item.log.id, item => item.log.title);
   const logs: Log[] = [];
   const trash: DeletedLog[] = [];
-  const focusCounts = new Map<string, number>();
   for (const { log, deletedAt } of records) {
     if (deletedAt !== undefined) {
       trash.push({ log, deletedAt });
       continue;
     }
     logs.push(log);
-    if (!log.completed && log.myDay) {
-      const count = (focusCounts.get(log.myDay) ?? 0) + 1;
-      if (count > 3) throw new WorkspaceConflict('The combined changes would put more than three tasks in My Day.');
-      focusCounts.set(log.myDay, count);
-    }
   }
   const projects = mergeRecords(base.projects, local.projects, remote.projects, project => project.id, project => project.name)
     .sort((a, b) => a.order - b.order)

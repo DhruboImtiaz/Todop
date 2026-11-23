@@ -13,7 +13,6 @@ import {
 import { CalendarGrid } from './CalendarGrid';
 import { CalendarDayPanel } from './CalendarDayPanel';
 import { LogFormSheet } from '../logs/LogFormSheet';
-import './CalendarPage.css';
 
 export const CalendarPage: React.FC = () => {
   const {
@@ -106,7 +105,7 @@ export const CalendarPage: React.FC = () => {
   };
 
   return (
-    <div className="calendar-page">
+    <div className="planner-page">
       <div className="page-header">
         <div className="page-header-main">
           <h1 className="page-title">Calendar</h1>

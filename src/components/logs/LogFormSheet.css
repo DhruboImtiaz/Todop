@@ -153,7 +153,6 @@
 .form-select {
   width: 100%;
   padding: 12px 14px;
-  font-size: var(--type-body);
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -289,8 +288,6 @@
 
 .subtask-inline-edit-input {
   flex: 1;
-  font-family: var(--font-body);
-  font-size: var(--type-body);
   color: var(--text-primary);
   background-color: var(--bg-input);
   border: 1px solid var(--accent-primary);
@@ -365,7 +362,6 @@
 .subtask-add-input {
   width: 100%;
   padding: 10px 12px;
-  font-size: var(--type-body);
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);

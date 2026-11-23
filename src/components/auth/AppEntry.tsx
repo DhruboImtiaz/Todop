@@ -21,7 +21,7 @@ const AuthPage = lazy(() =>
   import("./AuthPage").then((module) => ({ default: module.AuthPage })),
 );
 const TeamWorkspacesPage = lazy(() => import("../workspaces/TeamWorkspacesPage"));
-import { isDemoMode } from "../../utils/navigation";
+import { getPlannerLocation, isDemoMode } from "../../utils/navigation";
 import { isTeamPath } from "../../utils/teamRoutes";
 import { useStorage } from "../../hooks/useStorage";
 import { accountWorkspaceCacheKey } from "../../services/storage/supabaseRepository";
@@ -85,7 +85,8 @@ function Entry({ children }: { children: ReactNode }) {
   const personalAppearance = path === '/' || path === '/auth' || isTeamPath(path);
   const accountId = account?.id;
   useEffect(() => {
-    const onPopState = () => setLocation(window.location.pathname + window.location.search);
+    const onPopState = () => setLocation(getPlannerLocation());
+    onPopState();
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);

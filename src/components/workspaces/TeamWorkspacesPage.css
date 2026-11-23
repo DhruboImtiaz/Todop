@@ -19,7 +19,7 @@
 .team-panel h2 { font-size: var(--type-section); }
 .team-panel p { margin: 4px 0; }
 .team-panel label { display: grid; gap: 6px; font-weight: 700; }
-.team-panel input { width: 100%; min-width: 0; color: var(--text-primary); background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px; font: inherit; }
+.team-panel input { width: 100%; min-width: 0; color: var(--text-primary); background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px; }
 .team-panel .workspace-primary, .team-workspaces > .workspace-primary { justify-self: start; }
 .team-invite { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
 .team-actions { display: flex; flex-wrap: wrap; gap: 8px; }

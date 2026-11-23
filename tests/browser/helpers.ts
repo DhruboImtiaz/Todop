@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { createBackup } from '../../src/utils/backup';
 import { STORAGE_KEY } from '../../src/utils/settings';
 import type { AppDataSchema, AppFontSize, Log } from '../../src/types';
@@ -26,6 +26,13 @@ export function fixture(fontSize: AppFontSize = 'medium'): AppDataSchema {
 }
 
 export const readData = (page: Page): Promise<AppDataSchema> => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORAGE_KEY);
+
+export async function expectFontSize(locator: Locator, pixels: number, message?: string) {
+  await expect.poll(
+    () => locator.evaluate(element => parseFloat(getComputedStyle(element).fontSize)),
+    { message },
+  ).toBeCloseTo(pixels, 2);
+}
 export async function selectBackup(page: Page, content: unknown) {
   await page.locator('input[type=file]').setInputFiles({
     name: 'todop-test-backup.json', mimeType: 'application/json',

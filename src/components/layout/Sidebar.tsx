@@ -1,7 +1,7 @@
 import { BrandLogo } from '../common/BrandLogo';
 import React from 'react';
-import { CalendarClock, FolderGit2, Calendar, Search, Settings, Sunrise, Trash2 } from 'lucide-react';
 import type { NavigationTab } from '../../types';
+import { plannerNavigation, plannerSecondaryNavigation, type PlannerNavItem } from './plannerNavigation';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -9,62 +9,27 @@ interface SidebarProps {
   onSelectTab: (tab: NavigationTab) => void;
 }
 
-interface NavItem {
-  tab: NavigationTab;
-  icon: React.ReactElement;
-  label: string;
-  ariaLabel: string;
-}
-
-const PRIMARY_NAV: NavItem[] = [
-  { tab: 'today', icon: <Sunrise size={20} strokeWidth={1.8} />, label: 'MY DAY', ariaLabel: 'My Day' },
-  {
-    tab: 'upcoming',
-    icon: <CalendarClock size={20} strokeWidth={1.8} />,
-    label: 'UPCOMING',
-    ariaLabel: 'Upcoming tasks',
-  },
-  {
-    tab: 'projects',
-    icon: <FolderGit2 size={20} strokeWidth={1.8} />,
-    label: 'PROJECTS',
-    ariaLabel: 'Projects',
-  },
-  {
-    tab: 'calendar',
-    icon: <Calendar size={20} strokeWidth={1.8} />,
-    label: 'CALENDAR',
-    ariaLabel: 'Calendar',
-  },
-  {
-    tab: 'search',
-    icon: <Search size={20} strokeWidth={1.8} />,
-    label: 'SEARCH',
-    ariaLabel: 'Search',
-  },
-];
-
 function SidebarNavButton({
-  item,
+  item: { tab, icon: Icon, label, ariaLabel },
   isActive,
   onSelectTab,
 }: {
-  item: NavItem;
+  item: PlannerNavItem;
   isActive: boolean;
   onSelectTab: (tab: NavigationTab) => void;
 }) {
   return (
     <button
       type="button"
-      className={`sidebar-nav-item${isActive ? ' active' : ''}`}
-      onClick={() => onSelectTab(item.tab)}
-      aria-label={item.ariaLabel}
+      className="sidebar-nav-item"
+      onClick={() => onSelectTab(tab)}
+      aria-label={ariaLabel}
       aria-current={isActive ? 'page' : undefined}
     >
       <span className="sidebar-nav-icon" aria-hidden="true">
-        {item.icon}
+        <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
       </span>
-      <span className="sidebar-nav-label">{item.label}</span>
+      <span className="sidebar-nav-label">{label}</span>
     </button>
   );
 }
@@ -77,8 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
         <button
           type="button"
           className="sidebar-brand"
-          onClick={() => onSelectTab('today')}
-          aria-label="TODOP — Open My Day"
+          onClick={() => onSelectTab('upcoming')}
+          aria-label="TODOP — Open Upcoming"
         >
           <BrandLogo />
         </button>
@@ -86,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
 
       {/* Primary navigation */}
       <nav className="sidebar-nav" aria-label="Pages">
-        {PRIMARY_NAV.map((item) => (
+        {plannerNavigation.map((item) => (
           <SidebarNavButton
             key={item.tab}
             item={item}
@@ -98,17 +63,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
 
       {/* Settings at the bottom */}
       <div className="sidebar-footer">
-        <SidebarNavButton item={{ tab: 'trash', icon: <Trash2 size={19} strokeWidth={1.8} />, label: 'RECENTLY DELETED', ariaLabel: 'Recently deleted' }} isActive={currentTab === 'trash'} onSelectTab={onSelectTab} />
-        <SidebarNavButton
-          item={{
-            tab: 'settings',
-            icon: <Settings size={20} strokeWidth={1.8} />,
-            label: 'SETTINGS',
-            ariaLabel: 'Settings',
-          }}
-          isActive={currentTab === 'settings'}
-          onSelectTab={onSelectTab}
-        />
+        {plannerSecondaryNavigation.map((item) => (
+          <SidebarNavButton
+            key={item.tab}
+            item={item}
+            isActive={currentTab === item.tab}
+            onSelectTab={onSelectTab}
+          />
+        ))}
       </div>
     </aside>
   );

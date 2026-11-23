@@ -1,6 +1,12 @@
 import type { AppFontSize, Settings } from '../types';
 
 export const FONT_SIZES = ['xs', 'small', 'medium', 'large'] as const satisfies readonly AppFontSize[];
+export const FONT_SIZE_OPTIONS = {
+  xs: { label: 'Extra small', scale: 65 },
+  small: { label: 'Small', scale: 70 },
+  medium: { label: 'Medium', scale: 80 },
+  large: { label: 'Large', scale: 90 },
+} as const satisfies Record<AppFontSize, { label: string; scale: number }>;
 export const DEFAULT_SETTINGS: Settings = { theme: 'light', fontSize: 'medium' };
 export const LEGACY_STORAGE_KEY = 'todop_app_data_v1';
 export const STORAGE_KEY = 'todop_app_data_v2';
@@ -10,8 +16,10 @@ export function isFontSize(value: unknown): value is AppFontSize {
 }
 
 export function applyAppearance(settings: Settings): void {
-  document.documentElement.dataset.theme = settings.theme;
-  document.documentElement.dataset.fontSize = settings.fontSize;
+  const root = document.documentElement;
+  root.dataset.theme = settings.theme;
+  root.dataset.fontSize = settings.fontSize;
+  root.style.setProperty('--font-size-base', `${FONT_SIZE_OPTIONS[settings.fontSize].scale}%`);
   document.querySelector('meta[name="theme-color"]')?.setAttribute(
     'content', settings.theme === 'dark' ? '#1F2027' : '#FAFAF6',
   );

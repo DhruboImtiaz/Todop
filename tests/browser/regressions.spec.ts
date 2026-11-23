@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createBackup } from '../../src/utils/backup';
-import { FONT_SIZES, STORAGE_KEY } from '../../src/utils/settings';
-import { NOW, fixture, readData, seed, restore, selectBackup, readyOffline, newLog, dateTime } from './helpers';
+import { FONT_SIZE_OPTIONS, FONT_SIZES, STORAGE_KEY } from '../../src/utils/settings';
+import { NOW, fixture, readData, seed, restore, selectBackup, readyOffline, newLog, dateTime, expectFontSize } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(NOW);
@@ -398,21 +398,38 @@ test('the project roadmap shows milestone risk, rejects dependency cycles and su
 
 test('planner pages share a type scale and fit narrow and desktop layouts', async ({ page }) => {
   await seed(page);
-  const paths = ['/today', '/app', '/projects', '/projects/alpha', '/calendar', '/search', '/settings', '/trash'];
+  await page.goto('/settings');
+  for (const [size, percent, px] of [['xs', '65%', 10.4], ['small', '70%', 11.2], ['large', '90%', 14.4], ['medium', '80%', 12.8]] as const) {
+    const option = page.getByRole('radio', { name: FONT_SIZE_OPTIONS[size].label, exact: true });
+    await expect(option).toHaveAccessibleDescription(percent);
+    await option.click();
+    await expect(option).toBeChecked();
+    await expect(page.locator('html')).toHaveAttribute('data-font-size', size);
+    await expectFontSize(page.locator('html'), px);
+  }
+  const paths = ['/app', '/projects', '/projects/alpha', '/calendar', '/search', '/settings', '/trash'];
   for (const [width, size] of [[320, 'large'], [390, 'medium'], [1440, 'medium']] as const) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/settings');
-    await page.getByRole('radio', { name: size.toUpperCase(), exact: true }).click();
+    await page.getByRole('radio', { name: FONT_SIZE_OPTIONS[size].label, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-font-size', size);
-    const headingSize = size === 'large' ? '31.5px' : '28px';
+    const headingSize = size === 'large' ? 25.2 : 22.4;
+    let pageHeading: { left: number; top: number } | undefined;
     for (const path of paths) {
       await page.goto(path);
       const heading = page.getByRole('heading', { level: 1 });
-      await expect(heading, path).toHaveCSS('font-size', headingSize);
+      await expectFontSize(heading, headingSize, path);
+      await expect(heading, path).toHaveCSS('font-family', /Plus Jakarta Sans/);
       const layout = await page.evaluate(() => {
         const title = document.querySelector('h1')!.getBoundingClientRect();
-        return { left: title.left, right: title.right, scrollWidth: document.documentElement.scrollWidth };
+        const subtitle = document.querySelector('.page-subtitle')?.getBoundingClientRect();
+        return { left: title.left, top: title.top, right: title.right, subtitleLeft: subtitle?.left,
+          scrollWidth: document.documentElement.scrollWidth };
       });
+      pageHeading ??= layout;
+      expect(layout.left, path).toBeCloseTo(pageHeading.left, 1);
+      if (path !== '/projects/alpha') expect(layout.top, path).toBeCloseTo(pageHeading.top, 1);
+      if (layout.subtitleLeft !== undefined) expect(layout.subtitleLeft, path).toBeCloseTo(layout.left, 1);
       expect(layout.left, path).toBeGreaterThanOrEqual(0);
       expect(layout.right, path).toBeLessThanOrEqual(width);
       expect(layout.scrollWidth, path).toBeLessThanOrEqual(width);
@@ -420,9 +437,9 @@ test('planner pages share a type scale and fit narrow and desktop layouts', asyn
   }
   await page.goto('/projects/alpha');
   await page.getByRole('button', { name: 'Roadmap', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'QA early', exact: true })).toHaveCSS('font-size', '17px');
+  await expectFontSize(page.getByRole('button', { name: 'QA early', exact: true }), 13.6);
   await page.getByRole('button', { name: 'Tasks', exact: true }).click();
   const task = page.getByRole('button', { name: /Log: QA early,/ });
-  await expect(task.getByRole('heading', { name: 'QA early' })).toHaveCSS('font-size', '17px');
-  await expect(task.locator('.log-card-countdown')).toHaveCSS('font-size', '17px');
+  await expectFontSize(task.getByRole('heading', { name: 'QA early' }), 13.6);
+  await expectFontSize(task.locator('.log-card-countdown'), 13.6);
 });
