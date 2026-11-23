@@ -1,3 +1,23 @@
+@media (max-width: 1023px) {
+  .projects-page-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .projects-page-header .page-header-actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .projects-page-header .page-header-actions button {
+    padding-inline: clamp(8px, 3vw, 17px);
+    overflow-wrap: anywhere;
+  }
+  .projects-page-header .page-header-actions svg {
+    flex-shrink: 0;
+  }
+}
+
 /* ── Empty State ── */
 .projects-empty-state {
   display: flex;
@@ -26,7 +46,7 @@
 .projects-empty-sub {
   font-size: var(--type-body);
   color: var(--text-dim);
-  margin: 0 0 10px;
+  margin: 0;
 }
 
 /* ── Project List ── */

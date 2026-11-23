@@ -55,8 +55,8 @@ export function AccountPanel() {
         <div className="settings-data-actions">
           {account ? (
             <>
-              <button className="settings-action-btn secondary" disabled={busy} onClick={signOut}>Sign out</button>
               {empty && <button className="settings-action-btn primary" disabled={busy} onClick={copyDevicePlanner}>Copy device planner to account</button>}
+              <button className="settings-action-btn secondary" disabled={busy} onClick={signOut}>Sign out</button>
             </>
           ) : (
             <button className="settings-action-btn primary" onClick={() => navigate('/auth?mode=signup')}>Create account / Sign in</button>

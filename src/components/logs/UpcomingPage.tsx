@@ -85,7 +85,7 @@ export function UpcomingPage({
         </button>
       </div>
       {logs.length === 0 ? (
-        <EmptyState onCreateLog={onOpenCreateSheet} />
+        <EmptyState />
       ) : (
         <div className="upcoming-sections">
           {sections

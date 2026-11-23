@@ -1,9 +1,9 @@
 .floating-add-btn {
   position: fixed;
-  right: calc(max(var(--page-padding-x), (100vw - var(--max-content-width)) / 2 + var(--page-padding-x)));
-  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
-  width: 54px;
-  height: 54px;
+  inset-inline-end: var(--mobile-action-inset);
+  inset-block-end: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
+  width: var(--floating-add-size);
+  height: var(--floating-add-size);
   border-radius: var(--radius-full);
   background-color: var(--accent-primary);
   color: var(--accent-text);
@@ -17,17 +17,21 @@
 
 .floating-add-btn:hover {
   background-color: var(--accent-hover);
-  transform: translateY(-2px);
 }
 
 .floating-add-btn:active {
-  transform: translateY(0) scale(0.95);
+  transform: scale(0.95);
   background-color: var(--accent-active);
 }
 
 @media (min-width: 1024px) {
   .floating-add-btn {
-    right: calc(max(var(--page-padding-x), (100vw - var(--sidebar-width) - var(--desktop-content-max-width)) / 2 + var(--page-padding-x)));
-    bottom: calc(var(--safe-bottom) + 32px);
+    inset-inline-end: var(--desktop-action-inset);
+    inset-block-end: calc(var(--safe-bottom) + 32px);
   }
+  .floating-add-btn:hover:not(:active) { transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-add-btn { transition: none; }
 }

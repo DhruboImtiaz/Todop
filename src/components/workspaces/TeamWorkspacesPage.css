@@ -12,6 +12,7 @@
 .team-list, .team-panel-content, .team-form, .team-invite { display: grid; gap: 10px; min-width: 0; }
 .team-panel, .team-workspace-link { padding: var(--card-padding); background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
 .team-workspace-link, .team-member { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; overflow-wrap: anywhere; }
+.team-workspace-link { text-align: start; }
 .team-workspace-link:hover { background: var(--bg-card-hover); }
 .team-workspace-link span, .team-invite small { color: var(--text-secondary); font-size: var(--type-small); }
 .team-panel summary { cursor: pointer; font-weight: 750; min-height: 30px; }
@@ -25,4 +26,14 @@
 .team-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 1023px) {
   .team-workspaces { max-width: var(--mobile-content-max-width); }
+}
+@media (max-width: 480px) {
+  .team-heading { justify-content: space-between; }
+  .team-heading svg { order: 1; }
+  .team-breadcrumbs:has(> button + span) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .team-breadcrumbs > span { display: none; }
+  .team-breadcrumbs svg { flex-shrink: 0; }
 }

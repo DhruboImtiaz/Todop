@@ -144,7 +144,6 @@ const TodopMain: React.FC = () => {
         <SettingsPage />
       )}
 
-      {/* Floating Add Button (only on Upcoming) */}
       {currentTab === 'upcoming' && (
         <FloatingAddButton onClick={handleOpenCreate} />
       )}

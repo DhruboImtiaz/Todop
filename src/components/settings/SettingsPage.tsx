@@ -2,7 +2,7 @@ import { isDemoMode, navigate } from '../../utils/navigation';
 import { AccountPanel } from '../auth/AccountPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { runUiAction } from '../../utils/asyncAction';
-import { FONT_SIZE_OPTIONS, FONT_SIZES, isFontSize } from '../../utils/settings';
+import { FONT_SIZE_OPTIONS, FONT_SIZES, getUiScale, isFontSize } from '../../utils/settings';
 import React, { useRef, useState, useEffect } from 'react';
 import { Download, Moon, Sun, Upload, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useStorage } from '../../hooks/useStorage';
@@ -282,34 +282,33 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Font Size Section */}
-      <section className="settings-section" aria-labelledby="fontsize-heading">
-        <h2 id="fontsize-heading" className="settings-section-title">
-          TEXT SIZE
+      <section className="settings-section" aria-labelledby="display-heading">
+        <h2 id="display-heading" className="settings-section-title">
+          DISPLAY
         </h2>
 
         <div className="settings-card">
           <div className="settings-item-info">
-            <span className="settings-item-name">Text scale</span>
+            <span className="settings-item-name">Display scale</span>
             <span className="settings-item-desc">
-              Adjust text across TODOP. Medium is the default.
+              Adjust text and spacing across TODOP. Medium is the default.
             </span>
           </div>
 
           <div
             className="segmented-control text-size-control"
             role="radiogroup"
-            aria-label="Text Size"
+            aria-label="Display scale"
           >
             {FONT_SIZES.map(size => {
-              const { label, scale } = FONT_SIZE_OPTIONS[size];
+              const { label } = FONT_SIZE_OPTIONS[size];
               return (
                 <button key={size} type="button" role="radio"
                   className="segmented-control-btn"
                   aria-checked={currentFontSize === size} aria-label={label} aria-describedby={`text-size-${size}`}
                   onClick={() => runUiAction(() => handleFontSizeChange(size))}>
                   <span>{label}</span>
-                  <span className="text-size-percent" id={`text-size-${size}`}>{scale}%</span>
+                  <span className="text-size-percent" id={`text-size-${size}`}>{getUiScale(size) * 100}%</span>
                 </button>
               );
             })}

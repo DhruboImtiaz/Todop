@@ -35,30 +35,4 @@
   color: var(--text-secondary);
   max-width: 280px;
   line-height: 1.5;
-  margin-bottom: 28px;
-}
-
-.empty-state-btn {
-  background-color: var(--accent-primary);
-  color: var(--accent-text);
-  font-family: var(--font-heading);
-  font-size: var(--type-small);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 14px 28px;
-  border-radius: var(--radius-md);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-
-.empty-state-btn:hover {
-  background-color: var(--accent-hover);
-  transform: translateY(-1px);
-}
-
-.empty-state-btn:active {
-  transform: translateY(0) scale(0.98);
 }

@@ -18,7 +18,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--page-padding-x);
+  padding-left: var(--mobile-gutter-left);
+  padding-right: var(--mobile-gutter-right);
 }
 
 .top-bar-brand {
@@ -41,8 +42,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: var(--top-bar-action-size);
+  height: var(--top-bar-action-size);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   transition: color 0.15s ease, background-color 0.15s ease;

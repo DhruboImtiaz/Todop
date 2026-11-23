@@ -130,8 +130,10 @@ export const LogCard: React.FC<LogCardProps> = ({
       <div className="log-card-details">
         <h3 className="log-card-title">{log.title}</h3>
         <div className="log-card-project">
-          <span className="log-project-dot" />
-          {project?.name ?? "Personal"}
+          <span className="log-card-project-name">
+            <span className="log-project-dot" />
+            <span>{project?.name ?? "Personal"}</span>
+          </span>
           {log.subtasks.length > 0 && (
             <span className="log-card-subtasks">
               {" "}

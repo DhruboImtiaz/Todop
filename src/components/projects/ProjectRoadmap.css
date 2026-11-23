@@ -46,3 +46,15 @@
 .roadmap-editor fieldset { border: 0; padding: 0; }
 .roadmap-editor legend { font-weight: 700; margin-bottom: 6px; }
 .roadmap-field { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.roadmap-field input { flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .project-view-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .roadmap-summary div {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding-inline: 10px;
+  }
+  .roadmap-task { display: grid; justify-content: stretch; grid-template-columns: minmax(0, 1fr); }
+  .roadmap-task > button { justify-self: start; }
+}
